@@ -1,7 +1,9 @@
 package com.carlosjimz87.wandertrack.di
 
+import com.carlosjimz87.wandertrack.ui.screens.auth.AuthViewModel
+import org.koin.androidx.viewmodel.dsl.viewModel
 import org.koin.dsl.module
 
 val appModule = module {
-    single<String> { "Hola" }
+    viewModel { AuthViewModel() }
 }
