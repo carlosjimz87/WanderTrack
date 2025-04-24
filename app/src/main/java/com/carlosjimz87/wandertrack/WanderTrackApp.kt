@@ -1,27 +1,32 @@
 package com.carlosjimz87.wandertrack
 
 import android.app.Application
-import android.util.Log
+import com.carlosjimz87.wandertrack.di.appModule
 import com.google.firebase.FirebaseApp
+import org.koin.android.ext.koin.androidContext
+import org.koin.core.context.startKoin
+import com.carlosjimz87.wandertrack.utils.Logger
+
 
 class WanderTrackApp : Application(){
     override fun onCreate() {
         super.onCreate()
         initializeFirebase()
+        initializeKoin()
+    }
+
+    private fun initializeKoin(){
+        startKoin {
+            androidContext(this@WanderTrackApp)
+            modules(appModule)
+        }
     }
 
     private fun initializeFirebase() {
         try {
             FirebaseApp.initializeApp(this)
-            Log.i(TAG, "Firebase initialized successfully")
-        } catch (e: IllegalStateException) {
-            Log.w(TAG, "Firebase has already been initialized", e)
         } catch (e: Exception) {
-            Log.e(TAG, "Error initializing Firebase", e)
+            Logger.e("Error initializing Firebase [$e]")
         }
-    }
-
-    companion object {
-        private const val TAG = "WanderTrackApp"
     }
 }

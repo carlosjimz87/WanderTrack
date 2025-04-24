@@ -40,6 +40,11 @@ firebase-crashlytics-ktx = { group = "com.google.firebase", name = "firebase-cra
 maps-compose = { group = "com.google.maps.android", name = "maps-compose", version = "2.11.0" }
 play-services-maps = { group = "com.google.android.gms", name = "play-services-maps", version = "19.2.0" }
 
+# Koin (for DI)
+koin-core = { group = "io.insert-koin", name = "koin-core", version = "3.5.3" }
+koin-android = { group = "io.insert-koin", name = "koin-android", version = "3.5.3" }
+koin-compose = { group = "io.insert-koin", name = "koin-androidx-compose", version = "3.5.3" }
+
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
 kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
