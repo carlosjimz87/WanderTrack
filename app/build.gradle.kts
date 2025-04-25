@@ -51,12 +51,14 @@ dependencies {
     implementation(libs.androidx.ui.graphics)
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
+    implementation(libs.navigation.compose)
 
     // Firebase BoM
     implementation(platform(libs.firebase.bom))
 
     // Firebase modules
     implementation(libs.firebase.auth.ktx)
+    implementation(libs.google.auth)
     implementation(libs.firebase.firestore.ktx)
     implementation(libs.firebase.storage.ktx)
     implementation(libs.firebase.config.ktx)
