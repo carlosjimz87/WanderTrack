@@ -1,5 +1,7 @@
 package com.carlosjimz87.wandertrack.ui.screens.auth
 
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -18,18 +20,13 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonColors
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Checkbox
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextFieldColors
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -41,14 +38,18 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
+import com.carlosjimz87.wandertrack.BuildConfig
 import com.carlosjimz87.wandertrack.R
-import com.carlosjimz87.wandertrack.ui.composables.AuthButton
 import com.carlosjimz87.wandertrack.ui.composables.GoogleSignInButton
 import com.carlosjimz87.wandertrack.ui.theme.AccentPink
+import com.google.android.gms.auth.api.signin.GoogleSignIn
+import com.google.android.gms.auth.api.signin.GoogleSignInOptions
+import com.google.android.gms.common.api.ApiException
 import org.koin.androidx.compose.koinViewModel
 
 @Composable
@@ -56,6 +57,7 @@ fun AuthScreen(
     authViewModel: AuthViewModel = koinViewModel(),
     onAuthSuccess: () -> Unit
 ) {
+    val context = LocalContext.current
     val user by authViewModel.authState.collectAsState()
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
@@ -65,6 +67,33 @@ fun AuthScreen(
         if (user != null) {
             onAuthSuccess()
         }
+    }
+
+    val launcher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        val task = GoogleSignIn.getSignedInAccountFromIntent(result.data)
+        try {
+            val account = task.getResult(ApiException::class.java)
+            val idToken = account.idToken
+            if (idToken != null) {
+                authViewModel.loginWithGoogle(idToken) { success, msg ->
+                    if (!success) error = msg
+                }
+            }
+        } catch (e: Exception) {
+            error = e.localizedMessage
+        }
+    }
+
+    val signInClient = remember {
+        GoogleSignIn.getClient(
+            context,
+            GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+                .requestIdToken(BuildConfig.GOOGLE_CLIENT_ID) // From Firebase Console
+                .requestEmail()
+                .build()
+        )
     }
 
     Column(
@@ -97,7 +126,10 @@ fun AuthScreen(
             horizontalArrangement = Arrangement.SpaceEvenly,
             modifier = Modifier.width(100.dp)
         ) {
-            GoogleSignInButton(onClick = { /* Google auth */ }) // Replace
+            GoogleSignInButton(onClick = {
+                    launcher.launch(signInClient.signInIntent)
+                }
+            )
         }
 
         Spacer(modifier = Modifier.height(24.dp))
@@ -135,7 +167,9 @@ fun AuthScreen(
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Checkbox(checked = false, onCheckedChange = {}) // You can handle Remember me logic later
+                Checkbox(
+                    checked = false,
+                    onCheckedChange = {}) // You can handle Remember me logic later
                 Text("Remember me")
             }
 
@@ -167,7 +201,11 @@ fun AuthScreen(
         Spacer(modifier = Modifier.height(16.dp))
 
         error?.let {
-            Text(it, color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(top = 12.dp))
+            Text(
+                it,
+                color = MaterialTheme.colorScheme.error,
+                modifier = Modifier.padding(top = 12.dp)
+            )
         }
 
         Spacer(modifier = Modifier.height(16.dp))
