@@ -1,0 +1,31 @@
+[
+  {
+    "featureType": "all",
+    "elementType": "labels",
+    "stylers": [
+      { "visibility": "off" }
+    ]
+  },
+  {
+    "featureType": "administrative",
+    "elementType": "geometry",
+    "stylers": [
+      { "visibility": "on" },
+      { "color": "#757575" }
+    ]
+  },
+  {
+    "featureType": "landscape",
+    "elementType": "geometry",
+    "stylers": [
+      { "color": "#e0e0e0" }
+    ]
+  },
+  {
+    "featureType": "water",
+    "elementType": "geometry",
+    "stylers": [
+      { "color": "#a2daf2" }
+    ]
+  }
+]

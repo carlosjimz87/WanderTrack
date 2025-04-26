@@ -4,10 +4,14 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import com.carlosjimz87.wandertrack.R
 import com.carlosjimz87.wandertrack.utils.getMockCountryCodeFromLatLng
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
+import com.google.android.gms.maps.model.MapStyleOptions
 import com.google.maps.android.compose.GoogleMap
 import com.google.maps.android.compose.MapProperties
 import com.google.maps.android.compose.MapType
@@ -20,6 +24,10 @@ fun MapScreen(
     viewModel: MapViewModel = koinViewModel(),
     onCountryClicked: (String) -> Unit
 ) {
+    val context = LocalContext.current
+    val mapStyleOptions = remember {
+        MapStyleOptions.loadRawResourceStyle(context, R.raw.map_style)
+    }
     val visitedCountries by viewModel.visitedCountries.collectAsState()
     val cameraPositionState = rememberCameraPositionState{
         position = CameraPosition.fromLatLngZoom(LatLng(20.0, 0.0), 2f)
@@ -30,6 +38,7 @@ fun MapScreen(
         cameraPositionState = cameraPositionState,
         properties = MapProperties(
             mapType = MapType.NORMAL,
+            mapStyleOptions = mapStyleOptions,
             isBuildingEnabled = false
         ),
         uiSettings = MapUiSettings(
