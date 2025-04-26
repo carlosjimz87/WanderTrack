@@ -33,6 +33,13 @@ android {
             "GOOGLE_CLIENT_ID",
             "\"${secretsProperties["GOOGLE_CLIENT_ID"]}\""
         )
+
+        buildConfigField(
+            "String",
+            "GOOGLE_MAPS_KEY",
+            "\"${secretsProperties["GOOGLE_MAPS_KEY"]}\""
+        )
+        manifestPlaceholders["GOOGLE_MAPS_KEY"] = secretsProperties["GOOGLE_MAPS_KEY"] as Any
     }
 
     buildTypes {

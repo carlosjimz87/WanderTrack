@@ -1,12 +1,13 @@
 package com.carlosjimz87.wandertrack.navigation
 
-import androidx.compose.foundation.layout.Column
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import com.carlosjimz87.wandertrack.ui.screens.auth.AuthScreen
+import com.carlosjimz87.wandertrack.ui.screens.mapscreen.MapScreen
 
 @Composable
 fun AppNavigation() {
@@ -20,14 +21,21 @@ fun AppNavigation() {
             })
         }
         composable("home") {
-            HomeScreen()
+            MapScreen(
+                onCountryClicked = { countryCode ->
+                    navController.navigate("country/$countryCode")
+                }
+            )
         }
-    }
-}
 
-@Composable
-fun HomeScreen() {
-    Column {
-        Text("Home Screen")
+        composable(
+            route = "country/{countryCode}",
+            arguments = listOf(navArgument("countryCode") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val countryCode = backStackEntry.arguments?.getString("countryCode")
+            if (countryCode != null) {
+                // CountryScreen(countryCode)
+            }
+        }
     }
 }
