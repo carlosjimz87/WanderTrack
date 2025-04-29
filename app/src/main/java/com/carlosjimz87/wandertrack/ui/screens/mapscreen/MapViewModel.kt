@@ -9,6 +9,7 @@ import com.carlosjimz87.wandertrack.domain.models.Country
 import com.carlosjimz87.wandertrack.utils.fetchCountriesGeoJson
 import com.carlosjimz87.wandertrack.utils.getCountryCodeFromLatLng
 import com.google.android.gms.maps.model.LatLng
+import com.google.android.gms.maps.model.LatLngBounds
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -34,6 +35,9 @@ class MapViewModel(
     private val _isLoading = MutableStateFlow(true)
     val isLoading = _isLoading.asStateFlow()
 
+    private val _countryBounds = mutableMapOf<String, LatLngBounds>()
+    val countryBounds: Map<String, LatLngBounds> get() = _countryBounds
+
     init {
         loadMockCountries()
         loadCountriesGeoJson()
@@ -49,7 +53,19 @@ class MapViewModel(
             _isLoading.value = true
             val parsedBorders = fetchCountriesGeoJson(context).toMutableMap()
             Log.w("MapViewModel", "countries: $parsedBorders")
-            _countryBorders.value =  parsedBorders
+            _countryBorders.value = parsedBorders
+
+            // 🚀 Precálculo de bounds de cada país
+            parsedBorders.forEach { (code, polygons) ->
+                val boundsBuilder = LatLngBounds.Builder()
+                polygons.forEach { polygon ->
+                    polygon.forEach { point ->
+                        boundsBuilder.include(point)
+                    }
+                }
+                _countryBounds[code] = boundsBuilder.build()
+            }
+
             Log.d("MapViewModel", "Loaded borders: ${_countryBorders.value.keys.joinToString()}")
             _isLoading.value = false
         }

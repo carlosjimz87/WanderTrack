@@ -46,6 +46,7 @@ fun MapScreen(
     val bottomSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
     val isDarkTheme = isSystemInDarkTheme()
+
     val mapStyle = if (isDarkTheme) {
         MapStyleOptions.loadRawResourceStyle(context, R.raw.map_style_night)
     } else {
@@ -95,15 +96,7 @@ fun MapScreen(
 
         selectedCountry?.let { country ->
             LaunchedEffect(country) {
-                countryBorders[country.code]?.let { polygons ->
-                    val boundsBuilder = LatLngBounds.Builder()
-                    polygons.forEach { polygon ->
-                        polygon.forEach { point ->
-                            boundsBuilder.include(point)
-                        }
-                    }
-                    val bounds = boundsBuilder.build()
-
+                viewModel.countryBounds[country.code]?.let { bounds ->
                     cameraPositionState.animate(
                         update = CameraUpdateFactory.newLatLngBounds(bounds, 100)
                     )
