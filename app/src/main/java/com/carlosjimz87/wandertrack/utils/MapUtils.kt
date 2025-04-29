@@ -6,6 +6,8 @@ import com.carlosjimz87.wandertrack.R
 import com.google.android.gms.maps.model.LatLng
 import org.json.JSONArray
 import org.json.JSONObject
+
+
 fun fetchCountriesGeoJson(context: Context): Map<String, List<List<LatLng>>> {
     return runCatching {
         context.resources.openRawResource(R.raw.countries).use { inputStream ->
@@ -26,11 +28,22 @@ fun fetchCountriesGeoJson(context: Context): Map<String, List<List<LatLng>>> {
                     val admin = properties.optString("ADMIN", "").uppercase()
                     val countryType = properties.optString("TYPE", "").uppercase()
 
-                    // 🔴 Evitar ISO inválido
-                    if (isoCode.isBlank() || isoCode == "-99") continue
+                    if (isoCode == "-99") continue
 
-                    // 🔴 Evitar pintar colonias (mismo ISO pero diferente ADMIN)
-                    if (admin != sovereign && isoCode in setOf("FR", "GB", "US", "NL", "DK")) continue
+                    // Filtro de colonias para países conocidos
+                    val isMainland = admin == sovereign && countryType == "COUNTRY"
+                    if (!isMainland && sovereign in setOf(
+                            "FRANCE", "UNITED KINGDOM", "UNITED STATES OF AMERICA",
+                            "NETHERLANDS", "DENMARK", "AUSTRALIA", "CHINA", "NORWAY"
+                        )
+                    ) continue
+
+                    // Obtener la clave válida
+                    val key = when {
+                        isoCode.isNotBlank() -> isoCode
+                        isMainland -> countryNameToIso2[sovereign] ?: continue
+                        else -> continue
+                    }
 
                     val polygons = when (type) {
                         "Polygon" -> parsePolygon(coordinates)
@@ -38,9 +51,20 @@ fun fetchCountriesGeoJson(context: Context): Map<String, List<List<LatLng>>> {
                         else -> emptyList()
                     }
 
-                    if (polygons.isNotEmpty()) {
-                        val existing = this[isoCode] ?: emptyList()
-                        this[isoCode] = existing + polygons
+                    // Filtro específico para evitar territorios de ultramar (por ejemplo, Guayana Francesa)
+                    val filteredPolygons = if (isoCode == "FR") {
+                        polygons.filter { polygon ->
+                            polygon.any { point ->
+                                point.latitude in 40.0..52.0 && point.longitude in -5.0..10.0
+                            }
+                        }
+                    } else {
+                        polygons
+                    }
+
+                    if (filteredPolygons.isNotEmpty()) {
+                        val existing = this[key] ?: emptyList()
+                        this[key] = existing + filteredPolygons
                     }
                 }
             }
