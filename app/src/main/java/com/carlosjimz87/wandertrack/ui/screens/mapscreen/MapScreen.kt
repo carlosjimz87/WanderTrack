@@ -12,6 +12,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -20,14 +23,16 @@ import com.carlosjimz87.wandertrack.R
 import com.carlosjimz87.wandertrack.ui.composables.CountryBottomSheetContent
 import com.carlosjimz87.wandertrack.ui.theme.AccentPink
 import com.google.android.gms.maps.CameraUpdateFactory
-import com.google.android.gms.maps.model.LatLngBounds
+import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MapStyleOptions
+import com.google.maps.android.SphericalUtil
 import com.google.maps.android.compose.GoogleMap
 import com.google.maps.android.compose.MapProperties
 import com.google.maps.android.compose.MapType
 import com.google.maps.android.compose.MapUiSettings
 import com.google.maps.android.compose.Polygon
 import com.google.maps.android.compose.rememberCameraPositionState
+import kotlinx.coroutines.delay
 import org.koin.androidx.compose.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -46,15 +51,27 @@ fun MapScreen(
     val bottomSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
     val isDarkTheme = isSystemInDarkTheme()
-
     val mapStyle = if (isDarkTheme) {
         MapStyleOptions.loadRawResourceStyle(context, R.raw.map_style_night)
     } else {
         MapStyleOptions.loadRawResourceStyle(context, R.raw.map_style)
     }
 
-    Box(modifier = Modifier.fillMaxSize()) {
+    var lastClickLatLng by remember { mutableStateOf<LatLng?>(null) }
 
+    LaunchedEffect(cameraPositionState.position.target) {
+        lastClickLatLng?.let { original ->
+            val movedDistance = SphericalUtil.computeDistanceBetween(
+                original,
+                cameraPositionState.position.target
+            )
+            if (movedDistance > 100_000) { // más de 100 km
+                viewModel.notifyUserMovedMap()
+            }
+        }
+    }
+
+    Box(modifier = Modifier.fillMaxSize()) {
         GoogleMap(
             modifier = Modifier.fillMaxSize(),
             properties = MapProperties(
@@ -69,11 +86,12 @@ fun MapScreen(
                 mapToolbarEnabled = false
             ),
             onMapClick = { latLng ->
-                viewModel.onMapClick(context, latLng)
+                lastClickLatLng = latLng
+                viewModel.resetUserMovedFlag()
+                viewModel.onMapClick(context, latLng) // 🚀 solo guarda
             }
         ) {
             visitedCountries.forEach { code ->
-
                 val polygons = countryBorders[code] ?: return@forEach
                 polygons.forEach { polygon ->
                     Polygon(
@@ -96,12 +114,14 @@ fun MapScreen(
 
         selectedCountry?.let { country ->
             LaunchedEffect(country) {
-                viewModel.countryBounds[country.code]?.let { bounds ->
+                val bounds = viewModel.countryBounds[country.code]
+                if (bounds != null && !viewModel.userMovedMap.value) {
                     cameraPositionState.animate(
                         update = CameraUpdateFactory.newLatLngBounds(bounds, 100)
                     )
-                    bottomSheetState.show()
+                    delay(300)
                 }
+                bottomSheetState.show()
             }
 
             ModalBottomSheet(
@@ -110,11 +130,22 @@ fun MapScreen(
             ) {
                 CountryBottomSheetContent(
                     country = country,
+                    visitedCities = viewModel.visitedCities.value[country.code] ?: emptySet(),
+                    onToggleCityVisited = { cityName ->
+                        viewModel.toggleCityVisited(country.code, cityName)
+                    },
                     onToggleVisited = { code -> viewModel.toggleCountryVisited(code) },
                     onDismiss = { viewModel.clearSelectedCountry() },
-                    onCityClicked = {}
                 )
             }
+        }
+    }
+
+    // 📍 Hacemos la animación y búsqueda de país tras click
+    LaunchedEffect(lastClickLatLng) {
+        lastClickLatLng?.let { latLng ->
+            cameraPositionState.animate(CameraUpdateFactory.newLatLngZoom(latLng, 5f))
+            viewModel.resolveCountryFromLatLng(context, latLng)
         }
     }
 }

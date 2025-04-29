@@ -23,6 +23,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.carlosjimz87.wandertrack.common.Constants
 import com.carlosjimz87.wandertrack.domain.models.City
 import com.carlosjimz87.wandertrack.domain.models.Country
 import com.carlosjimz87.wandertrack.ui.theme.WanderTrackTheme
@@ -30,8 +31,9 @@ import com.carlosjimz87.wandertrack.ui.theme.WanderTrackTheme
 @Composable
 fun CountryBottomSheetContent(
     country: Country,
+    visitedCities: Set<String>,
+    onToggleCityVisited: (String) -> Unit,
     onToggleVisited: (String) -> Unit,
-    onCityClicked: (String) -> Unit,
     onDismiss: () -> Unit
 ) {
     Column(
@@ -64,7 +66,7 @@ fun CountryBottomSheetContent(
                 contentDescription = "Bandera",
                 modifier = Modifier.padding(end = 8.dp)
             )
-            
+
             Text(
                 text = country.name,
                 style = MaterialTheme.typography.headlineSmall,
@@ -80,7 +82,7 @@ fun CountryBottomSheetContent(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(vertical = 8.dp)
-                    .clickable { onCityClicked(city.name) },
+                    .clickable { onToggleVisited(city.name) },
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
@@ -89,9 +91,9 @@ fun CountryBottomSheetContent(
                     style = MaterialTheme.typography.bodyLarge
                 )
                 Switch(
-                    checked = city.visited,
+                    checked = visitedCities.contains(city.name),
                     onCheckedChange = {
-                        // TODO: implementar toggle de ciudad
+                        onToggleCityVisited(city.name)
                     }
                 )
             }
@@ -102,22 +104,20 @@ fun CountryBottomSheetContent(
 @Preview
 @Composable
 private fun CountryBottomSheetContentPreview() {
+
     WanderTrackTheme {
-        val country = Country(
-            code = "ES",
-            name = "Spain",
-            cities = listOf(
-                City("MAD", "Madrid", false),
-                City("BCN", "Barcelona", true)
-            )
-        )
+
+
+        val country = Constants.countries.first()
 
         CountryBottomSheetContent(
             country = country,
+            visitedCities = setOf("Ciudad 1", "Ciudad 2"),
+            onToggleCityVisited = {},
             onToggleVisited = {},
-            onCityClicked = {},
             onDismiss = {}
         )
-    }
 
+    }
+    
 }

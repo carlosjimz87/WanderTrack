@@ -1,7 +1,6 @@
 package com.carlosjimz87.wandertrack.ui.screens.mapscreen
 
 import android.content.Context
-import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.carlosjimz87.wandertrack.common.Constants
@@ -19,6 +18,9 @@ import kotlinx.coroutines.launch
 class MapViewModel(
     val context: Context
 ) : ViewModel() {
+
+    private val _userMovedMap = MutableStateFlow(false)
+    val userMovedMap = _userMovedMap.asStateFlow()
 
     private val _countries = MutableStateFlow<List<Country>>(emptyList())
     val countries = _countries.asStateFlow()
@@ -38,13 +40,24 @@ class MapViewModel(
     private val _countryBounds = mutableMapOf<String, LatLngBounds>()
     val countryBounds: Map<String, LatLngBounds> get() = _countryBounds
 
+    private val _visitedCities = MutableStateFlow<Map<String, Set<String>>>(emptyMap())
+    val visitedCities = _visitedCities.asStateFlow()
+
     init {
         loadMockCountries()
         loadCountriesGeoJson()
     }
 
+    fun notifyUserMovedMap() {
+        _userMovedMap.value = true
+    }
+
+    fun resetUserMovedFlag() {
+        _userMovedMap.value = false
+    }
+
     private fun loadMockCountries() {
-        _countries.value = Constants.visitedCountries
+        _countries.value = Constants.countries
         _visitedCountries.value = _countries.value.filter { it.visited }.map { it.code }.toSet()
     }
 
@@ -52,10 +65,8 @@ class MapViewModel(
         viewModelScope.launch(Dispatchers.IO) {
             _isLoading.value = true
             val parsedBorders = fetchCountriesGeoJson(context).toMutableMap()
-            Log.w("MapViewModel", "countries: $parsedBorders")
             _countryBorders.value = parsedBorders
 
-            // 🚀 Precálculo de bounds de cada país
             parsedBorders.forEach { (code, polygons) ->
                 val boundsBuilder = LatLngBounds.Builder()
                 polygons.forEach { polygon ->
@@ -66,7 +77,6 @@ class MapViewModel(
                 _countryBounds[code] = boundsBuilder.build()
             }
 
-            Log.d("MapViewModel", "Loaded borders: ${_countryBorders.value.keys.joinToString()}")
             _isLoading.value = false
         }
     }
@@ -77,25 +87,22 @@ class MapViewModel(
         }
     }
 
-    fun selectCountry(country: Country) {
-        _selectedCountry.value = country
-    }
-
     fun clearSelectedCountry() {
         _selectedCountry.value = null
     }
 
     fun onMapClick(context: Context, latLng: LatLng) {
-        viewModelScope.launch {
-            runCatching {
-                val countryCode = getCountryCodeFromLatLng(context, latLng)
-                countryCode?.let { code ->
-                    getCountryByCode(code)?.let { country ->
-                        selectCountry(country)
-                    }
+        // Ya no hacemos nada aquí
+        // Solo recogemos la posición en el Composable
+    }
+
+    fun resolveCountryFromLatLng(context: Context, latLng: LatLng) {
+        viewModelScope.launch(Dispatchers.IO) {
+            val countryCode = getCountryCodeFromLatLng(context, latLng)
+            countryCode?.let { code ->
+                getCountryByCode(code)?.let { country ->
+                    _selectedCountry.value = country
                 }
-            }.onFailure {
-                it.printStackTrace()
             }
         }
     }
@@ -104,7 +111,15 @@ class MapViewModel(
         return countries.value.find { it.code.equals(code, ignoreCase = true) }
     }
 
-    fun selectCity(cityName: String) {
-        // TODO: Marcar la ciudad como visitada si implementamos esa parte
+    fun toggleCityVisited(countryCode: String, cityName: String) {
+        _visitedCities.update { current ->
+            val currentVisited = current[countryCode] ?: emptySet()
+            val updatedVisited = if (currentVisited.contains(cityName)) {
+                currentVisited - cityName
+            } else {
+                currentVisited + cityName
+            }
+            current + (countryCode to updatedVisited)
+        }
     }
 }
