@@ -1,11 +1,11 @@
 package com.carlosjimz87.wandertrack.utils
 
 import android.content.Context
+import android.util.Log
 import com.carlosjimz87.wandertrack.R
 import com.google.android.gms.maps.model.LatLng
 import org.json.JSONArray
 import org.json.JSONObject
-
 fun fetchCountriesGeoJson(context: Context): Map<String, List<List<LatLng>>> {
     return runCatching {
         context.resources.openRawResource(R.raw.countries).use { inputStream ->
@@ -26,23 +26,21 @@ fun fetchCountriesGeoJson(context: Context): Map<String, List<List<LatLng>>> {
                     val admin = properties.optString("ADMIN", "").uppercase()
                     val countryType = properties.optString("TYPE", "").uppercase()
 
-                    val key = when {
-                        isoCode.isNotBlank() && isoCode != "-99" -> isoCode
-                        sovereign.isNotBlank() && countryType == "COUNTRY" && admin == sovereign -> {
-                            countryNameToIso2[sovereign] ?: continue
-                        }
-                        else -> null
-                    } ?: continue
+                    // 🔴 Evitar ISO inválido
+                    if (isoCode.isBlank() || isoCode == "-99") continue
 
-                    val polygons: List<List<LatLng>> = when (type) {
+                    // 🔴 Evitar pintar colonias (mismo ISO pero diferente ADMIN)
+                    if (admin != sovereign && isoCode in setOf("FR", "GB", "US", "NL", "DK")) continue
+
+                    val polygons = when (type) {
                         "Polygon" -> parsePolygon(coordinates)
                         "MultiPolygon" -> parseMultiPolygon(coordinates)
                         else -> emptyList()
                     }
 
                     if (polygons.isNotEmpty()) {
-                        val existing = this[key] ?: emptyList()
-                        this[key] = existing + polygons
+                        val existing = this[isoCode] ?: emptyList()
+                        this[isoCode] = existing + polygons
                     }
                 }
             }
