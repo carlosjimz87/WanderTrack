@@ -2,12 +2,19 @@ package com.carlosjimz87.wandertrack.ui.screens.mapscreen
 
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.material3.BottomSheetScaffold
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.SheetValue
+import androidx.compose.material3.rememberBottomSheetScaffoldState
 import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.material3.rememberStandardBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -47,10 +54,15 @@ fun MapScreen(
     val countryBorders by viewModel.countryBorders.collectAsState()
     val selectedCountry by viewModel.selectedCountry.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
+    val userMovedMap by viewModel.userMovedMap.collectAsState()
 
     val cameraPositionState = rememberCameraPositionState()
-    val bottomSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-
+    val bottomSheetScaffoldState = rememberBottomSheetScaffoldState(
+        bottomSheetState = rememberStandardBottomSheetState(
+            initialValue = SheetValue.Hidden, // o Expanded
+            skipHiddenState = false // <--- permite usar .hide()
+        )
+    )
     val isDarkTheme = isSystemInDarkTheme()
     val mapStyle = if (isDarkTheme) {
         MapStyleOptions.loadRawResourceStyle(context, R.raw.map_style_night)
@@ -60,75 +72,43 @@ fun MapScreen(
 
     var lastClickLatLng by remember { mutableStateOf<LatLng?>(null) }
 
+    // Detectar si el usuario movió el mapa después del clic
     LaunchedEffect(cameraPositionState.position.target) {
         lastClickLatLng?.let { original ->
             val movedDistance = SphericalUtil.computeDistanceBetween(
                 original,
                 cameraPositionState.position.target
             )
-            if (movedDistance > 100_000) { // más de 100 km
+            if (movedDistance > 100_000) {
                 viewModel.notifyUserMovedMap()
             }
         }
     }
 
-    Box(modifier = Modifier.fillMaxSize()) {
-        GoogleMap(
-            modifier = Modifier.fillMaxSize(),
-            properties = MapProperties(
-                mapStyleOptions = mapStyle,
-                isBuildingEnabled = false,
-                mapType = MapType.NORMAL,
-                isMyLocationEnabled = false
-            ),
-            cameraPositionState = cameraPositionState,
-            uiSettings = MapUiSettings(
-                zoomControlsEnabled = true,
-                mapToolbarEnabled = false
-            ),
-            onMapClick = { latLng ->
-                lastClickLatLng = latLng
-                viewModel.resetUserMovedFlag()
-            }
-        ) {
-            visitedCountries.forEach { code ->
-                val polygons = countryBorders[code] ?: return@forEach
-                polygons.forEach { polygon ->
-                    Polygon(
-                        points = polygon,
-                        fillColor = AccentPink.copy(alpha = 0.5f),
-                        strokeColor = AccentPink,
-                        strokeWidth = 4f
-                    )
-                }
-            }
+    // Animación y lógica al hacer click en el mapa
+    LaunchedEffect(lastClickLatLng) {
+        lastClickLatLng?.let { latLng ->
+            cameraPositionState.animate(CameraUpdateFactory.newLatLngZoom(latLng, 5f))
+            viewModel.resolveCountryFromLatLng(latLng)
         }
+    }
 
-        if (isLoading) {
-            CircularProgressIndicator(
-                modifier = Modifier
-                    .align(Alignment.Center)
-                    .size(50.dp)
-            )
+    LaunchedEffect(selectedCountry) {
+        if (selectedCountry == null) {
+            // Si no hay país seleccionado, colapsa el BottomSheet
+            bottomSheetScaffoldState.bottomSheetState.partialExpand()
+        } else {
+            // Si hay país, expándelo
+            bottomSheetScaffoldState.bottomSheetState.expand()
         }
+    }
 
-        selectedCountry?.let { country ->
-            LaunchedEffect(country) {
-                val bounds = viewModel.countryBounds[country.code]
-                if (bounds != null && !viewModel.userMovedMap.value) {
-                    cameraPositionState.animate(
-                        update = CameraUpdateFactory.newLatLngBounds(bounds, 100)
-                    )
-                    delay(300)
-                }
-                bottomSheetState.show()
-            }
-
-            ModalBottomSheet(
-                sheetState = bottomSheetState,
-                scrimColor = Color.Transparent,
-                onDismissRequest = { viewModel.clearSelectedCountry() }
-            ) {
+    BottomSheetScaffold(
+        scaffoldState = bottomSheetScaffoldState,
+        sheetPeekHeight = 0.dp,
+        sheetSwipeEnabled = true,
+        sheetContent = {
+            selectedCountry?.let { country ->
                 CountryBottomSheetContent(
                     country = country,
                     visitedCities = viewModel.visitedCities.value[country.code] ?: emptySet(),
@@ -136,17 +116,53 @@ fun MapScreen(
                         viewModel.toggleCityVisited(country.code, cityName)
                     },
                     onToggleVisited = { code -> viewModel.toggleCountryVisited(code) },
-                    onDismiss = { viewModel.clearSelectedCountry() },
+                    onDismiss = { viewModel.clearSelectedCountry() }
+                )
+            } ?: Spacer(modifier = Modifier.height(1.dp))
+        }
+    ) { innerPadding ->
+        Box(modifier = Modifier
+            .fillMaxSize()
+            .padding(innerPadding)) {
+
+            GoogleMap(
+                modifier = Modifier.fillMaxSize(),
+                properties = MapProperties(
+                    mapStyleOptions = mapStyle,
+                    isBuildingEnabled = false,
+                    mapType = MapType.NORMAL,
+                    isMyLocationEnabled = false
+                ),
+                cameraPositionState = cameraPositionState,
+                uiSettings = MapUiSettings(
+                    zoomControlsEnabled = true,
+                    mapToolbarEnabled = false
+                ),
+                onMapClick = { latLng ->
+                    lastClickLatLng = latLng
+                    viewModel.resetUserMovedFlag()
+                }
+            ) {
+                visitedCountries.forEach { code ->
+                    val polygons = countryBorders[code] ?: return@forEach
+                    polygons.forEach { polygon ->
+                        Polygon(
+                            points = polygon,
+                            fillColor = AccentPink.copy(alpha = 0.5f),
+                            strokeColor = AccentPink,
+                            strokeWidth = 4f
+                        )
+                    }
+                }
+            }
+
+            if (isLoading) {
+                CircularProgressIndicator(
+                    modifier = Modifier
+                        .align(Alignment.Center)
+                        .size(50.dp)
                 )
             }
-        }
-    }
-
-    // 📍 Hacemos la animación y búsqueda de país tras click
-    LaunchedEffect(lastClickLatLng) {
-        lastClickLatLng?.let { latLng ->
-            cameraPositionState.animate(CameraUpdateFactory.newLatLngZoom(latLng, 5f))
-            viewModel.resolveCountryFromLatLng(latLng)
         }
     }
 }
