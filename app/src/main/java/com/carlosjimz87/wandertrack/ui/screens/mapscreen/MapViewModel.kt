@@ -4,6 +4,7 @@ import android.content.Context
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.carlosjimz87.wandertrack.common.Constants
 import com.carlosjimz87.wandertrack.domain.models.Country
 import com.carlosjimz87.wandertrack.utils.fetchCountriesGeoJson
 import com.carlosjimz87.wandertrack.utils.getCountryCodeFromLatLng
@@ -39,13 +40,7 @@ class MapViewModel(
     }
 
     private fun loadMockCountries() {
-        _countries.value = listOf(
-            Country("DE", "Germany", visited = true),
-            Country("CU", "Cuba", visited = true),
-            Country("ES", "Spain", visited = true),
-            Country("FR", "France", visited = true),
-            Country("IT", "Italy", visited = true)
-        )
+        _countries.value = Constants.visitedCountries
         _visitedCountries.value = _countries.value.filter { it.visited }.map { it.code }.toSet()
     }
 

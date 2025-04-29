@@ -1,7 +1,6 @@
 package com.carlosjimz87.wandertrack.utils
 
 import android.content.Context
-import android.util.Log
 import com.carlosjimz87.wandertrack.R
 import com.google.android.gms.maps.model.LatLng
 import org.json.JSONArray
@@ -10,7 +9,7 @@ import org.json.JSONObject
 
 fun fetchCountriesGeoJson(context: Context): Map<String, List<List<LatLng>>> {
     return runCatching {
-        context.resources.openRawResource(R.raw.countries).use { inputStream ->
+        context.resources.openRawResource(R.raw.simplified_borders).use { inputStream ->
             val geoJson = inputStream.bufferedReader().use { it.readText() }
             val parsed = JSONObject(geoJson)
             val features = parsed.getJSONArray("features")

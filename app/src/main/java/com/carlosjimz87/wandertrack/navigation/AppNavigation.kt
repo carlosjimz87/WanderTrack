@@ -8,6 +8,7 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.carlosjimz87.wandertrack.ui.screens.auth.AuthScreen
 import com.carlosjimz87.wandertrack.ui.screens.mapscreen.MapScreen
+import com.carlosjimz87.wandertrack.ui.screens.mapscreen.SimpleMapScreen
 
 @Composable
 fun AppNavigation() {
@@ -19,6 +20,9 @@ fun AppNavigation() {
                     popUpTo(Screens.AUTH.name) { inclusive = true }
                 }
             })
+        }
+        composable(Screens.TEST.name) {
+            SimpleMapScreen()
         }
         composable(Screens.MAP.name) {
             MapScreen(

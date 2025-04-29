@@ -6,15 +6,12 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -49,17 +46,21 @@ fun MapScreen(
     val bottomSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
     val isDarkTheme = isSystemInDarkTheme()
-    val mapStyle = remember(isDarkTheme) {
-        if (isDarkTheme) R.raw.map_style_night else R.raw.map_style
+    val mapStyle = if (isDarkTheme) {
+        MapStyleOptions.loadRawResourceStyle(context, R.raw.map_style_night)
+    } else {
+        MapStyleOptions.loadRawResourceStyle(context, R.raw.map_style)
     }
 
     Box(modifier = Modifier.fillMaxSize()) {
+
         GoogleMap(
             modifier = Modifier.fillMaxSize(),
             properties = MapProperties(
-                mapStyleOptions = MapStyleOptions.loadRawResourceStyle(context, mapStyle),
+                mapStyleOptions = mapStyle,
                 isBuildingEnabled = false,
-                mapType = MapType.NORMAL
+                mapType = MapType.NORMAL,
+                isMyLocationEnabled = false
             ),
             cameraPositionState = cameraPositionState,
             uiSettings = MapUiSettings(
