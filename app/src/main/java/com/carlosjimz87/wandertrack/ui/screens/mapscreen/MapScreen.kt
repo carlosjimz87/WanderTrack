@@ -21,6 +21,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -40,7 +41,9 @@ import com.google.maps.android.compose.MapType
 import com.google.maps.android.compose.MapUiSettings
 import com.google.maps.android.compose.Polygon
 import com.google.maps.android.compose.rememberCameraPositionState
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -50,6 +53,7 @@ fun MapScreen(
     onCountryClicked: (String) -> Unit
 ) {
     val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
     val visitedCountries by viewModel.visitedCountries.collectAsState()
     val countryBorders by viewModel.countryBorders.collectAsState()
     val selectedCountry by viewModel.selectedCountry.collectAsState()
@@ -88,17 +92,23 @@ fun MapScreen(
     // Animación y lógica al hacer click en el mapa
     LaunchedEffect(lastClickLatLng) {
         lastClickLatLng?.let { latLng ->
-            cameraPositionState.animate(CameraUpdateFactory.newLatLngZoom(latLng, 5f))
-            viewModel.resolveCountryFromLatLng(latLng)
+            coroutineScope {
+                launch {
+                    delay(500)
+                    cameraPositionState.animate(CameraUpdateFactory.newLatLngZoom(latLng, 5f))
+                }
+                launch {
+                    delay(500)
+                    viewModel.resolveCountryFromLatLng(latLng)
+                }
+            }
         }
     }
 
     LaunchedEffect(selectedCountry) {
         if (selectedCountry == null) {
-            // Si no hay país seleccionado, colapsa el BottomSheet
             bottomSheetScaffoldState.bottomSheetState.partialExpand()
         } else {
-            // Si hay país, expándelo
             bottomSheetScaffoldState.bottomSheetState.expand()
         }
     }
@@ -141,6 +151,11 @@ fun MapScreen(
                 onMapClick = { latLng ->
                     lastClickLatLng = latLng
                     viewModel.resetUserMovedFlag()
+
+                    // Siempre colapsar primero
+                    coroutineScope.launch {
+                        bottomSheetScaffoldState.bottomSheetState.partialExpand()
+                    }
                 }
             ) {
                 visitedCountries.forEach { code ->
