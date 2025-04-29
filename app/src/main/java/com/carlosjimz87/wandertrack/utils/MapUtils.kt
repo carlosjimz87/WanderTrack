@@ -2,7 +2,9 @@ package com.carlosjimz87.wandertrack.utils
 
 import android.content.Context
 import com.carlosjimz87.wandertrack.R
+import com.carlosjimz87.wandertrack.domain.models.Country
 import com.google.android.gms.maps.model.LatLng
+import com.google.maps.android.PolyUtil
 import org.json.JSONArray
 import org.json.JSONObject
 
@@ -115,3 +117,18 @@ val countryNameToIso2 = mapOf(
     "SPAIN" to "ES",
     "ITALY" to "IT",
 )
+
+fun getCountryByCode(countries: List<Country>, code: String): Country? {
+    return countries.find { it.code.equals(code, ignoreCase = true) }
+}
+
+fun getCountryCodeFromLatLngOffline(borders: Map<String, List<List<LatLng>>>, latLng: LatLng): String? {
+    for ((code, polygons) in borders) {
+        for (polygon in polygons) {
+            if (PolyUtil.containsLocation(latLng, polygon, true)) {
+                return code
+            }
+        }
+    }
+    return null
+}

@@ -1,19 +1,17 @@
 package com.carlosjimz87.wandertrack.ui.screens.mapscreen
 
 import android.content.Context
-import android.util.Log
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.SheetState
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.carlosjimz87.wandertrack.common.Constants
 import com.carlosjimz87.wandertrack.domain.models.Country
 import com.carlosjimz87.wandertrack.utils.fetchCountriesGeoJson
+import com.carlosjimz87.wandertrack.utils.getCountryByCode
+import com.carlosjimz87.wandertrack.utils.getCountryCodeFromLatLngOffline
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.LatLngBounds
 import com.google.maps.android.PolyUtil
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
@@ -24,6 +22,7 @@ class MapViewModel(
     val context: Context
 ) : ViewModel() {
 
+    // --- UI STATES ---
     private val _userMovedMap = MutableStateFlow(false)
     val userMovedMap = _userMovedMap.asStateFlow()
 
@@ -42,17 +41,20 @@ class MapViewModel(
     private val _isLoading = MutableStateFlow(true)
     val isLoading = _isLoading.asStateFlow()
 
-    private val _countryBounds = mutableMapOf<String, LatLngBounds>()
-    val countryBounds: Map<String, LatLngBounds> get() = _countryBounds
-
     private val _visitedCities = MutableStateFlow<Map<String, Set<String>>>(emptyMap())
     val visitedCities = _visitedCities.asStateFlow()
 
+    // --- Non-state data (precálculo) ---
+    private val _countryBounds = mutableMapOf<String, LatLngBounds>()
+    val countryBounds: Map<String, LatLngBounds> get() = _countryBounds
+
+    // --- INIT ---
     init {
         getVisitedCountriesList()
         loadCountriesGeoJson()
     }
 
+    // --- USER INTERACTION ---
     fun notifyUserMovedMap() {
         _userMovedMap.value = true
     }
@@ -61,60 +63,26 @@ class MapViewModel(
         _userMovedMap.value = false
     }
 
-    private fun getVisitedCountriesList() {
-        _visitedCountries.value = _countries.value.filter { it.visited }.map { it.code }.toSet()
-    }
-
-    private fun loadCountriesGeoJson() {
-        viewModelScope.launch {
-            _isLoading.value = true
-
-            val parsedBorders = withContext(Dispatchers.IO) {
-                fetchCountriesGeoJson(context).toMutableMap()
-            }
-
-            _countryBorders.value = parsedBorders
-
-            parsedBorders.forEach { (code, polygons) ->
-                val boundsBuilder = LatLngBounds.Builder()
-                polygons.forEach { polygon ->
-                    polygon.forEach { point -> boundsBuilder.include(point) }
-                }
-                _countryBounds[code] = boundsBuilder.build()
-            }
-
-            _isLoading.value = false
-        }
-    }
-
-    fun toggleCountryVisited(code: String) {
-        _visitedCountries.update { current ->
-            if (current.contains(code)) current - code else current + code
-        }
-    }
-
     fun clearSelectedCountry() {
         _selectedCountry.value = null
     }
 
+    // --- COUNTRY SELECTION ---
     fun resolveCountryFromLatLng(latLng: LatLng) {
         viewModelScope.launch {
-            val countryCode = withContext(Dispatchers.IO) {
-                getCountryCodeFromLatLngOffline(latLng)
+            val code = withContext(Dispatchers.IO) {
+                getCountryCodeFromLatLngOffline(countryBorders.value, latLng)
             }
 
-            if (countryCode == null) {
-                clearSelectedCountry()
-                return@launch
-            }
-
-            val newCountry = getCountryByCode(countryCode)
-            _selectedCountry.value = newCountry
+            _selectedCountry.value = code?.let { getCountryByCode(countries.value, it) }
         }
     }
 
-    private fun getCountryByCode(code: String): Country? {
-        return countries.value.find { it.code.equals(code, ignoreCase = true) }
+    // --- TOGGLES ---
+    fun toggleCountryVisited(code: String) {
+        _visitedCountries.update { current ->
+            if (current.contains(code)) current - code else current + code
+        }
     }
 
     fun toggleCityVisited(countryCode: String, cityName: String) {
@@ -129,15 +97,32 @@ class MapViewModel(
         }
     }
 
+    // --- DATA LOADING ---
+    private fun getVisitedCountriesList() {
+        _visitedCountries.value = _countries.value
+            .filter { it.visited }
+            .map { it.code }
+            .toSet()
+    }
 
-    private fun getCountryCodeFromLatLngOffline(latLng: LatLng): String? {
-        for ((code, polygons) in countryBorders.value) {
-            for (polygon in polygons) {
-                if (PolyUtil.containsLocation(latLng, polygon, true)) {
-                    return code
-                }
+    private fun loadCountriesGeoJson() {
+        viewModelScope.launch {
+            _isLoading.value = true
+
+            val parsedBorders = withContext(Dispatchers.IO) {
+                fetchCountriesGeoJson(context).toMutableMap()
             }
+
+            _countryBorders.value = parsedBorders
+
+            // Precalculate bounds
+            parsedBorders.forEach { (code, polygons) ->
+                val boundsBuilder = LatLngBounds.Builder()
+                polygons.flatten().forEach(boundsBuilder::include)
+                _countryBounds[code] = boundsBuilder.build()
+            }
+
+            _isLoading.value = false
         }
-        return null
     }
 }
