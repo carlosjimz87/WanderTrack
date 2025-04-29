@@ -17,6 +17,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.carlosjimz87.wandertrack.R
@@ -88,7 +89,6 @@ fun MapScreen(
             onMapClick = { latLng ->
                 lastClickLatLng = latLng
                 viewModel.resetUserMovedFlag()
-                viewModel.onMapClick(context, latLng) // 🚀 solo guarda
             }
         ) {
             visitedCountries.forEach { code ->
@@ -126,6 +126,7 @@ fun MapScreen(
 
             ModalBottomSheet(
                 sheetState = bottomSheetState,
+                scrimColor = Color.Transparent,
                 onDismissRequest = { viewModel.clearSelectedCountry() }
             ) {
                 CountryBottomSheetContent(
@@ -145,7 +146,7 @@ fun MapScreen(
     LaunchedEffect(lastClickLatLng) {
         lastClickLatLng?.let { latLng ->
             cameraPositionState.animate(CameraUpdateFactory.newLatLngZoom(latLng, 5f))
-            viewModel.resolveCountryFromLatLng(context, latLng)
+            viewModel.resolveCountryFromLatLng(latLng)
         }
     }
 }

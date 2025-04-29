@@ -1,14 +1,15 @@
 package com.carlosjimz87.wandertrack.ui.screens.mapscreen
 
 import android.content.Context
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.carlosjimz87.wandertrack.common.Constants
 import com.carlosjimz87.wandertrack.domain.models.Country
 import com.carlosjimz87.wandertrack.utils.fetchCountriesGeoJson
-import com.carlosjimz87.wandertrack.utils.getCountryCodeFromLatLng
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.LatLngBounds
+import com.google.maps.android.PolyUtil
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -22,7 +23,7 @@ class MapViewModel(
     private val _userMovedMap = MutableStateFlow(false)
     val userMovedMap = _userMovedMap.asStateFlow()
 
-    private val _countries = MutableStateFlow<List<Country>>(emptyList())
+    private val _countries = MutableStateFlow(Constants.countries)
     val countries = _countries.asStateFlow()
 
     private val _visitedCountries = MutableStateFlow<Set<String>>(emptySet())
@@ -44,7 +45,7 @@ class MapViewModel(
     val visitedCities = _visitedCities.asStateFlow()
 
     init {
-        loadMockCountries()
+        getVisitedCountriesList()
         loadCountriesGeoJson()
     }
 
@@ -56,8 +57,7 @@ class MapViewModel(
         _userMovedMap.value = false
     }
 
-    private fun loadMockCountries() {
-        _countries.value = Constants.countries
+    private fun getVisitedCountriesList() {
         _visitedCountries.value = _countries.value.filter { it.visited }.map { it.code }.toSet()
     }
 
@@ -91,17 +91,13 @@ class MapViewModel(
         _selectedCountry.value = null
     }
 
-    fun onMapClick(context: Context, latLng: LatLng) {
-        // Ya no hacemos nada aquí
-        // Solo recogemos la posición en el Composable
-    }
-
-    fun resolveCountryFromLatLng(context: Context, latLng: LatLng) {
+    fun resolveCountryFromLatLng(latLng: LatLng) {
         viewModelScope.launch(Dispatchers.IO) {
-            val countryCode = getCountryCodeFromLatLng(context, latLng)
+            val countryCode = getCountryCodeFromLatLngOffline(latLng)
             countryCode?.let { code ->
                 getCountryByCode(code)?.let { country ->
                     _selectedCountry.value = country
+                    Log.d("MapViewModel", "Resolved country: $country")
                 }
             }
         }
@@ -121,5 +117,17 @@ class MapViewModel(
             }
             current + (countryCode to updatedVisited)
         }
+    }
+
+
+    private fun getCountryCodeFromLatLngOffline(latLng: LatLng): String? {
+        for ((code, polygons) in countryBorders.value) {
+            for (polygon in polygons) {
+                if (PolyUtil.containsLocation(latLng, polygon, true)) {
+                    return code
+                }
+            }
+        }
+        return null
     }
 }

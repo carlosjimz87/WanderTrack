@@ -67,6 +67,15 @@ object Constants {
                 City(name = "Toronto", latitude = 43.6532, longitude = -79.3832),
                 City(name = "Vancouver", latitude = 49.2827, longitude = -123.1207)
             )
+        ),
+        Country(
+            code = "DE",
+            name = "Germany",
+            visited = false,
+            cities = listOf(
+                City(name = "Berlin", latitude = 52.5200, longitude = 13.4050),
+                City(name = "Munich", latitude = 48.1351, longitude = 11.5820)
+            )
         )
     )
 }
