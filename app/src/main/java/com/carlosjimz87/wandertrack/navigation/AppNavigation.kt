@@ -12,15 +12,15 @@ import com.carlosjimz87.wandertrack.ui.screens.mapscreen.MapScreen
 @Composable
 fun AppNavigation() {
     val navController = rememberNavController()
-    NavHost(navController, startDestination = "auth") {
-        composable("auth") {
+    NavHost(navController, startDestination = Screens.MAP.name) {
+        composable(Screens.AUTH.name) {
             AuthScreen(onAuthSuccess = {
-                navController.navigate("home") {
-                    popUpTo("auth") { inclusive = true }
+                navController.navigate(Screens.MAP.name) {
+                    popUpTo(Screens.AUTH.name) { inclusive = true }
                 }
             })
         }
-        composable("home") {
+        composable(Screens.MAP.name) {
             MapScreen(
                 onCountryClicked = { countryCode ->
                     navController.navigate("country/$countryCode")
@@ -29,7 +29,7 @@ fun AppNavigation() {
         }
 
         composable(
-            route = "country/{countryCode}",
+            route = "${Screens.COUNTRY.name}/{countryCode}",
             arguments = listOf(navArgument("countryCode") { type = NavType.StringType })
         ) { backStackEntry ->
             val countryCode = backStackEntry.arguments?.getString("countryCode")

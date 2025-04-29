@@ -15,6 +15,11 @@ class WanderTrackApp : Application(){
         initializeKoin()
     }
 
+    companion object {
+        lateinit var instance: WanderTrackApp
+            private set
+    }
+
     private fun initializeKoin(){
         startKoin {
             androidContext(this@WanderTrackApp)

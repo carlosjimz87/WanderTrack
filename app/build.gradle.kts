@@ -98,6 +98,8 @@ dependencies {
     implementation(libs.koin.android)
     implementation(libs.koin.compose)
 
+    // Google Maps Utils
+    implementation(libs.android.maps.utils)
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
