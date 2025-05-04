@@ -116,11 +116,3 @@ fun getCountryCodeFromLatLngOffline(
 fun getCountryByCode(countries: List<Country>, code: String): Country? {
     return countries.find { it.code.equals(code, ignoreCase = true) }
 }
-
-// 🔁 Sample mapping (populate accordingly)
-val countryNameToIso2 = mapOf(
-    "SPAIN" to "ES",
-    "FRANCE" to "FR",
-    "GERMANY" to "DE"
-    // add more mappings...
-)

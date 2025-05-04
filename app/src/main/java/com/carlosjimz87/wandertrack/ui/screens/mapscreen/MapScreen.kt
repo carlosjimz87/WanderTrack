@@ -117,9 +117,9 @@ fun MapScreen(
 
                     coroutineScope.launch {
                         bottomSheetScaffoldState.bottomSheetState.expand() // 1. animate sheet first
-                        delay(300) // slight delay to improve perceived perf
-                        cameraPositionState.animate(CameraUpdateFactory.newLatLngZoom(latLng, 5f)) // 2. zoom
-                        viewModel.resolveCountryFromLatLng(latLng) // 3. resolve
+                        viewModel.resolveCountryFromLatLng(latLng) // 2. resolve country from latLng
+                        delay(100) // 3. delay to avoid flickering
+                        cameraPositionState.animate(CameraUpdateFactory.newLatLngZoom(latLng, 5f), durationMs = 1000) // 2. zoom
                     }
                 },
                 cameraPositionState = cameraPositionState
