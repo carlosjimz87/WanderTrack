@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.carlosjimz87.wandertrack.common.Constants
 import com.carlosjimz87.wandertrack.data.repos.map.MapRepository
 import com.carlosjimz87.wandertrack.domain.models.Country
+import com.carlosjimz87.wandertrack.domain.models.CountryGeometry
 import com.carlosjimz87.wandertrack.utils.getCountryByCode
 import com.carlosjimz87.wandertrack.utils.getCountryCodeFromLatLngOffline
 import com.google.android.gms.maps.model.LatLng
@@ -20,7 +21,6 @@ class MapViewModel(
     private val repository: MapRepository
 ) : ViewModel() {
 
-    // --- UI STATES ---
     private val _userMovedMap = MutableStateFlow(false)
     val userMovedMap = _userMovedMap.asStateFlow()
 
@@ -33,8 +33,11 @@ class MapViewModel(
     private val _selectedCountry = MutableStateFlow<Country?>(null)
     val selectedCountry = _selectedCountry.asStateFlow()
 
-    private val _countryBorders = MutableStateFlow<Map<String, List<List<LatLng>>>>(emptyMap())
+    private val _countryBorders = MutableStateFlow<Map<String, CountryGeometry>>(emptyMap())
     val countryBorders = _countryBorders.asStateFlow()
+
+    private val _countryBounds = MutableStateFlow<Map<String, LatLngBounds>>(emptyMap())
+    val countryBounds = _countryBounds.asStateFlow()
 
     private val _isLoading = MutableStateFlow(true)
     val isLoading = _isLoading.asStateFlow()
@@ -58,14 +61,15 @@ class MapViewModel(
         viewModelScope.launch {
             _isLoading.value = true
             val parsedBorders = withContext(Dispatchers.IO) {
-                repository.getCountryBorders()  // from MapRepository
+                repository.getCountryBorders()
             }
 
             _countryBorders.value = parsedBorders
 
-            parsedBorders.forEach { (_, polygons) ->
-                val boundsBuilder = LatLngBounds.Builder()
-                polygons.flatten().forEach(boundsBuilder::include)
+            _countryBounds.value = parsedBorders.mapValues { (_, geometry) ->
+                geometry.polygons.flatten().fold(LatLngBounds.builder()) { builder, point ->
+                    builder.include(point)
+                }.build()
             }
 
             _isLoading.value = false
@@ -84,14 +88,15 @@ class MapViewModel(
         _selectedCountry.value = null
     }
 
-    fun resolveCountryFromLatLng(latLng: LatLng) {
-        viewModelScope.launch {
-            val code = withContext(Dispatchers.Default) {
-                getCountryCodeFromLatLngOffline(_countryBorders.value, latLng)
-            }
-
-            _selectedCountry.value = code?.let { getCountryByCode(_countries.value, it) }
+    suspend fun resolveCountryFromLatLng(latLng: LatLng): LatLngBounds? {
+        val code = withContext(Dispatchers.Default) {
+            getCountryCodeFromLatLngOffline(_countryBorders.value, latLng)
         }
+
+        val country = code?.let { getCountryByCode(_countries.value, it) }
+        _selectedCountry.value = country
+
+        return code?.let { _countryBounds.value[it] }
     }
 
     fun toggleCountryVisited(code: String) {

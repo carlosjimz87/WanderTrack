@@ -27,12 +27,16 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import com.carlosjimz87.wandertrack.ui.composables.bottomsheet.CountryBottomSheetContent
 import com.carlosjimz87.wandertrack.ui.composables.map.MapCanvas
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.model.LatLng
+import com.google.android.gms.maps.model.LatLngBounds
 import com.google.maps.android.SphericalUtil
+import com.google.maps.android.compose.CameraPositionState
 import com.google.maps.android.compose.rememberCameraPositionState
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -56,6 +60,17 @@ fun MapScreen(
             skipHiddenState = false
         )
     )
+    val isBottomSheetExpanded = bottomSheetScaffoldState.bottomSheetState.currentValue == SheetValue.Expanded
+    val density = LocalDensity.current
+    val configuration = LocalConfiguration.current
+
+    val mapViewHeight = remember(configuration) {
+        with(density) { configuration.screenHeightDp.dp.toPx() }.toInt()
+    }
+    val mapViewWidth = remember(configuration) {
+        with(density) { configuration.screenWidthDp.dp.toPx() }.toInt()
+    }
+    val bottomOffset = if (isBottomSheetExpanded) mapViewHeight else mapViewHeight / 3
 
     var lastClickLatLng by remember { mutableStateOf<LatLng?>(null) }
 
@@ -116,10 +131,19 @@ fun MapScreen(
                     viewModel.resetUserMovedFlag()
 
                     coroutineScope.launch {
-                        bottomSheetScaffoldState.bottomSheetState.expand() // 1. animate sheet first
-                        viewModel.resolveCountryFromLatLng(latLng) // 2. resolve country from latLng
-                        delay(100) // 3. delay to avoid flickering
-                        cameraPositionState.animate(CameraUpdateFactory.newLatLngZoom(latLng, 5f), durationMs = 1000) // 2. zoom
+                        val bounds = viewModel.resolveCountryFromLatLng(latLng)
+                        bottomSheetScaffoldState.bottomSheetState.expand()
+
+                        bounds?.let {
+                            delay(100) // animación fluida
+                            safeAnimateToBounds(
+                                cameraPositionState = cameraPositionState,
+                                bounds = it,
+                                mapWidth = mapViewWidth,
+                                mapHeight = mapViewHeight,
+                                bottomSheetExpanded = bottomSheetScaffoldState.bottomSheetState.currentValue == SheetValue.Expanded
+                            )
+                        }
                     }
                 },
                 cameraPositionState = cameraPositionState
@@ -147,5 +171,43 @@ private fun DetectUserMapMovement(
             val movedDistance = SphericalUtil.computeDistanceBetween(original, cameraTarget)
             if (movedDistance > 100_000) onMoveDetected()
         }
+    }
+}
+
+suspend fun safeAnimateToBounds(
+    cameraPositionState: CameraPositionState,
+    bounds: LatLngBounds,
+    mapWidth: Int,
+    mapHeight: Int,
+    bottomSheetExpanded: Boolean
+) {
+    // Padding inferior según el estado del bottom sheet
+    val bottomPadding = if (bottomSheetExpanded) mapHeight / 2 else mapHeight / 3
+
+    // Padding superior y lateral (puedes ajustar)
+    val sidePadding = 64
+    val topPadding = 64
+
+    val effectiveHeight = mapHeight - bottomPadding - topPadding
+    val effectiveWidth = mapWidth - (sidePadding * 2)
+
+    val isSizeSafe = effectiveHeight > 100 && effectiveWidth > 100
+
+    if (isSizeSafe) {
+        cameraPositionState.animate(
+            CameraUpdateFactory.newLatLngBounds(
+                bounds,
+                mapWidth,
+                mapHeight,
+                sidePadding
+            ),
+            durationMs = 1000
+        )
+    } else {
+        // Fallback simple si el tamaño efectivo es muy pequeño
+        cameraPositionState.animate(
+            CameraUpdateFactory.newLatLngZoom(bounds.center, 5f),
+            durationMs = 1000
+        )
     }
 }
