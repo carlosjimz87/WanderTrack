@@ -1,13 +1,17 @@
 package com.carlosjimz87.wandertrack.ui.screens.mapscreen
 
 import android.content.Context
+import androidx.compose.foundation.background
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.BottomSheetScaffold
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -31,6 +35,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.carlosjimz87.wandertrack.R
+import com.carlosjimz87.wandertrack.common.Constants
 import com.carlosjimz87.wandertrack.domain.models.Country
 import com.carlosjimz87.wandertrack.ui.composables.CountryBottomSheetContent
 import com.carlosjimz87.wandertrack.ui.theme.AccentPink
@@ -89,20 +94,39 @@ fun MapScreen(
         viewModel.resolveCountryFromLatLng(latLng)
     }
 
-    HandleBottomSheetState(
-        selectedCountry,
-        bottomSheetScaffoldState.bottomSheetState
-    )
+//    HandleBottomSheetState(
+//        selectedCountry,
+//        bottomSheetScaffoldState.bottomSheetState
+//    )
 
     BottomSheetScaffold(
         scaffoldState = bottomSheetScaffoldState,
         sheetPeekHeight = 0.dp,
         sheetSwipeEnabled = true,
+        sheetDragHandle = {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(24.dp), // Reduced height
+                contentAlignment = Alignment.Center
+            ) {
+                Box(
+                    modifier = Modifier
+                        .width(36.dp)
+                        .height(4.dp)
+                        .background(
+                            color = Color.LightGray,
+                            shape = RoundedCornerShape(2.dp)
+                        )
+                )
+            }
+        },
         sheetContent = {
             selectedCountry?.let { country ->
                 CountryBottomSheetContent(
                     country = country,
                     visitedCities = viewModel.visitedCities.value[country.code] ?: emptySet(),
+                    visitedCountries = Constants.countries.filter { it.visited },
                     onToggleCityVisited = { viewModel.toggleCityVisited(country.code, it) },
                     onToggleVisited = { viewModel.toggleCountryVisited(it) },
                     onDismiss = { viewModel.clearSelectedCountry() }
@@ -134,21 +158,12 @@ fun MapScreen(
                     lastClickLatLng = latLng
                     viewModel.resetUserMovedFlag()
                     coroutineScope.launch {
-                        bottomSheetScaffoldState.bottomSheetState.partialExpand()
+                        bottomSheetScaffoldState.bottomSheetState.expand()
                     }
                 }
             ) {
-                visitedCountries.forEach { code ->
-                    val polygons = countryBorders[code] ?: return@forEach
-                    polygons.forEach { polygon ->
-                        Polygon(
-                            points = polygon,
-                            fillColor = AccentPink.copy(alpha = 0.5f),
-                            strokeColor = AccentPink,
-                            strokeWidth = 4f
-                        )
-                    }
-                }
+                paintVisitedCountries(visitedCountries, countryBorders)
+                paintSelectedCountry(selectedCountry, countryBorders)
             }
 
             if (isLoading) {
@@ -158,6 +173,44 @@ fun MapScreen(
                         .size(50.dp)
                 )
             }
+        }
+    }
+}
+
+@Composable
+private fun paintSelectedCountry(
+    selectedCountry: Country?,
+    countryBorders: Map<String, List<List<LatLng>>>
+) {
+    selectedCountry?.let { country ->
+        val polygons = countryBorders[country.code] ?: emptyList()
+        polygons.forEach { polygon ->
+            Polygon(
+                points = polygon,
+                fillColor = Color.Gray.copy(alpha = 0.4f),
+                strokeColor = Color.DarkGray,
+                strokeWidth = 4f,
+                zIndex = 2f // aseguramos que quede encima
+            )
+        }
+    }
+}
+
+
+@Composable
+private fun paintVisitedCountries(
+    visitedCountries: Set<String>,
+    countryBorders: Map<String, List<List<LatLng>>>
+) {
+    visitedCountries.forEach { code ->
+        val polygons = countryBorders[code] ?: return@forEach
+        polygons.forEach { polygon ->
+            Polygon(
+                points = polygon,
+                fillColor = AccentPink.copy(alpha = 0.5f),
+                strokeColor = AccentPink,
+                strokeWidth = 4f
+            )
         }
     }
 }
@@ -198,20 +251,20 @@ private fun AnimateClickAndResolveCountry(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun HandleBottomSheetState(
-    selectedCountry: Country?,
-    bottomSheetState: SheetState
-) {
-    LaunchedEffect(selectedCountry) {
-        if (selectedCountry == null) {
-            bottomSheetState.partialExpand()
-        } else {
-            bottomSheetState.expand()
-        }
-    }
-}
+//@OptIn(ExperimentalMaterial3Api::class)
+//@Composable
+//private fun HandleBottomSheetState(
+//    selectedCountry: Country?,
+//    bottomSheetState: SheetState
+//) {
+//    LaunchedEffect(selectedCountry) {
+//        if (selectedCountry == null) {
+//            bottomSheetState.partialExpand()
+//        } else {
+//            bottomSheetState.expand()
+//        }
+//    }
+//}
 
 @Composable
 private fun getMapStyle(context: Context): MapStyleOptions {
