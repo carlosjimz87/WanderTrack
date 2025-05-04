@@ -1,42 +1,25 @@
-package com.carlosjimz87.wandertrack.ui.composables
+package com.carlosjimz87.wandertrack.ui.composables.bottomsheet
 
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Switch
-import androidx.compose.material3.Text
+import androidx.compose.foundation.layout.Column
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import com.carlosjimz87.wandertrack.domain.models.Country
+import androidx.compose.runtime.key
+import com.carlosjimz87.wandertrack.domain.models.City
 
 @Composable
 fun BottomSheetContentList(
-    country: Country,
-    onToggleVisited: (String) -> Unit,
-    visitedCities: Set<String>,
+    cities: List<City>,
     onToggleCityVisited: (String) -> Unit
 ) {
-    country.cities.forEach { city ->
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clickable { onToggleVisited(city.name) },
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Text(
-                text = city.name,
-                style = MaterialTheme.typography.bodyLarge
-            )
-            Switch(
-                checked = visitedCities.contains(city.name),
-                onCheckedChange = {
-                    onToggleCityVisited(city.name)
-                }
-            )
+
+    Column {
+        cities.forEach { city ->
+            key(city.name) { // Prevent reusing the same recomposition scope
+                CityRow(
+                    cityName = city.name,
+                    isVisited = city.visited,
+                    onToggle = { onToggleCityVisited(city.name) }
+                )
+            }
         }
     }
 }

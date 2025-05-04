@@ -1,4 +1,4 @@
-package com.carlosjimz87.wandertrack.ui.composables
+package com.carlosjimz87.wandertrack.ui.composables.map
 
 import android.content.Context
 import androidx.compose.foundation.isSystemInDarkTheme

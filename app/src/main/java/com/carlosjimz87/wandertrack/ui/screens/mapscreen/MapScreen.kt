@@ -1,8 +1,7 @@
 package com.carlosjimz87.wandertrack.ui.screens.mapscreen
 
-import android.content.Context
+import android.util.Log
 import androidx.compose.foundation.background
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -15,11 +14,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.BottomSheetScaffold
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.SheetState
 import androidx.compose.material3.SheetValue
 import androidx.compose.material3.rememberBottomSheetScaffoldState
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.material3.rememberStandardBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -34,25 +30,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import com.carlosjimz87.wandertrack.R
 import com.carlosjimz87.wandertrack.common.Constants
-import com.carlosjimz87.wandertrack.domain.models.Country
-import com.carlosjimz87.wandertrack.ui.composables.CountryBottomSheetContent
-import com.carlosjimz87.wandertrack.ui.theme.AccentPink
+import com.carlosjimz87.wandertrack.ui.composables.bottomsheet.CountryBottomSheetContent
+import com.carlosjimz87.wandertrack.ui.composables.map.MapCanvas
 import com.google.android.gms.maps.CameraUpdateFactory
-import com.google.android.gms.maps.GoogleMapOptions
 import com.google.android.gms.maps.model.LatLng
-import com.google.android.gms.maps.model.MapStyleOptions
 import com.google.maps.android.SphericalUtil
 import com.google.maps.android.compose.CameraPositionState
-import com.google.maps.android.compose.GoogleMap
-import com.google.maps.android.compose.MapProperties
-import com.google.maps.android.compose.MapType
-import com.google.maps.android.compose.MapUiSettings
-import com.google.maps.android.compose.Polygon
 import com.google.maps.android.compose.rememberCameraPositionState
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
@@ -63,7 +49,6 @@ fun MapScreen(
     viewModel: MapViewModel = koinViewModel(),
     onCountryClicked: (String) -> Unit
 ) {
-    val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
     val visitedCountries by viewModel.visitedCountries.collectAsState()
     val countryBorders by viewModel.countryBorders.collectAsState()
@@ -124,9 +109,10 @@ fun MapScreen(
         sheetContent = {
             selectedCountry?.let { country ->
                 CountryBottomSheetContent(
-                    country = country,
-                    visitedCities = viewModel.visitedCities.value[country.code] ?: emptySet(),
-                    visitedCountries = Constants.countries.filter { it.visited },
+                    countryName = country.name,
+                    countryCode = country.code,
+                    countryVisited = country.visited,
+                    countryCities = country.cities,
                     onToggleCityVisited = { viewModel.toggleCityVisited(country.code, it) },
                     onToggleVisited = { viewModel.toggleCountryVisited(it) },
                     onDismiss = { viewModel.clearSelectedCountry() }
@@ -139,32 +125,22 @@ fun MapScreen(
                 .fillMaxSize()
                 .padding(innerPadding)
         ) {
-            GoogleMap(
-                modifier = Modifier.fillMaxSize(),
-                properties = MapProperties(
-                    mapStyleOptions = getMapStyle(context),
-                    isBuildingEnabled = false,
-                    mapType = MapType.NORMAL,
-                    isMyLocationEnabled = false,
-                    minZoomPreference = 2f,
-                    maxZoomPreference = 6f
-                ),
-                cameraPositionState = cameraPositionState,
-                uiSettings = MapUiSettings(
-                    zoomControlsEnabled = true,
-                    mapToolbarEnabled = false
-                ),
+            MapCanvas(
+                selectedCountry = selectedCountry,
+                visitedCountries = visitedCountries,
+                countryBorders = countryBorders,
                 onMapClick = { latLng ->
+                    Log.d("ZZ", "Mapclick")
                     lastClickLatLng = latLng
                     viewModel.resetUserMovedFlag()
+                    Log.d("ZZ", "Mapclick resetUserMovedFlag")
                     coroutineScope.launch {
                         bottomSheetScaffoldState.bottomSheetState.expand()
+                        Log.d("ZZ", "Mapclick bottomSheetStateExpanded")
                     }
-                }
-            ) {
-                paintVisitedCountries(visitedCountries, countryBorders)
-                paintSelectedCountry(selectedCountry, countryBorders)
-            }
+                },
+                cameraPositionState = cameraPositionState,
+            )
 
             if (isLoading) {
                 CircularProgressIndicator(
@@ -176,45 +152,6 @@ fun MapScreen(
         }
     }
 }
-
-@Composable
-private fun paintSelectedCountry(
-    selectedCountry: Country?,
-    countryBorders: Map<String, List<List<LatLng>>>
-) {
-    selectedCountry?.let { country ->
-        val polygons = countryBorders[country.code] ?: emptyList()
-        polygons.forEach { polygon ->
-            Polygon(
-                points = polygon,
-                fillColor = Color.Gray.copy(alpha = 0.4f),
-                strokeColor = Color.DarkGray,
-                strokeWidth = 4f,
-                zIndex = 2f // aseguramos que quede encima
-            )
-        }
-    }
-}
-
-
-@Composable
-private fun paintVisitedCountries(
-    visitedCountries: Set<String>,
-    countryBorders: Map<String, List<List<LatLng>>>
-) {
-    visitedCountries.forEach { code ->
-        val polygons = countryBorders[code] ?: return@forEach
-        polygons.forEach { polygon ->
-            Polygon(
-                points = polygon,
-                fillColor = AccentPink.copy(alpha = 0.5f),
-                strokeColor = AccentPink,
-                strokeWidth = 4f
-            )
-        }
-    }
-}
-
 
 @Composable
 private fun DetectUserMapMovement(
@@ -248,30 +185,5 @@ private fun AnimateClickAndResolveCountry(
                 onResolve(latLng)
             }
         }
-    }
-}
-
-//@OptIn(ExperimentalMaterial3Api::class)
-//@Composable
-//private fun HandleBottomSheetState(
-//    selectedCountry: Country?,
-//    bottomSheetState: SheetState
-//) {
-//    LaunchedEffect(selectedCountry) {
-//        if (selectedCountry == null) {
-//            bottomSheetState.partialExpand()
-//        } else {
-//            bottomSheetState.expand()
-//        }
-//    }
-//}
-
-@Composable
-private fun getMapStyle(context: Context): MapStyleOptions {
-    val isDarkTheme = isSystemInDarkTheme()
-    return if (isDarkTheme) {
-        MapStyleOptions.loadRawResourceStyle(context, R.raw.map_style_night)
-    } else {
-        MapStyleOptions.loadRawResourceStyle(context, R.raw.map_style)
     }
 }
