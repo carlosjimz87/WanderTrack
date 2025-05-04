@@ -21,7 +21,7 @@ import com.google.maps.android.compose.Polygon
 
 @Composable
 fun MapCanvas(
-    visitedCountries: Set<String>,
+    visitedCountriesCodes: Set<String>,
     selectedCountry: Country?,
     countryBorders: Map<String, List<List<LatLng>>>,
     onMapClick: (LatLng) -> Unit,
@@ -46,8 +46,8 @@ fun MapCanvas(
         ),
         onMapClick = onMapClick
     ) {
-        paintVisitedCountries(visitedCountries, countryBorders)
-        paintSelectedCountry(selectedCountry, countryBorders)
+        PaintVisitedCountries(visitedCountriesCodes, countryBorders)
+        PaintSelectedCountry(selectedCountry, countryBorders)
     }
 }
 
@@ -64,7 +64,7 @@ private fun getMapStyle(context: Context): MapStyleOptions {
 
 
 @Composable
-private fun paintSelectedCountry(
+private fun PaintSelectedCountry(
     selectedCountry: Country?,
     countryBorders: Map<String, List<List<LatLng>>>
 ) {
@@ -84,7 +84,7 @@ private fun paintSelectedCountry(
 
 
 @Composable
-private fun paintVisitedCountries(
+private fun PaintVisitedCountries(
     visitedCountries: Set<String>,
     countryBorders: Map<String, List<List<LatLng>>>
 ) {

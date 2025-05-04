@@ -1,6 +1,5 @@
 package com.carlosjimz87.wandertrack.ui.screens.mapscreen
 
-import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Spacer
@@ -28,17 +27,13 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import com.carlosjimz87.wandertrack.common.Constants
 import com.carlosjimz87.wandertrack.ui.composables.bottomsheet.CountryBottomSheetContent
 import com.carlosjimz87.wandertrack.ui.composables.map.MapCanvas
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.model.LatLng
 import com.google.maps.android.SphericalUtil
-import com.google.maps.android.compose.CameraPositionState
 import com.google.maps.android.compose.rememberCameraPositionState
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
@@ -50,7 +45,7 @@ fun MapScreen(
     onCountryClicked: (String) -> Unit
 ) {
     val coroutineScope = rememberCoroutineScope()
-    val visitedCountries by viewModel.visitedCountries.collectAsState()
+    val visitedCountriesCodes by viewModel.visitedCountryCodes.collectAsState()
     val countryBorders by viewModel.countryBorders.collectAsState()
     val selectedCountry by viewModel.selectedCountry.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
@@ -71,19 +66,6 @@ fun MapScreen(
         viewModel.notifyUserMovedMap()
     }
 
-    AnimateClickAndResolveCountry(
-        lastClickLatLng,
-        coroutineScope,
-        cameraPositionState
-    ) { latLng ->
-        viewModel.resolveCountryFromLatLng(latLng)
-    }
-
-//    HandleBottomSheetState(
-//        selectedCountry,
-//        bottomSheetScaffoldState.bottomSheetState
-//    )
-
     BottomSheetScaffold(
         scaffoldState = bottomSheetScaffoldState,
         sheetPeekHeight = 0.dp,
@@ -92,7 +74,7 @@ fun MapScreen(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(24.dp), // Reduced height
+                    .height(24.dp),
                 contentAlignment = Alignment.Center
             ) {
                 Box(
@@ -127,19 +109,20 @@ fun MapScreen(
         ) {
             MapCanvas(
                 selectedCountry = selectedCountry,
-                visitedCountries = visitedCountries,
+                visitedCountriesCodes = visitedCountriesCodes,
                 countryBorders = countryBorders,
                 onMapClick = { latLng ->
-                    Log.d("ZZ", "Mapclick")
                     lastClickLatLng = latLng
                     viewModel.resetUserMovedFlag()
-                    Log.d("ZZ", "Mapclick resetUserMovedFlag")
+
                     coroutineScope.launch {
-                        bottomSheetScaffoldState.bottomSheetState.expand()
-                        Log.d("ZZ", "Mapclick bottomSheetStateExpanded")
+                        bottomSheetScaffoldState.bottomSheetState.expand() // 1. animate sheet first
+                        delay(300) // slight delay to improve perceived perf
+                        cameraPositionState.animate(CameraUpdateFactory.newLatLngZoom(latLng, 5f)) // 2. zoom
+                        viewModel.resolveCountryFromLatLng(latLng) // 3. resolve
                     }
                 },
-                cameraPositionState = cameraPositionState,
+                cameraPositionState = cameraPositionState
             )
 
             if (isLoading) {
@@ -163,27 +146,6 @@ private fun DetectUserMapMovement(
         lastClickLatLng?.let { original ->
             val movedDistance = SphericalUtil.computeDistanceBetween(original, cameraTarget)
             if (movedDistance > 100_000) onMoveDetected()
-        }
-    }
-}
-
-@Composable
-private fun AnimateClickAndResolveCountry(
-    lastClickLatLng: LatLng?,
-    coroutineScope: CoroutineScope,
-    cameraPositionState: CameraPositionState,
-    onResolve: suspend (LatLng) -> Unit
-) {
-    LaunchedEffect(lastClickLatLng) {
-        lastClickLatLng?.let { latLng ->
-            coroutineScope.launch {
-                delay(500)
-                cameraPositionState.animate(CameraUpdateFactory.newLatLngZoom(latLng, 5f))
-            }
-            coroutineScope.launch {
-                delay(500)
-                onResolve(latLng)
-            }
         }
     }
 }

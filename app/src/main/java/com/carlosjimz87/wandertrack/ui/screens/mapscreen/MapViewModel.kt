@@ -1,16 +1,14 @@
 package com.carlosjimz87.wandertrack.ui.screens.mapscreen
 
-import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.carlosjimz87.wandertrack.common.Constants
+import com.carlosjimz87.wandertrack.data.repos.map.MapRepository
 import com.carlosjimz87.wandertrack.domain.models.Country
-import com.carlosjimz87.wandertrack.utils.fetchCountriesGeoJson
 import com.carlosjimz87.wandertrack.utils.getCountryByCode
 import com.carlosjimz87.wandertrack.utils.getCountryCodeFromLatLngOffline
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.LatLngBounds
-import com.google.maps.android.PolyUtil
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -19,7 +17,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 class MapViewModel(
-    val context: Context
+    private val repository: MapRepository
 ) : ViewModel() {
 
     // --- UI STATES ---
@@ -29,8 +27,8 @@ class MapViewModel(
     private val _countries = MutableStateFlow(Constants.countries)
     val countries = _countries.asStateFlow()
 
-    private val _visitedCountries = MutableStateFlow<Set<String>>(emptySet())
-    val visitedCountries = _visitedCountries.asStateFlow()
+    private val _visitedCountryCodes = MutableStateFlow<Set<String>>(emptySet())
+    val visitedCountryCodes = _visitedCountryCodes.asStateFlow()
 
     private val _selectedCountry = MutableStateFlow<Country?>(null)
     val selectedCountry = _selectedCountry.asStateFlow()
@@ -44,17 +42,36 @@ class MapViewModel(
     private val _visitedCities = MutableStateFlow<Map<String, Set<String>>>(emptyMap())
     val visitedCities = _visitedCities.asStateFlow()
 
-    // --- Non-state data (precálculo) ---
-    private val _countryBounds = mutableMapOf<String, LatLngBounds>()
-    val countryBounds: Map<String, LatLngBounds> get() = _countryBounds
-
-    // --- INIT ---
     init {
-        getVisitedCountriesList()
-        loadCountriesGeoJson()
+        markInitiallyVisitedCountries()
+        loadBordersAndPrecalculateBounds()
     }
 
-    // --- USER INTERACTION ---
+    private fun markInitiallyVisitedCountries() {
+        _visitedCountryCodes.value = _countries.value
+            .filter { it.visited }
+            .map { it.code }
+            .toSet()
+    }
+
+    private fun loadBordersAndPrecalculateBounds() {
+        viewModelScope.launch {
+            _isLoading.value = true
+            val parsedBorders = withContext(Dispatchers.IO) {
+                repository.getCountryBorders()  // from MapRepository
+            }
+
+            _countryBorders.value = parsedBorders
+
+            parsedBorders.forEach { (_, polygons) ->
+                val boundsBuilder = LatLngBounds.Builder()
+                polygons.flatten().forEach(boundsBuilder::include)
+            }
+
+            _isLoading.value = false
+        }
+    }
+
     fun notifyUserMovedMap() {
         _userMovedMap.value = true
     }
@@ -67,62 +84,31 @@ class MapViewModel(
         _selectedCountry.value = null
     }
 
-    // --- COUNTRY SELECTION ---
     fun resolveCountryFromLatLng(latLng: LatLng) {
         viewModelScope.launch {
-            val code = withContext(Dispatchers.IO) {
-                getCountryCodeFromLatLngOffline(countryBorders.value, latLng)
+            val code = withContext(Dispatchers.Default) {
+                getCountryCodeFromLatLngOffline(_countryBorders.value, latLng)
             }
 
-            _selectedCountry.value = code?.let { getCountryByCode(countries.value, it) }
+            _selectedCountry.value = code?.let { getCountryByCode(_countries.value, it) }
         }
     }
 
-    // --- TOGGLES ---
     fun toggleCountryVisited(code: String) {
-        _visitedCountries.update { current ->
+        _visitedCountryCodes.update { current ->
             if (current.contains(code)) current - code else current + code
         }
     }
 
     fun toggleCityVisited(countryCode: String, cityName: String) {
         _visitedCities.update { current ->
-            val currentVisited = current[countryCode] ?: emptySet()
-            val updatedVisited = if (currentVisited.contains(cityName)) {
-                currentVisited - cityName
+            val currentSet = current[countryCode] ?: emptySet()
+            val updatedSet = if (currentSet.contains(cityName)) {
+                currentSet - cityName
             } else {
-                currentVisited + cityName
+                currentSet + cityName
             }
-            current + (countryCode to updatedVisited)
-        }
-    }
-
-    // --- DATA LOADING ---
-    private fun getVisitedCountriesList() {
-        _visitedCountries.value = _countries.value
-            .filter { it.visited }
-            .map { it.code }
-            .toSet()
-    }
-
-    private fun loadCountriesGeoJson() {
-        viewModelScope.launch {
-            _isLoading.value = true
-
-            val parsedBorders = withContext(Dispatchers.IO) {
-                fetchCountriesGeoJson(context).toMutableMap()
-            }
-
-            _countryBorders.value = parsedBorders
-
-            // Precalculate bounds
-            parsedBorders.forEach { (code, polygons) ->
-                val boundsBuilder = LatLngBounds.Builder()
-                polygons.flatten().forEach(boundsBuilder::include)
-                _countryBounds[code] = boundsBuilder.build()
-            }
-
-            _isLoading.value = false
+            current + (countryCode to updatedSet)
         }
     }
 }
