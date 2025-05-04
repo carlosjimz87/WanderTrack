@@ -35,6 +35,7 @@ import com.carlosjimz87.wandertrack.domain.models.Country
 import com.carlosjimz87.wandertrack.ui.composables.CountryBottomSheetContent
 import com.carlosjimz87.wandertrack.ui.theme.AccentPink
 import com.google.android.gms.maps.CameraUpdateFactory
+import com.google.android.gms.maps.GoogleMapOptions
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MapStyleOptions
 import com.google.maps.android.SphericalUtil
@@ -120,7 +121,9 @@ fun MapScreen(
                     mapStyleOptions = getMapStyle(context),
                     isBuildingEnabled = false,
                     mapType = MapType.NORMAL,
-                    isMyLocationEnabled = false
+                    isMyLocationEnabled = false,
+                    minZoomPreference = 2f,
+                    maxZoomPreference = 6f
                 ),
                 cameraPositionState = cameraPositionState,
                 uiSettings = MapUiSettings(

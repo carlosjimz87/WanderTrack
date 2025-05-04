@@ -2,6 +2,7 @@ package com.carlosjimz87.wandertrack.utils
 
 import android.content.Context
 import com.carlosjimz87.wandertrack.R
+import com.carlosjimz87.wandertrack.common.Constants.countryNameToIso2
 import com.carlosjimz87.wandertrack.domain.models.Country
 import com.google.android.gms.maps.model.LatLng
 import com.google.maps.android.PolyUtil
@@ -11,62 +12,35 @@ import org.json.JSONObject
 
 fun fetchCountriesGeoJson(context: Context): Map<String, List<List<LatLng>>> {
     return runCatching {
-        context.resources.openRawResource(R.raw.simplified_borders).use { inputStream ->
-            val geoJson = inputStream.bufferedReader().use { it.readText() }
-            val parsed = JSONObject(geoJson)
-            val features = parsed.getJSONArray("features")
+        val geoJson = context.resources
+            .openRawResource(R.raw.simplified_borders)
+            .bufferedReader()
+            .use { it.readText() }
 
-            buildMap<String, List<List<LatLng>>> {
-                for (i in 0 until features.length()) {
-                    val feature = features.optJSONObject(i) ?: continue
-                    val properties = feature.optJSONObject("properties") ?: continue
-                    val geometry = feature.optJSONObject("geometry") ?: continue
-                    val type = geometry.optString("type", "")
-                    val coordinates = geometry.optJSONArray("coordinates") ?: continue
+        val features = JSONObject(geoJson).getJSONArray("features")
 
-                    val isoCode = properties.optString("ISO_A2", "").uppercase()
-                    val sovereign = properties.optString("SOVEREIGNT", "").uppercase()
-                    val admin = properties.optString("ADMIN", "").uppercase()
-                    val countryType = properties.optString("TYPE", "").uppercase()
+        buildMap<String, List<List<LatLng>>> {
+            for (i in 0 until features.length()) {
+                val feature = features.optJSONObject(i) ?: continue
+                val properties = feature.optJSONObject("properties") ?: continue
+                val geometry = feature.optJSONObject("geometry") ?: continue
 
-                    if (isoCode == "-99") continue
+                val isoCode = properties.optString("ISO_A2", "").uppercase()
+                val sovereign = properties.optString("SOVEREIGNT", "").uppercase()
+                val admin = properties.optString("ADMIN", "").uppercase()
+                val type = geometry.optString("type", "")
+                val coordinates = geometry.optJSONArray("coordinates") ?: continue
 
-                    // Filtro de colonias para países conocidos
-                    val isMainland = admin == sovereign && countryType == "COUNTRY"
-                    if (!isMainland && sovereign in setOf(
-                            "FRANCE", "UNITED KINGDOM", "UNITED STATES OF AMERICA",
-                            "NETHERLANDS", "DENMARK", "AUSTRALIA", "CHINA", "NORWAY"
-                        )
-                    ) continue
+                if (!shouldIncludeCountry(isoCode, admin, sovereign, properties.optString("TYPE", ""))) continue
 
-                    // Obtener la clave válida
-                    val key = when {
-                        isoCode.isNotBlank() -> isoCode
-                        isMainland -> countryNameToIso2[sovereign] ?: continue
-                        else -> continue
-                    }
+                val key = resolveCountryKey(isoCode, sovereign) ?: continue
+                val rawPolygons = parseGeoJsonPolygons(type, coordinates)
 
-                    val polygons = when (type) {
-                        "Polygon" -> parsePolygon(coordinates)
-                        "MultiPolygon" -> parseMultiPolygon(coordinates)
-                        else -> emptyList()
-                    }
+                val filteredPolygons = filterOutOverseasTerritories(isoCode, rawPolygons)
 
-                    // Filtro específico para evitar territorios de ultramar (por ejemplo, Guayana Francesa)
-                    val filteredPolygons = if (isoCode == "FR") {
-                        polygons.filter { polygon ->
-                            polygon.any { point ->
-                                point.latitude in 40.0..52.0 && point.longitude in -5.0..10.0
-                            }
-                        }
-                    } else {
-                        polygons
-                    }
-
-                    if (filteredPolygons.isNotEmpty()) {
-                        val existing = this[key] ?: emptyList()
-                        this[key] = existing + filteredPolygons
-                    }
+                if (filteredPolygons.isNotEmpty()) {
+                    val existing = this[key] ?: emptyList()
+                    this[key] = existing + filteredPolygons
                 }
             }
         }
@@ -76,59 +50,77 @@ fun fetchCountriesGeoJson(context: Context): Map<String, List<List<LatLng>>> {
     }
 }
 
-fun parsePolygon(coordinates: JSONArray): List<List<LatLng>> {
-    val polygon = mutableListOf<LatLng>()
-    val ring = coordinates.optJSONArray(0) ?: return emptyList()
-    for (i in 0 until ring.length()) {
-        val point = ring.optJSONArray(i)
-        if (point != null && point.length() >= 2) {
-            polygon.add(LatLng(point.getDouble(1), point.getDouble(0)))
+private fun shouldIncludeCountry(
+    isoCode: String,
+    admin: String,
+    sovereign: String,
+    countryType: String
+): Boolean {
+    if (isoCode == "-99") return false
+    val isMainland = admin == sovereign && countryType.uppercase() == "COUNTRY"
+    val knownColonizers = setOf("FRANCE", "UNITED KINGDOM", "UNITED STATES OF AMERICA", "NETHERLANDS", "DENMARK", "AUSTRALIA", "CHINA", "NORWAY")
+    return isMainland || sovereign !in knownColonizers
+}
+
+private fun resolveCountryKey(isoCode: String, sovereign: String): String? {
+    return when {
+        isoCode.isNotBlank() -> isoCode
+        else -> countryNameToIso2[sovereign]
+    }
+}
+
+private fun parseGeoJsonPolygons(type: String, coordinates: JSONArray): List<List<LatLng>> {
+    return when (type) {
+        "Polygon" -> parsePolygon(coordinates)
+        "MultiPolygon" -> parseMultiPolygon(coordinates)
+        else -> emptyList()
+    }
+}
+
+private fun filterOutOverseasTerritories(code: String, polygons: List<List<LatLng>>): List<List<LatLng>> {
+    if (code != "FR") return polygons
+    return polygons.filter { polygon ->
+        polygon.any { point ->
+            point.latitude in 40.0..52.0 && point.longitude in -5.0..10.0
         }
     }
-    return listOf(polygon) // << retornamos como lista de polígonos
+}
+
+fun parsePolygon(coordinates: JSONArray): List<List<LatLng>> {
+    val ring = coordinates.optJSONArray(0) ?: return emptyList()
+    val polygon = List(ring.length()) { i ->
+        ring.optJSONArray(i)?.let { LatLng(it.getDouble(1), it.getDouble(0)) }
+    }.filterNotNull()
+    return listOf(polygon)
 }
 
 fun parseMultiPolygon(coordinates: JSONArray): List<List<LatLng>> {
     val polygons = mutableListOf<List<LatLng>>()
-
     for (i in 0 until coordinates.length()) {
-        val polygonArray = coordinates.optJSONArray(i)?.optJSONArray(0) ?: continue
-        val points = mutableListOf<LatLng>()
-
-        for (j in 0 until polygonArray.length()) {
-            val point = polygonArray.optJSONArray(j)
-            if (point != null && point.length() >= 2) {
-                points.add(LatLng(point.getDouble(1), point.getDouble(0)))
-            }
-        }
-
-        if (points.isNotEmpty()) {
-            polygons.add(points)
-        }
+        val ring = coordinates.optJSONArray(i)?.optJSONArray(0) ?: continue
+        val polygon = List(ring.length()) { j ->
+            ring.optJSONArray(j)?.let { LatLng(it.getDouble(1), it.getDouble(0)) }
+        }.filterNotNull()
+        if (polygon.isNotEmpty()) polygons.add(polygon)
     }
-
     return polygons
 }
 
-val countryNameToIso2 = mapOf(
-    "FRANCE" to "FR",
-    "UNITED STATES" to "US",
-    "GERMANY" to "DE",
-    "SPAIN" to "ES",
-    "ITALY" to "IT",
-)
+fun getCountryCodeFromLatLngOffline(
+    borders: Map<String, List<List<LatLng>>>,
+    latLng: LatLng
+): String? = borders.entries.firstOrNull { (_, polygons) ->
+    polygons.any { polygon -> PolyUtil.containsLocation(latLng, polygon, true) }
+}?.key
 
 fun getCountryByCode(countries: List<Country>, code: String): Country? {
     return countries.find { it.code.equals(code, ignoreCase = true) }
 }
 
-fun getCountryCodeFromLatLngOffline(borders: Map<String, List<List<LatLng>>>, latLng: LatLng): String? {
-    for ((code, polygons) in borders) {
-        for (polygon in polygons) {
-            if (PolyUtil.containsLocation(latLng, polygon, true)) {
-                return code
-            }
-        }
-    }
-    return null
-}
+// 🔁 Sample mapping (populate accordingly)
+val countryNameToIso2 = mapOf(
+    "SPAIN" to "ES",
+    "FRANCE" to "FR",
+    "GERMANY" to "DE"
+    // add more mappings...
+)

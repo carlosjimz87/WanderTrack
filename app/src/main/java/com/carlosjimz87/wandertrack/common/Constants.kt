@@ -78,4 +78,12 @@ object Constants {
             )
         )
     )
+
+    val countryNameToIso2 = mapOf(
+        "FRANCE" to "FR",
+        "UNITED STATES" to "US",
+        "GERMANY" to "DE",
+        "SPAIN" to "ES",
+        "ITALY" to "IT",
+    )
 }
