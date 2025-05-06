@@ -3,7 +3,8 @@ package com.carlosjimz87.wandertrack.ui.screens.mapscreen
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.carlosjimz87.wandertrack.common.Constants
-import com.carlosjimz87.wandertrack.data.mapper.MapRepository
+import com.carlosjimz87.wandertrack.data.repo.FirestoreRepository
+import com.carlosjimz87.wandertrack.data.repo.MapRepository
 import com.carlosjimz87.wandertrack.domain.models.Country
 import com.carlosjimz87.wandertrack.domain.models.CountryGeometry
 import com.carlosjimz87.wandertrack.utils.Logger
@@ -19,7 +20,9 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 class MapViewModel(
-    private val repository: MapRepository
+    private val userId: String,
+    private val mapRepo: MapRepository,
+    private val firestoreRepo: FirestoreRepository,
 ) : ViewModel() {
 
     private val _userMovedMap = MutableStateFlow(false)
@@ -61,8 +64,12 @@ class MapViewModel(
     private fun loadBordersAndPrecalculateBounds() {
         viewModelScope.launch {
             _isLoading.value = true
+
+            val countries = firestoreRepo.fetchCountries()
+            _countries.value = countries
+
             val parsedBorders = withContext(Dispatchers.IO) {
-                repository.getCountryBorders()
+                mapRepo.getCountryBorders()
             }
 
             _countryBorders.value = parsedBorders
@@ -112,6 +119,10 @@ class MapViewModel(
         _selectedCountry.update { current ->
             if (current?.code == code) current.copy(visited = isVisitedNow)
             else current
+        }
+
+        viewModelScope.launch {
+            firestoreRepo.updateCountryVisited(userId, code, isVisitedNow)
         }
     }
 
