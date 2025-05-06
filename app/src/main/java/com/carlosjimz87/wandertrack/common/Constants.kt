@@ -4,6 +4,9 @@ import com.carlosjimz87.wandertrack.domain.models.City
 import com.carlosjimz87.wandertrack.domain.models.Country
 
 object Constants {
+
+    const val ANIMATION_DURATION = 600
+
     val countries = listOf(
         Country(
             code = "ID",

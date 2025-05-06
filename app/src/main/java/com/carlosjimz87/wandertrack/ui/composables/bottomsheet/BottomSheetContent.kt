@@ -7,12 +7,12 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.carlosjimz87.wandertrack.common.Constants
 import com.carlosjimz87.wandertrack.domain.models.City
 import com.carlosjimz87.wandertrack.ui.theme.AccentPink
+import com.carlosjimz87.wandertrack.ui.theme.AccentPinkDark
 import com.carlosjimz87.wandertrack.ui.theme.WanderTrackTheme
 
 @Composable
@@ -25,8 +25,8 @@ fun CountryBottomSheetContent(
     onToggleVisited: (String) -> Unit,
     onDismiss: () -> Unit
 ) {
-    val buttonText = if (countryVisited) "Visitar" else "Visitado"
-    val buttonColor = if (countryVisited) AccentPink else Color.Gray
+    val buttonText = if (countryVisited) "Visitado" else "Visitar"
+    val buttonColor = if (countryVisited) AccentPinkDark else AccentPink
 
     Column(
         modifier = Modifier

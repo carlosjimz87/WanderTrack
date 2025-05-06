@@ -28,19 +28,15 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.unit.dp
+import com.carlosjimz87.wandertrack.common.calculateBottomOffset
 import com.carlosjimz87.wandertrack.common.safeAnimateToBounds
 import com.carlosjimz87.wandertrack.ui.composables.bottomsheet.CountryBottomSheetContent
 import com.carlosjimz87.wandertrack.ui.composables.map.MapCanvas
-import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.model.LatLng
-import com.google.android.gms.maps.model.LatLngBounds
 import com.google.maps.android.SphericalUtil
-import com.google.maps.android.compose.CameraPositionState
 import com.google.maps.android.compose.rememberCameraPositionState
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
 
@@ -128,6 +124,9 @@ fun MapScreen(
                 visitedCountriesCodes = visitedCountriesCodes,
                 countryBorders = countryBorders,
                 onMapClick = { latLng ->
+
+                    if (viewModel.isSameCountrySelected(latLng)) return@MapCanvas
+
                     lastClickLatLng = latLng
                     viewModel.resetUserMovedFlag()
 
@@ -136,18 +135,16 @@ fun MapScreen(
                         bottomSheetScaffoldState.bottomSheetState.expand()
 
                         bounds?.let {
-                            delay(100) // animación fluida
-
-                            val bottomOffset = if (bottomSheetScaffoldState.bottomSheetState.currentValue == SheetValue.Expanded)
-                                mapViewHeight else mapViewHeight / 3
 
                             safeAnimateToBounds(
                                 cameraPositionState = cameraPositionState,
                                 bounds = it,
                                 mapWidth = mapViewWidth,
                                 mapHeight = mapViewHeight,
-                                bottomOffset = bottomOffset
-                               // bottomSheetExpanded = bottomSheetScaffoldState.bottomSheetState.currentValue == SheetValue.Expanded
+                                bottomOffset = calculateBottomOffset(
+                                    bottomSheetScaffoldState.bottomSheetState.currentValue,
+                                    mapViewHeight
+                                )
                             )
                         }
                     }

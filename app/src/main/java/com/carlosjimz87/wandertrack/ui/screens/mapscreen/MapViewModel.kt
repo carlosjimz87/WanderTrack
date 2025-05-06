@@ -6,6 +6,7 @@ import com.carlosjimz87.wandertrack.common.Constants
 import com.carlosjimz87.wandertrack.data.repos.map.MapRepository
 import com.carlosjimz87.wandertrack.domain.models.Country
 import com.carlosjimz87.wandertrack.domain.models.CountryGeometry
+import com.carlosjimz87.wandertrack.utils.Logger
 import com.carlosjimz87.wandertrack.utils.getCountryByCode
 import com.carlosjimz87.wandertrack.utils.getCountryCodeFromLatLngOffline
 import com.google.android.gms.maps.model.LatLng
@@ -93,15 +94,24 @@ class MapViewModel(
             getCountryCodeFromLatLngOffline(_countryBorders.value, latLng)
         }
 
+        Logger.w("Resolved country from click: $code")
         val country = code?.let { getCountryByCode(_countries.value, it) }
+
         _selectedCountry.value = country
 
         return code?.let { _countryBounds.value[it] }
     }
 
     fun toggleCountryVisited(code: String) {
+        val isVisitedNow = !_visitedCountryCodes.value.contains(code)
+
         _visitedCountryCodes.update { current ->
-            if (current.contains(code)) current - code else current + code
+            if (isVisitedNow) current + code else current - code
+        }
+
+        _selectedCountry.update { current ->
+            if (current?.code == code) current.copy(visited = isVisitedNow)
+            else current
         }
     }
 
@@ -116,4 +126,10 @@ class MapViewModel(
             current + (countryCode to updatedSet)
         }
     }
+
+    fun isSameCountrySelected(latLng: LatLng): Boolean {
+        val code = getCountryCodeFromLatLngOffline(_countryBorders.value, latLng)
+        return selectedCountry.value?.code?.equals(code, ignoreCase = true) == true
+    }
+
 }
