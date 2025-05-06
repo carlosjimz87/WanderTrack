@@ -3,7 +3,7 @@ package com.carlosjimz87.wandertrack.ui.screens.mapscreen
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.carlosjimz87.wandertrack.common.Constants
-import com.carlosjimz87.wandertrack.data.repos.map.MapRepository
+import com.carlosjimz87.wandertrack.data.mapper.MapRepository
 import com.carlosjimz87.wandertrack.domain.models.Country
 import com.carlosjimz87.wandertrack.domain.models.CountryGeometry
 import com.carlosjimz87.wandertrack.utils.Logger

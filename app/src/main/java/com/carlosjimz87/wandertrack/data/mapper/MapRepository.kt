@@ -1,4 +1,4 @@
-package com.carlosjimz87.wandertrack.data.repos.map
+package com.carlosjimz87.wandertrack.data.mapper
 
 import android.content.Context
 import com.carlosjimz87.wandertrack.domain.models.CountryGeometry
