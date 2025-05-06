@@ -6,10 +6,13 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Switch
+import androidx.compose.material3.SwitchColors
+import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import com.carlosjimz87.wandertrack.ui.theme.AccentPink
 
 @Composable
 fun CityRow(
@@ -27,7 +30,10 @@ fun CityRow(
         Text(text = cityName, style = MaterialTheme.typography.bodyLarge)
         Switch(
             checked = isVisited,
-            onCheckedChange = { onToggle() }
+            onCheckedChange = { onToggle() },
+            colors = SwitchDefaults.colors(
+                checkedTrackColor = AccentPink
+            )
         )
     }
 }

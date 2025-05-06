@@ -125,6 +125,15 @@ class MapViewModel(
             }
             current + (countryCode to updatedSet)
         }
+
+        _selectedCountry.update { current ->
+            if (current?.code == countryCode) {
+                val updatedCities = current.cities.map {
+                    if (it.name == cityName) it.copy(visited = !it.visited) else it
+                }
+                current.copy(cities = updatedCities)
+            } else current
+        }
     }
 
     fun isSameCountrySelected(latLng: LatLng): Boolean {
