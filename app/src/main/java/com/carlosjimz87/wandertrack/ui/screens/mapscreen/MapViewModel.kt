@@ -28,7 +28,7 @@ class MapViewModel(
     private val _userMovedMap = MutableStateFlow(false)
     val userMovedMap = _userMovedMap.asStateFlow()
 
-    private val _countries = MutableStateFlow(Constants.countries)
+    private val _countries = MutableStateFlow<List<Country>>(emptyList())
     val countries = _countries.asStateFlow()
 
     private val _visitedCountryCodes = MutableStateFlow<Set<String>>(emptySet())
@@ -50,23 +50,24 @@ class MapViewModel(
     val visitedCities = _visitedCities.asStateFlow()
 
     init {
-        markInitiallyVisitedCountries()
-        loadBordersAndPrecalculateBounds()
+        loadData()
     }
 
-    private fun markInitiallyVisitedCountries() {
-        _visitedCountryCodes.value = _countries.value
-            .filter { it.visited }
-            .map { it.code }
-            .toSet()
-    }
-
-    private fun loadBordersAndPrecalculateBounds() {
+    private fun loadData() {
         viewModelScope.launch {
             _isLoading.value = true
 
-            val countries = firestoreRepo.fetchCountries()
-            _countries.value = countries
+            val countriesFromFirestore = firestoreRepo.fetchCountries()
+            _countries.value = countriesFromFirestore
+
+            _visitedCountryCodes.value = countriesFromFirestore
+                .filter { it.visited }
+                .map { it.code }
+                .toSet()
+
+            _visitedCities.value = countriesFromFirestore.associate { country ->
+                country.code to country.cities.filter { it.visited }.map { it.name }.toSet()
+            }
 
             val parsedBorders = withContext(Dispatchers.IO) {
                 mapRepo.getCountryBorders()
@@ -102,6 +103,7 @@ class MapViewModel(
         }
 
         Logger.w("Resolved country from click: $code")
+
         val country = code?.let { getCountryByCode(_countries.value, it) }
 
         _selectedCountry.value = country
@@ -117,8 +119,7 @@ class MapViewModel(
         }
 
         _selectedCountry.update { current ->
-            if (current?.code == code) current.copy(visited = isVisitedNow)
-            else current
+            if (current?.code == code) current.copy(visited = isVisitedNow) else current
         }
 
         viewModelScope.launch {

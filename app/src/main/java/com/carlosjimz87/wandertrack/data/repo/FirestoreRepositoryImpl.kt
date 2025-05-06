@@ -1,4 +1,5 @@
 import com.carlosjimz87.wandertrack.data.repo.FirestoreRepository
+import com.carlosjimz87.wandertrack.domain.models.City
 import com.carlosjimz87.wandertrack.domain.models.Country
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
@@ -10,9 +11,24 @@ class FirestoreRepositoryImpl : FirestoreRepository {
 
     override suspend fun fetchCountries(): List<Country> {
         return try {
-            val snapshot = db.collection("countries").get().await()
+            val snapshot = db.collection("meta").document("countries")
+                .collection("all").get().await()
+
             snapshot.documents.mapNotNull { doc ->
-                doc.toObject(Country::class.java)
+                val name = doc.getString("name") ?: return@mapNotNull null
+                val code = doc.getString("code") ?: return@mapNotNull null
+                val visited = doc.getBoolean("visited") ?: false
+                val citiesList = doc.get("cities") as? List<Map<String, Any>> ?: emptyList()
+
+                val cities = citiesList.mapNotNull { cityMap ->
+                    val cityName = cityMap["name"] as? String ?: return@mapNotNull null
+                    val lat = (cityMap["latitude"] as? Number)?.toDouble() ?: return@mapNotNull null
+                    val lng = (cityMap["longitude"] as? Number)?.toDouble() ?: return@mapNotNull null
+                    val cityVisited = cityMap["visited"] as? Boolean ?: false
+                    City(name = cityName, latitude = lat, longitude = lng, visited = cityVisited)
+                }
+
+                Country(code = code, name = name, visited = visited, cities = cities)
             }
         } catch (e: Exception) {
             e.printStackTrace()
