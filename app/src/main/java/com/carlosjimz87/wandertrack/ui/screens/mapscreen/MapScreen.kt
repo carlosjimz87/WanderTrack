@@ -29,7 +29,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.unit.dp
+import com.carlosjimz87.wandertrack.common.safeAnimateToBounds
 import com.carlosjimz87.wandertrack.ui.composables.bottomsheet.CountryBottomSheetContent
 import com.carlosjimz87.wandertrack.ui.composables.map.MapCanvas
 import com.google.android.gms.maps.CameraUpdateFactory
@@ -60,17 +62,16 @@ fun MapScreen(
             skipHiddenState = false
         )
     )
-    val isBottomSheetExpanded = bottomSheetScaffoldState.bottomSheetState.currentValue == SheetValue.Expanded
-    val density = LocalDensity.current
+    val containerSize = LocalWindowInfo.current.containerSize
+
     val configuration = LocalConfiguration.current
 
     val mapViewHeight = remember(configuration) {
-        with(density) { configuration.screenHeightDp.dp.toPx() }.toInt()
+        containerSize.height
     }
     val mapViewWidth = remember(configuration) {
-        with(density) { configuration.screenWidthDp.dp.toPx() }.toInt()
+        containerSize.width
     }
-    val bottomOffset = if (isBottomSheetExpanded) mapViewHeight else mapViewHeight / 3
 
     var lastClickLatLng by remember { mutableStateOf<LatLng?>(null) }
 
@@ -136,12 +137,17 @@ fun MapScreen(
 
                         bounds?.let {
                             delay(100) // animación fluida
+
+                            val bottomOffset = if (bottomSheetScaffoldState.bottomSheetState.currentValue == SheetValue.Expanded)
+                                mapViewHeight else mapViewHeight / 3
+
                             safeAnimateToBounds(
                                 cameraPositionState = cameraPositionState,
                                 bounds = it,
                                 mapWidth = mapViewWidth,
                                 mapHeight = mapViewHeight,
-                                bottomSheetExpanded = bottomSheetScaffoldState.bottomSheetState.currentValue == SheetValue.Expanded
+                                bottomOffset = bottomOffset
+                               // bottomSheetExpanded = bottomSheetScaffoldState.bottomSheetState.currentValue == SheetValue.Expanded
                             )
                         }
                     }
@@ -171,43 +177,5 @@ private fun DetectUserMapMovement(
             val movedDistance = SphericalUtil.computeDistanceBetween(original, cameraTarget)
             if (movedDistance > 100_000) onMoveDetected()
         }
-    }
-}
-
-suspend fun safeAnimateToBounds(
-    cameraPositionState: CameraPositionState,
-    bounds: LatLngBounds,
-    mapWidth: Int,
-    mapHeight: Int,
-    bottomSheetExpanded: Boolean
-) {
-    // Padding inferior según el estado del bottom sheet
-    val bottomPadding = if (bottomSheetExpanded) mapHeight / 2 else mapHeight / 3
-
-    // Padding superior y lateral (puedes ajustar)
-    val sidePadding = 64
-    val topPadding = 64
-
-    val effectiveHeight = mapHeight - bottomPadding - topPadding
-    val effectiveWidth = mapWidth - (sidePadding * 2)
-
-    val isSizeSafe = effectiveHeight > 100 && effectiveWidth > 100
-
-    if (isSizeSafe) {
-        cameraPositionState.animate(
-            CameraUpdateFactory.newLatLngBounds(
-                bounds,
-                mapWidth,
-                mapHeight,
-                sidePadding
-            ),
-            durationMs = 1000
-        )
-    } else {
-        // Fallback simple si el tamaño efectivo es muy pequeño
-        cameraPositionState.animate(
-            CameraUpdateFactory.newLatLngZoom(bounds.center, 5f),
-            durationMs = 1000
-        )
     }
 }
