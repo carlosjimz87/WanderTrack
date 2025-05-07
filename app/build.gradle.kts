@@ -42,6 +42,18 @@ android {
         manifestPlaceholders["GOOGLE_MAPS_KEY"] = secretsProperties["GOOGLE_MAPS_KEY"] as Any
     }
 
+    flavorDimensions += "env"
+    productFlavors {
+        create("dev") {
+            dimension = "env"
+            buildConfigField("String", "FIREBASE_ENV", "\"dev\"")
+        }
+        create("prod") {
+            dimension = "env"
+            buildConfigField("String", "FIREBASE_ENV", "\"prod\"")
+        }
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = false
@@ -102,10 +114,16 @@ dependencies {
     implementation(libs.android.maps.utils)
 
     testImplementation(libs.junit)
+    testImplementation(libs.junit.jupiter)
+    testImplementation(libs.kotlinx.coroutines.test)
+    testImplementation(libs.mockk)
+    testImplementation(libs.play.services.tasks)
+    testImplementation(libs.androidx.core.testing)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.ui.test.junit4)
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
+    testImplementation(kotlin("test"))
 }

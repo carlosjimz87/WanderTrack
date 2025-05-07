@@ -57,7 +57,7 @@ class MapViewModel(
         viewModelScope.launch {
             _isLoading.value = true
 
-            val countriesFromFirestore = firestoreRepo.fetchCountries()
+            val countriesFromFirestore = firestoreRepo.fetchAllCountries(userId)
             _countries.value = countriesFromFirestore
 
             _visitedCountryCodes.value = countriesFromFirestore
@@ -128,11 +128,14 @@ class MapViewModel(
     }
 
     fun toggleCityVisited(countryCode: String, cityName: String) {
+        var isNowVisited = false
         _visitedCities.update { current ->
             val currentSet = current[countryCode] ?: emptySet()
             val updatedSet = if (currentSet.contains(cityName)) {
+                isNowVisited = false
                 currentSet - cityName
             } else {
+                isNowVisited = true
                 currentSet + cityName
             }
             current + (countryCode to updatedSet)
@@ -141,11 +144,16 @@ class MapViewModel(
         _selectedCountry.update { current ->
             if (current?.code == countryCode) {
                 val updatedCities = current.cities.map {
-                    if (it.name == cityName) it.copy(visited = !it.visited) else it
+                    if (it.name == cityName) it.copy(visited = isNowVisited) else it
                 }
                 current.copy(cities = updatedCities)
             } else current
         }
+
+        viewModelScope.launch {
+            firestoreRepo.updateCityVisited(userId, countryCode, cityName, isNowVisited)
+        }
+
     }
 
     fun isSameCountrySelected(latLng: LatLng): Boolean {
