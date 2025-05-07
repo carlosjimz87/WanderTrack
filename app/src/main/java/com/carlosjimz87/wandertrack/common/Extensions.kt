@@ -7,6 +7,8 @@ import com.carlosjimz87.wandertrack.domain.models.City
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.model.LatLngBounds
 import com.google.maps.android.compose.CameraPositionState
+import kotlin.math.abs
+import kotlin.math.max
 
 fun List<City>.visited(): List<City> = this.filter { it.visited }.toList()
 
@@ -36,10 +38,27 @@ suspend fun safeAnimateToBounds(
             durationMs = ANIMATION_DURATION
         )
     } else {
+        // Fallback: usar centro y zoom estimado según tamaño del país
+        val zoomLevel = calculateZoomLevel(bounds)
         cameraPositionState.animate(
-            CameraUpdateFactory.newLatLngZoom(bounds.center, 5f),
+            CameraUpdateFactory.newLatLngZoom(bounds.center, zoomLevel),
             durationMs = ANIMATION_DURATION
         )
+    }
+}
+
+private fun calculateZoomLevel(bounds: LatLngBounds): Float {
+    val latDiff = abs(bounds.northeast.latitude - bounds.southwest.latitude)
+    val lngDiff = abs(bounds.northeast.longitude - bounds.southwest.longitude)
+    val sizeFactor = max(latDiff, lngDiff)
+
+    return when {
+        sizeFactor > 40 -> 2.5f // Rusia, China
+        sizeFactor > 20 -> 3.5f // USA, Brasil, Canadá
+        sizeFactor > 10 -> 4.5f // Alemania, España
+        sizeFactor > 5  -> 5.5f // Suecia, Italia
+        sizeFactor > 2  -> 6.5f // Bélgica, Suiza
+        else -> 7.5f            // Andorra, San Marino
     }
 }
 
