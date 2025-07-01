@@ -1,3 +1,8 @@
 <resources>
     <string name="app_name">WanderTrack</string>
+    <string name="your_trips">Your trips</string>
+    <plurals name="countries_visited">
+        <item quantity="one">%d country visited</item>
+        <item quantity="other">%d countries visited</item>
+    </plurals>
 </resources>

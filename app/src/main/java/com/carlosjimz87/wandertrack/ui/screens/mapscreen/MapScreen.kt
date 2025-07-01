@@ -1,19 +1,24 @@
 package com.carlosjimz87.wandertrack.ui.screens.mapscreen
 
+import android.provider.CalendarContract.Colors
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.BottomSheetScaffold
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SheetValue
+import androidx.compose.material3.Text
 import androidx.compose.material3.rememberBottomSheetScaffoldState
 import androidx.compose.material3.rememberStandardBottomSheetState
 import androidx.compose.runtime.Composable
@@ -28,12 +33,15 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.unit.dp
+import com.carlosjimz87.wandertrack.R
 import com.carlosjimz87.wandertrack.common.calculateBottomOffset
 import com.carlosjimz87.wandertrack.common.safeAnimateToBounds
 import com.carlosjimz87.wandertrack.ui.composables.bottomsheet.CountryBottomSheetContent
 import com.carlosjimz87.wandertrack.ui.composables.map.MapCanvas
+import com.carlosjimz87.wandertrack.ui.theme.SecondaryGrey
 import com.google.android.gms.maps.model.LatLng
 import com.google.maps.android.SphericalUtil
 import com.google.maps.android.compose.rememberCameraPositionState
@@ -58,6 +66,8 @@ fun MapScreen(
             skipHiddenState = false
         )
     )
+    val context = LocalContext.current
+
     val containerSize = LocalWindowInfo.current.containerSize
 
     val configuration = LocalConfiguration.current
@@ -118,6 +128,8 @@ fun MapScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
+                .background(MaterialTheme.colorScheme.surfaceVariant)
+                .systemBarsPadding()
         ) {
             MapCanvas(
                 selectedCountry = selectedCountry,
@@ -151,6 +163,28 @@ fun MapScreen(
                 },
                 cameraPositionState = cameraPositionState
             )
+
+            Column(
+                modifier = Modifier
+                    .padding(top = 16.dp, start = 16.dp)
+                    .align(Alignment.TopStart)
+            ) {
+                Text(
+                    text = context.getString(R.string.your_trips),
+                    style = MaterialTheme.typography.titleLarge,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+
+                Text(
+                    text = context.resources.getQuantityString(
+                        R.plurals.countries_visited,
+                        visitedCountriesCodes.size,
+                        visitedCountriesCodes.size
+                    ),
+                    style = MaterialTheme.typography.headlineSmall,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+            }
 
             if (isLoading) {
                 CircularProgressIndicator(

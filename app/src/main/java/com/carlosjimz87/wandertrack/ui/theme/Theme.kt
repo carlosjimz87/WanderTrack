@@ -12,44 +12,38 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 
 val DarkColorScheme = darkColorScheme(
-    primary = AccentPinkDark,            // Botones principales, elementos destacados
-    onPrimary = Color.White,             // Color del texto sobre botones primarios
-
-    secondary = SecondaryGreyDark,       // Elementos secundarios o botones alternativos
+    primary = AccentPinkDark,
+    onPrimary = Color.White,
+    secondary = SecondaryGreyDark,
     onSecondary = Color.White,
-
-    tertiary = TertiaryPink,             // Detalles, chips, elementos decorativos
+    tertiary = TertiaryPink,
     onTertiary = Color.Black,
-
-    background = Black,                  // Fondo principal de la app
-    onBackground = Color.White,          // Texto encima del fondo
-
-    surface = Color(0xFF1E1E1E),         // Superficies tipo BottomSheet, Cards
-    onSurface = Color.White              // Texto encima de las superficies
+    background = Black,
+    onBackground = Color.White,
+    surface = Color(0xFF1E1E1E),
+    onSurface = Color.White,
+    surfaceVariant = SecondaryGreyDark
 )
 
 val LightColorScheme = lightColorScheme(
-    primary = AccentPink,                // Botones principales, elementos destacados
+    primary = AccentPink,
     onPrimary = Color.Black,
-
-    secondary = SecondaryGrey,           // Elementos secundarios o botones alternativos
+    secondary = SecondaryGrey,
     onSecondary = Color.Black,
-
-    tertiary = TertiaryPink,             // Detalles, chips, elementos decorativos
+    tertiary = TertiaryPink,
     onTertiary = Color.Black,
-
-    background = White,                  // Fondo principal de la app
+    background = White,
     onBackground = Color.Black,
-
-    surface = TertiaryNeutral,           // Superficies tipo BottomSheet, Cards
-    onSurface = Color.Black
+    surface = TertiaryNeutral,
+    onSurface = Color.Black,
+    surfaceVariant = SecondaryGrey
 )
 
 @Composable
 fun WanderTrackTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
     // Dynamic color is available on Android 12+
-    dynamicColor: Boolean = true,
+    dynamicColor: Boolean = false,
     content: @Composable () -> Unit
 ) {
     val colorScheme = when {
