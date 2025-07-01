@@ -1,43 +1,49 @@
 [
   {
     "featureType": "administrative.country",
-    "elementType": "labels.text.fill",
+    "elementType": "labels.text",
     "stylers": [
-      { "color": "#333333" }
+      { "visibility": "off" }
     ]
   },
   {
-    "featureType": "administrative.country",
-    "elementType": "labels.text.stroke",
+    "featureType": "water",
+    "elementType": "labels.text",
     "stylers": [
-      { "color": "#e0e0e0" },
-      { "weight": 2 }
+      { "visibility": "off" }
     ]
   },
   {
     "featureType": "administrative.country",
     "elementType": "geometry.stroke",
     "stylers": [
-      { "color": "#757575" }
+      { "color": "#A6D8D2" }
     ]
   },
   {
     "featureType": "landscape",
     "elementType": "geometry",
     "stylers": [
-      { "color": "#e0e0e0" }
+      { "color": "#FEFAF5" }
     ]
   },
   {
     "featureType": "water",
     "elementType": "geometry",
     "stylers": [
-      { "color": "#a2daf2" }
+      { "color": "#A6D8D2" }
     ]
   },
   {
     "featureType": "all",
     "elementType": "labels.icon",
+    "stylers": [
+      { "visibility": "off" }
+    ]
+  },
+  {
+    "featureType": "road",
+    "elementType": "all",
     "stylers": [
       { "visibility": "off" }
     ]
