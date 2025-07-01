@@ -6,6 +6,7 @@ import com.carlosjimz87.wandertrack.domain.models.Country
 object Constants {
 
     const val ANIMATION_DURATION = 600
+    const val MIN_ZOOM_LEVEL = 2.5f
 
     val countries = listOf(
         Country(

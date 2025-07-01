@@ -144,4 +144,41 @@ class MapViewModel(
         return selectedCountry.value?.code?.equals(code, ignoreCase = true) == true
     }
 
+    fun getVisitedCountriesBounds(): LatLngBounds? {
+        if (_visitedCountryCodes.value.isEmpty()) return null
+
+        val boundsBuilder = LatLngBounds.builder()
+
+        _visitedCountryCodes.value.forEach { code ->
+            val geometry = mapRepo.getCountryGeometries()[code] ?: return@forEach
+            geometry.polygons.flatten().forEach { boundsBuilder.include(it) }
+        }
+
+        return boundsBuilder.build()
+    }
+
+    fun getVisitedCountriesCenterAndBounds(): Pair<LatLng, LatLngBounds>? {
+        val codes = _visitedCountryCodes.value
+        if (codes.isEmpty()) return null
+
+        val geometries = mapRepo.getCountryGeometries()
+
+        val allPoints = codes.flatMap { code ->
+            geometries[code]?.polygons?.flatten() ?: emptyList()
+        }
+
+        if (allPoints.isEmpty()) return null
+
+        // Calcular bounds
+        val boundsBuilder = LatLngBounds.builder()
+        allPoints.forEach { boundsBuilder.include(it) }
+        val bounds = boundsBuilder.build()
+
+        // Calcular centroide
+        val avgLat = allPoints.map { it.latitude }.average()
+        val avgLng = allPoints.map { it.longitude }.average()
+        val center = LatLng(avgLat, avgLng)
+
+        return Pair(center, bounds)
+    }
 }

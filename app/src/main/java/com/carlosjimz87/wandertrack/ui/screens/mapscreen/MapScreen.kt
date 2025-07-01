@@ -37,12 +37,16 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.unit.dp
 import com.carlosjimz87.wandertrack.R
+import com.carlosjimz87.wandertrack.common.Constants.ANIMATION_DURATION
 import com.carlosjimz87.wandertrack.common.calculateBottomOffset
+import com.carlosjimz87.wandertrack.common.calculateZoomLevel
 import com.carlosjimz87.wandertrack.common.safeAnimateToBounds
 import com.carlosjimz87.wandertrack.ui.composables.bottomsheet.CountryBottomSheetContent
 import com.carlosjimz87.wandertrack.ui.composables.map.MapCanvas
 import com.carlosjimz87.wandertrack.ui.theme.SecondaryGrey
+import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.model.LatLng
+import com.google.android.gms.maps.model.LatLngBounds
 import com.google.maps.android.SphericalUtil
 import com.google.maps.android.compose.rememberCameraPositionState
 import kotlinx.coroutines.launch
@@ -80,6 +84,21 @@ fun MapScreen(
     }
 
     var lastClickLatLng by remember { mutableStateOf<LatLng?>(null) }
+
+    val hasCenteredMap = remember { mutableStateOf(false) }
+
+    LaunchedEffect(visitedCountriesCodes) {
+        if (visitedCountriesCodes.isNotEmpty() && !hasCenteredMap.value) {
+            val centerAndBounds = viewModel.getVisitedCountriesCenterAndBounds()
+            centerAndBounds?.let { (center, bounds) ->
+                cameraPositionState.animate(
+                    CameraUpdateFactory.newLatLngZoom(center, calculateZoomLevel(bounds)),
+                    durationMs = ANIMATION_DURATION
+                )
+            }
+            hasCenteredMap.value = true
+        }
+    }
 
     DetectUserMapMovement(
         lastClickLatLng,
