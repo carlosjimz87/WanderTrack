@@ -6,7 +6,6 @@ import com.carlosjimz87.wandertrack.common.Constants.countryNameToIso2
 import com.carlosjimz87.wandertrack.domain.models.Country
 import com.carlosjimz87.wandertrack.domain.models.CountryGeometry
 import com.google.android.gms.maps.model.LatLng
-import com.google.android.gms.maps.model.LatLngBounds
 import com.google.maps.android.PolyUtil
 import org.json.JSONArray
 import org.json.JSONObject
@@ -41,11 +40,7 @@ fun fetchCountriesGeoJson(context: Context): Map<String, CountryGeometry> {
             val filteredPolygons = filterOutOverseasTerritories(isoCode, rawPolygons)
             if (filteredPolygons.isEmpty()) continue
 
-            val allPoints = filteredPolygons.flatten()
-            val boundsBuilder = LatLngBounds.builder()
-            allPoints.forEach { boundsBuilder.include(it) }
-
-            result[key] = CountryGeometry(polygons = filteredPolygons, bounds = boundsBuilder.build())
+            result[key] = CountryGeometry(polygons = filteredPolygons)
         }
 
         result

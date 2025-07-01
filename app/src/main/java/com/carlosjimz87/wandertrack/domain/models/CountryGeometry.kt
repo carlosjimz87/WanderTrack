@@ -4,6 +4,5 @@ import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.LatLngBounds
 
 data class CountryGeometry(
-    val polygons: List<List<LatLng>>,
-    val bounds: LatLngBounds
+    val polygons: List<List<LatLng>>
 )

@@ -2,14 +2,12 @@ package com.carlosjimz87.wandertrack.ui.screens.mapscreen
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.carlosjimz87.wandertrack.common.Constants
 import com.carlosjimz87.wandertrack.data.repo.FirestoreRepository
 import com.carlosjimz87.wandertrack.data.repo.MapRepository
 import com.carlosjimz87.wandertrack.domain.models.Country
 import com.carlosjimz87.wandertrack.domain.models.CountryGeometry
 import com.carlosjimz87.wandertrack.utils.Logger
 import com.carlosjimz87.wandertrack.utils.getCountryByCode
-import com.carlosjimz87.wandertrack.utils.getCountryCodeFromLatLngOffline
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.LatLngBounds
 import kotlinx.coroutines.Dispatchers
@@ -34,20 +32,17 @@ class MapViewModel(
     private val _visitedCountryCodes = MutableStateFlow<Set<String>>(emptySet())
     val visitedCountryCodes = _visitedCountryCodes.asStateFlow()
 
+    private val _visitedCities = MutableStateFlow<Map<String, Set<String>>>(emptyMap())
+    val visitedCities = _visitedCities.asStateFlow()
+
     private val _selectedCountry = MutableStateFlow<Country?>(null)
     val selectedCountry = _selectedCountry.asStateFlow()
-
-    private val _countryBorders = MutableStateFlow<Map<String, CountryGeometry>>(emptyMap())
-    val countryBorders = _countryBorders.asStateFlow()
-
-    private val _countryBounds = MutableStateFlow<Map<String, LatLngBounds>>(emptyMap())
-    val countryBounds = _countryBounds.asStateFlow()
 
     private val _isLoading = MutableStateFlow(true)
     val isLoading = _isLoading.asStateFlow()
 
-    private val _visitedCities = MutableStateFlow<Map<String, Set<String>>>(emptyMap())
-    val visitedCities = _visitedCities.asStateFlow()
+    private val _countryBorders = MutableStateFlow<Map<String, CountryGeometry>>(emptyMap())
+    val countryBorders = _countryBorders.asStateFlow()
 
     init {
         loadData()
@@ -69,17 +64,7 @@ class MapViewModel(
                 country.code to country.cities.filter { it.visited }.map { it.name }.toSet()
             }
 
-            val parsedBorders = withContext(Dispatchers.IO) {
-                mapRepo.getCountryBorders()
-            }
-
-            _countryBorders.value = parsedBorders
-
-            _countryBounds.value = parsedBorders.mapValues { (_, geometry) ->
-                geometry.polygons.flatten().fold(LatLngBounds.builder()) { builder, point ->
-                    builder.include(point)
-                }.build()
-            }
+            _countryBorders.value = mapRepo.getCountryGeometries()
 
             _isLoading.value = false
         }
@@ -99,16 +84,15 @@ class MapViewModel(
 
     suspend fun resolveCountryFromLatLng(latLng: LatLng): LatLngBounds? {
         val code = withContext(Dispatchers.Default) {
-            getCountryCodeFromLatLngOffline(_countryBorders.value, latLng)
+            mapRepo.getCountryCodeFromLatLng(latLng)
         }
 
         Logger.w("Resolved country from click: $code")
 
         val country = code?.let { getCountryByCode(_countries.value, it) }
-
         _selectedCountry.value = country
 
-        return code?.let { _countryBounds.value[it] }
+        return code?.let { mapRepo.getCountryBounds()[it] }
     }
 
     fun toggleCountryVisited(code: String) {
@@ -153,11 +137,10 @@ class MapViewModel(
         viewModelScope.launch {
             firestoreRepo.updateCityVisited(userId, countryCode, cityName, isNowVisited)
         }
-
     }
 
     fun isSameCountrySelected(latLng: LatLng): Boolean {
-        val code = getCountryCodeFromLatLngOffline(_countryBorders.value, latLng)
+        val code = mapRepo.getCountryCodeFromLatLng(latLng)
         return selectedCountry.value?.code?.equals(code, ignoreCase = true) == true
     }
 
