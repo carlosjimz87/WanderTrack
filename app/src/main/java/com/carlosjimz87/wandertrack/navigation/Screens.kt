@@ -4,5 +4,6 @@ enum class Screens {
     AUTH,
     MAP,
     COUNTRY,
-    TEST
+    TEST,
+    SPLASH
 }

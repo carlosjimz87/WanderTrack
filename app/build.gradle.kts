@@ -91,6 +91,10 @@ dependencies {
     // Google Fonts
     implementation(libs.androidx.ui.text.google.fonts)
 
+    // Lottie & Splashscreen
+    implementation(libs.lottie.compose)
+    implementation(libs.androidx.core.splashscreen)
+
     // Firebase BoM
     implementation(platform(libs.firebase.bom))
 

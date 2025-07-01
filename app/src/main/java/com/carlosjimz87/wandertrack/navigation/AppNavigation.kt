@@ -9,11 +9,12 @@ import androidx.navigation.navArgument
 import com.carlosjimz87.wandertrack.ui.screens.auth.AuthScreen
 import com.carlosjimz87.wandertrack.ui.screens.mapscreen.MapScreen
 import com.carlosjimz87.wandertrack.ui.screens.mapscreen.SimpleMapScreen
+import com.carlosjimz87.wandertrack.ui.screens.splash.SplashScreen
 
 @Composable
 fun AppNavigation() {
     val navController = rememberNavController()
-    NavHost(navController, startDestination = Screens.MAP.name) {
+    NavHost(navController, startDestination = Screens.SPLASH.name) {
         composable(Screens.AUTH.name) {
             AuthScreen(onAuthSuccess = {
                 navController.navigate(Screens.MAP.name) {
@@ -40,6 +41,14 @@ fun AppNavigation() {
             if (countryCode != null) {
                 // CountryScreen(countryCode)
             }
+        }
+
+        composable(Screens.SPLASH.name) {
+            SplashScreen(onSplashFinished = {
+                navController.navigate(Screens.AUTH.name) {
+                    popUpTo(Screens.SPLASH.name) { inclusive = true }
+                }
+            })
         }
     }
 }
