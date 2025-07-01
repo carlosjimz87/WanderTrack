@@ -11,30 +11,37 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 
-
 val DarkColorScheme = darkColorScheme(
-    primary = AccentPinkDark,
-    secondary = SecondaryGrey,
-    tertiary = TertiaryNeutral,
-    background = Color(0xFF121212),
-    surface = Color(0xFF1E1E1E),
-    onPrimary = Color.White,
+    primary = AccentPinkDark,            // Botones principales, elementos destacados
+    onPrimary = Color.White,             // Color del texto sobre botones primarios
+
+    secondary = SecondaryGreyDark,       // Elementos secundarios o botones alternativos
     onSecondary = Color.White,
-    onTertiary = Color.White,
-    onBackground = Color.White,
-    onSurface = Color.White
+
+    tertiary = TertiaryPink,             // Detalles, chips, elementos decorativos
+    onTertiary = Color.Black,
+
+    background = Black,                  // Fondo principal de la app
+    onBackground = Color.White,          // Texto encima del fondo
+
+    surface = Color(0xFF1E1E1E),         // Superficies tipo BottomSheet, Cards
+    onSurface = Color.White              // Texto encima de las superficies
 )
 
 val LightColorScheme = lightColorScheme(
-    primary = AccentPink,
-    secondary = SecondaryGrey,
-    tertiary = TertiaryNeutral,
-    background = Color(0xFFFFFBFE),
-    surface = Color(0xFFFFFFFF),
-    onPrimary = Color.White,
+    primary = AccentPink,                // Botones principales, elementos destacados
+    onPrimary = Color.Black,
+
+    secondary = SecondaryGrey,           // Elementos secundarios o botones alternativos
     onSecondary = Color.Black,
+
+    tertiary = TertiaryPink,             // Detalles, chips, elementos decorativos
     onTertiary = Color.Black,
+
+    background = White,                  // Fondo principal de la app
     onBackground = Color.Black,
+
+    surface = TertiaryNeutral,           // Superficies tipo BottomSheet, Cards
     onSurface = Color.Black
 )
 

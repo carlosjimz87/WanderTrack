@@ -88,6 +88,9 @@ dependencies {
     implementation(libs.androidx.material3)
     implementation(libs.navigation.compose)
 
+    // Google Fonts
+    implementation(libs.androidx.ui.text.google.fonts)
+
     // Firebase BoM
     implementation(platform(libs.firebase.bom))
 
