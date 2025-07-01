@@ -1,0 +1,8 @@
+package com.carlosjimz87.wandertrack.domain.models
+
+import com.google.android.gms.maps.model.LatLng
+
+data class PolygonData(
+    val points: List<LatLng>,
+    val isSelected: Boolean = false
+)
