@@ -1,10 +1,8 @@
 package com.carlosjimz87.wandertrack.ui.composables.bottomsheet
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -26,7 +24,12 @@ import androidx.compose.material3.Divider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
@@ -37,6 +40,7 @@ import com.carlosjimz87.wandertrack.ui.theme.WanderTrackTheme
 
 @Composable
 fun CountryBottomSheetContent(
+    countryName: String,
     countryCode: String,
     countryVisited: Boolean,
     countryCities: List<City>,
@@ -44,6 +48,9 @@ fun CountryBottomSheetContent(
     onToggleVisited: (String) -> Unit,
     onDismiss: () -> Unit
 ) {
+    var expanded by remember { mutableStateOf(false) }
+    val previewCities = if (expanded) countryCities else countryCities.take(3)
+
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -52,43 +59,38 @@ fun CountryBottomSheetContent(
             .background(MaterialTheme.colorScheme.surface)
             .padding(16.dp)
     ) {
-        // Drag handle
-        Box(
-            modifier = Modifier
-                .size(width = 40.dp, height = 4.dp)
-                .background(
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f),
-                    shape = RoundedCornerShape(2.dp)
-                )
-                .align(Alignment.CenterHorizontally)
+
+        // Nombre del país centrado
+        Text(
+            text = countryName,
+            style = MaterialTheme.typography.headlineMedium,
+            color = MaterialTheme.colorScheme.onSurface,
+            modifier = Modifier.align(Alignment.CenterHorizontally)
         )
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(8.dp))
 
-        // Botón visitar arriba derecha
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.End
+        // Botón visitar centrado y destacado
+        Button(
+            onClick = { onToggleVisited(countryCode) },
+            colors = ButtonDefaults.buttonColors(
+                containerColor = MaterialTheme.colorScheme.primary,
+                contentColor = MaterialTheme.colorScheme.onPrimary
+            ),
+            shape = RoundedCornerShape(24.dp),
+            modifier = Modifier
+                .height(48.dp)
+                .align(Alignment.CenterHorizontally)
         ) {
-            Button(
-                onClick = { onToggleVisited(countryCode) },
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = if (countryVisited) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.secondary,
-                    contentColor = MaterialTheme.colorScheme.onPrimary
-                ),
-                shape = RoundedCornerShape(24.dp),
-                modifier = Modifier.height(40.dp)
-            ) {
-                Icon(
-                    imageVector = if (countryVisited) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
-                    contentDescription = null
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(if (countryVisited) "Visitado" else "Visitar")
-            }
+            Icon(
+                imageVector = if (countryVisited) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
+                contentDescription = null
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            Text(if (countryVisited) "Visitado" else "Visitar")
         }
 
-        Spacer(modifier = Modifier.height(12.dp))
+        Spacer(modifier = Modifier.height(16.dp))
 
         // Lista scrollable de ciudades
         LazyColumn(
@@ -96,13 +98,20 @@ fun CountryBottomSheetContent(
                 .fillMaxWidth()
                 .heightIn(max = 280.dp)
         ) {
-            items(countryCities) { city ->
+            items(previewCities) { city ->
                 CityRow(
                     cityName = city.name,
                     isVisited = city.visited,
                     onToggle = { onToggleCityVisited(city.name) }
                 )
                 Divider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f))
+            }
+            if (countryCities.size > 3) {
+                item {
+                    TextButton(onClick = { expanded = !expanded }) {
+                        Text(if (expanded) "Mostrar menos" else "Mostrar más")
+                    }
+                }
             }
         }
     }
@@ -111,12 +120,10 @@ fun CountryBottomSheetContent(
 @Preview
 @Composable
 private fun CountryBottomSheetContentPreview() {
-
     WanderTrackTheme {
-
         val country = Constants.countries.first()
-
         CountryBottomSheetContent(
+            countryName = country.name,
             countryCode = country.code,
             countryVisited = country.visited,
             countryCities = country.cities,
@@ -124,7 +131,5 @@ private fun CountryBottomSheetContentPreview() {
             onToggleVisited = {},
             onDismiss = {}
         )
-
     }
-    
 }

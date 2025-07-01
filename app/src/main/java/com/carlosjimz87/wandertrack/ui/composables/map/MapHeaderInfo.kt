@@ -37,9 +37,9 @@ fun MapHeaderInfo(
             Spacer(modifier = Modifier.height(4.dp))
 
             val citiesText = if (visitedCitiesCount > 0) {
-                "$visitedCitiesCount cities visited"
+                context.getString(R.string.visited_cities, visitedCitiesCount)
             } else {
-                "No cities visited"
+                context.getString(R.string.no_cities)
             }
 
             Text(

@@ -5,4 +5,7 @@
         <item quantity="one">%d country visited</item>
         <item quantity="other">%d countries visited</item>
     </plurals>
+    <string name="visited_cities">Visited %d cities.</string>
+    <string name="no_cities">No visited cities.</string>
+
 </resources>
