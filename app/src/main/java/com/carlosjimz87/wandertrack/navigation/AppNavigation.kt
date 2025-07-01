@@ -20,7 +20,8 @@ fun AppNavigation() {
                 navController.navigate(Screens.MAP.name) {
                     popUpTo(Screens.AUTH.name) { inclusive = true }
                 }
-            })
+            },
+                onSignInClick = {}, onGetStartedClick = {})
         }
         composable(Screens.TEST.name) {
             SimpleMapScreen()

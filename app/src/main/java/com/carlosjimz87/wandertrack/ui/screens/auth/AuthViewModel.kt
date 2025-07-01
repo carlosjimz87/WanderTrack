@@ -14,6 +14,21 @@ class AuthViewModel : ViewModel() {
     private val _authState = MutableStateFlow(auth.currentUser)
     val authState: StateFlow<FirebaseUser?> = _authState.asStateFlow()
 
+    private val _authScreenState = MutableStateFlow(AuthScreenState.START)
+    val authScreenState: StateFlow<AuthScreenState> = _authScreenState.asStateFlow()
+
+    fun showLogin() {
+        _authScreenState.value = AuthScreenState.LOGIN
+    }
+
+    fun showSignup() {
+        _authScreenState.value = AuthScreenState.SIGNUP
+    }
+
+    fun showStart() {
+        _authScreenState.value = AuthScreenState.START
+    }
+
     fun login(email: String, password: String, onResult: (Boolean, String?) -> Unit) {
         auth.signInWithEmailAndPassword(email, password)
             .addOnSuccessListener {
