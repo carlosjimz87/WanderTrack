@@ -114,7 +114,7 @@ fun MapScreen(
         sheetPeekHeight = 0.dp,
         sheetSwipeEnabled = true,
         sheetDragHandle = {
-            BottomSheetDragHandle()
+            BottomSheetDragHandle(selectedCountry?.visited == true)
         },
         sheetContent = {
             selectedCountry?.let { country ->

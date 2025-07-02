@@ -17,7 +17,7 @@ import org.koin.androidx.compose.koinViewModel
 @Composable
 fun AppNavigation() {
     val navController = rememberNavController()
-    NavHost(navController, startDestination = Screens.SPLASH.name) {
+    NavHost(navController, startDestination = Screens.MAP.name) {
 
         composable(Screens.SPLASH.name) {
             SplashScreen(onSplashFinished = {

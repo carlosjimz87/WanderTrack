@@ -13,9 +13,9 @@ import androidx.compose.ui.platform.LocalContext
 
 val DarkColorScheme = darkColorScheme(
     primary = AccentPinkDark,
-    onPrimary = Color.White,
     primaryContainer = AccentPink,
-    secondary = SecondaryGreyDark,
+    onPrimary = Color.White,
+    secondary = SecondaryBlueDark,
     onSecondary = Color.White,
     tertiary = TertiaryPink,
     onTertiary = Color.Black,
@@ -23,14 +23,14 @@ val DarkColorScheme = darkColorScheme(
     onBackground = Color.White,
     surface = Color(0xFF1E1E1E),
     onSurface = Color.White,
-    surfaceVariant = SecondaryGreyDark
+    surfaceVariant = SecondaryBlueDark
 )
 
 val LightColorScheme = lightColorScheme(
     primary = AccentPink,
     primaryContainer = AccentPinkDark,
     onPrimary = Color.Black,
-    secondary = SecondaryGrey,
+    secondary = SecondaryBlue,
     onSecondary = Color.Black,
     tertiary = TertiaryPink,
     onTertiary = Color.Black,
@@ -38,7 +38,7 @@ val LightColorScheme = lightColorScheme(
     onBackground = Color.Black,
     surface = TertiaryNeutral,
     onSurface = Color.Black,
-    surfaceVariant = SecondaryGrey
+    surfaceVariant = SecondaryBlue
 )
 
 @Composable

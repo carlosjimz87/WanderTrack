@@ -16,7 +16,14 @@
     <string name="sign_in">Sign In</string>
     <string name="email_address">Email</string>
     <string name="password">Password</string>
-    <string name="forgot_password">"Forgot password?"</string>
+    <string name="forgot_password">Forgot password?</string>
+
+
+    <string name="visited">Visited</string>
+    <string name="to_visit">To Visit</string>
+    <string name="show_less">Show less</string>
+    <string name="show_more">Show more</string>
+
 
 
 </resources>
