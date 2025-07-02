@@ -7,6 +7,6 @@ val AccentPinkDark = Color(0xFFEE5662) // intense pink
 val SecondaryGrey = Color(0xFFA6D8D2) // balanced gray-blue
 val SecondaryGreyDark = Color(0xFF199AB5) // balanced blue
 val TertiaryNeutral = Color(0xFFFBF7F1) // light white
-val TertiaryPink = Color(0xFFE69E9B)    // light pink
+val TertiaryPink = Color(0xFFEECCB5)    // light pink
 val White = Color(0xFFFEFAF5) // white
 val Black = Color(0xFF0B131F) // black

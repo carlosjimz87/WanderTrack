@@ -17,12 +17,9 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import com.carlosjimz87.wandertrack.R
 import com.carlosjimz87.wandertrack.ui.composables.auth.AuthButtons
-import org.koin.androidx.compose.koinViewModel
 
 @Composable
 fun AuthScreen(
-    authViewModel: AuthViewModel = koinViewModel(),
-    onAuthSuccess: () -> Unit,
     onGetStartedClick: () -> Unit,
     onSignInClick: () -> Unit
 ) {
@@ -65,8 +62,11 @@ fun AuthScreen(
         )
 
         AuthButtons(
-           onGetStartedClick = onGetStartedClick,
+            onGetStartedClick = onGetStartedClick,
             onSignInClick = onSignInClick,
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .padding(bottom = 32.dp)
         )
     }
 }

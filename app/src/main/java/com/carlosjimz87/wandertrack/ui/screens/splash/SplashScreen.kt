@@ -31,7 +31,8 @@ import com.airbnb.lottie.compose.LottieConstants
 import com.airbnb.lottie.compose.animateLottieCompositionAsState
 import com.airbnb.lottie.compose.rememberLottieComposition
 import com.carlosjimz87.wandertrack.R
-import com.carlosjimz87.wandertrack.ui.theme.White
+import com.carlosjimz87.wandertrack.ui.theme.AccentPink
+import com.carlosjimz87.wandertrack.ui.theme.Black
 import kotlinx.coroutines.delay
 
 @Composable
@@ -88,7 +89,7 @@ fun SplashScreen(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(White),
+            .background(AccentPink),
         contentAlignment = Alignment.Center
     ) {
 
@@ -124,7 +125,7 @@ fun SplashScreen(
                 Text(
                     text = context.getString(R.string.app_name),
                     style = MaterialTheme.typography.titleLarge,
-                    color = MaterialTheme.colorScheme.onPrimary
+                    color = Black
                 )
             }
         }
