@@ -1,6 +1,8 @@
 package com.carlosjimz87.wandertrack.ui.screens.auth
 
 import com.carlosjimz87.wandertrack.data.repo.FakeAuthRepository
+import com.carlosjimz87.wandertrack.ui.screens.auth.state.AuthScreenState
+import com.carlosjimz87.wandertrack.ui.screens.auth.viewmodel.AuthViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
@@ -38,7 +40,7 @@ class AuthViewModelTest {
 
     @Test
     fun `login success updates authState`() = runTest {
-        viewModel.login("test@test.com", "password") { success, _ ->
+        viewModel.loginWithEmail("test@test.com", "password") { success, _ ->
             assertTrue(success)
         }
         assertNotNull(viewModel.authState.first())
@@ -48,7 +50,7 @@ class AuthViewModelTest {
     fun `login failure does not update authState`() = runTest {
         repo.shouldFail = true
 
-        viewModel.login("test@test.com", "password") { success, message ->
+        viewModel.loginWithEmail("test@test.com", "password") { success, message ->
             assertFalse(success)
             assertEquals("Login failed", message)
         }
@@ -66,7 +68,7 @@ class AuthViewModelTest {
 
     @Test
     fun `logout clears authState`() = runTest {
-        viewModel.login("test@test.com", "password") { _, _ -> }
+        viewModel.loginWithEmail("test@test.com", "password") { _, _ -> }
         assertNotNull(viewModel.authState.first())
 
         viewModel.logout()
@@ -89,5 +91,33 @@ class AuthViewModelTest {
     fun `showStart updates authScreenState`() = runTest {
         viewModel.showStart()
         assertEquals(AuthScreenState.START, viewModel.authScreenState.first())
+    }
+
+    @Test
+    fun `loginWithGoogle updates authState on success`() = runTest {
+        repo.setGoogleLoginResult(success = true)
+
+        var callbackSuccess = false
+
+        viewModel.loginWithGoogle("fakeToken") { success, _ ->
+            callbackSuccess = success
+        }
+
+        assertTrue(callbackSuccess)
+        assertNotNull(viewModel.authState.value)
+    }
+
+    @Test
+    fun `loginWithGoogle does not update authState on failure`() = runTest {
+        repo.setGoogleLoginResult(success = false)
+
+        var callbackSuccess = true
+
+        viewModel.loginWithGoogle("fakeToken") { success, _ ->
+            callbackSuccess = success
+        }
+
+        assertFalse(callbackSuccess)
+        assertNull(viewModel.authState.value)
     }
 }

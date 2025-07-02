@@ -6,8 +6,8 @@ import com.carlosjimz87.wandertrack.data.repo.AuthRepositoryImpl
 import com.carlosjimz87.wandertrack.data.repo.FirestoreRepository
 import com.carlosjimz87.wandertrack.data.repo.MapRepository
 import com.carlosjimz87.wandertrack.data.repo.MapRepositoryImpl
-import com.carlosjimz87.wandertrack.ui.screens.auth.AuthViewModel
-import com.carlosjimz87.wandertrack.ui.screens.mapscreen.MapViewModel
+import com.carlosjimz87.wandertrack.ui.screens.auth.viewmodel.AuthViewModel
+import com.carlosjimz87.wandertrack.ui.screens.mapscreen.viewmodel.MapViewModel
 import org.koin.android.ext.koin.androidContext
 import org.koin.androidx.viewmodel.dsl.viewModel
 import org.koin.core.qualifier.named

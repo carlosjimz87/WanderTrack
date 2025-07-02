@@ -31,6 +31,7 @@ import com.airbnb.lottie.compose.LottieConstants
 import com.airbnb.lottie.compose.animateLottieCompositionAsState
 import com.airbnb.lottie.compose.rememberLottieComposition
 import com.carlosjimz87.wandertrack.R
+import com.carlosjimz87.wandertrack.ui.screens.splash.viewmodel.SplashViewModel
 import com.carlosjimz87.wandertrack.ui.theme.AccentPink
 import com.carlosjimz87.wandertrack.ui.theme.Black
 import kotlinx.coroutines.delay

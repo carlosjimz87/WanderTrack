@@ -1,7 +1,8 @@
-package com.carlosjimz87.wandertrack.ui.screens.auth
+package com.carlosjimz87.wandertrack.ui.screens.auth.viewmodel
 
 import androidx.lifecycle.ViewModel
 import com.carlosjimz87.wandertrack.data.repo.AuthRepository
+import com.carlosjimz87.wandertrack.ui.screens.auth.state.AuthScreenState
 import com.google.firebase.auth.FirebaseUser
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -21,7 +22,7 @@ class AuthViewModel(
     fun showSignup() { _authScreenState.value = AuthScreenState.SIGNUP }
     fun showStart() { _authScreenState.value = AuthScreenState.START }
 
-    fun login(email: String, password: String, onResult: (Boolean, String?) -> Unit) {
+    fun loginWithEmail(email: String, password: String, onResult: (Boolean, String?) -> Unit) {
         authRepository.login(email, password) { success, message ->
             if (success) _authState.value = authRepository.currentUser
             onResult(success, message)
@@ -34,6 +35,12 @@ class AuthViewModel(
             onResult(success, message)
         }
     }
+
+//    fun sendPasswordReset(email: String, onResult: (Boolean, String?) -> Unit) {
+//        authRepository.sendPasswordReset(email) { success, msg ->
+//            onResult(success, msg)
+//        }
+//    }
 
     fun signup(email: String, password: String, onResult: (Boolean, String?) -> Unit) {
         authRepository.signup(email, password) { success, message ->

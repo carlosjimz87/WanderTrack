@@ -29,12 +29,14 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
+import androidx.navigation.NavController
+import com.carlosjimz87.wandertrack.navigation.Screens
+import com.carlosjimz87.wandertrack.ui.screens.auth.viewmodel.AuthViewModel
 import org.koin.androidx.compose.koinViewModel
 
 @Composable
 fun SignUpScreen(
-    onSignUpSuccess: () -> Unit,
-    onBackToLoginClick: () -> Unit,
+    navController: NavController,
     authViewModel: AuthViewModel = koinViewModel()
 ) {
     val context = LocalContext.current
@@ -46,7 +48,9 @@ fun SignUpScreen(
 
     LaunchedEffect(user) {
         if (user != null) {
-            onSignUpSuccess()
+            navController.navigate(Screens.MAP.name) {
+                popUpTo(0)
+            }
         }
     }
 
@@ -121,12 +125,16 @@ fun SignUpScreen(
             shape = RoundedCornerShape(8.dp),
             colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
         ) {
-            Text("Get Started", color = MaterialTheme.colorScheme.onPrimary, style = MaterialTheme.typography.bodyLarge)
+            Text(
+                "Get Started",
+                color = MaterialTheme.colorScheme.onPrimary,
+                style = MaterialTheme.typography.bodyLarge
+            )
         }
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        TextButton(onClick = onBackToLoginClick) {
+        TextButton(onClick = { navController.popBackStack() }) {
             Text("Already have an account? Sign in", color = MaterialTheme.colorScheme.primary)
         }
 

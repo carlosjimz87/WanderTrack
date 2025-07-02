@@ -1,4 +1,4 @@
-package com.carlosjimz87.wandertrack.ui.screens.splash
+package com.carlosjimz87.wandertrack.ui.screens.splash.viewmodel
 
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableLongStateOf

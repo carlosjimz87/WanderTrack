@@ -1,23 +1,40 @@
 package com.carlosjimz87.wandertrack.navigation
 
+import android.widget.Toast
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.carlosjimz87.wandertrack.ui.screens.auth.AuthScreen
-import com.carlosjimz87.wandertrack.ui.screens.auth.AuthViewModel
 import com.carlosjimz87.wandertrack.ui.screens.auth.LoginScreen
 import com.carlosjimz87.wandertrack.ui.screens.auth.SignUpScreen
+import com.carlosjimz87.wandertrack.ui.screens.auth.viewmodel.AuthViewModel
 import com.carlosjimz87.wandertrack.ui.screens.mapscreen.MapScreen
 import com.carlosjimz87.wandertrack.ui.screens.splash.SplashScreen
 import org.koin.androidx.compose.koinViewModel
 
 @Composable
-fun AppNavigation() {
+fun AppNavigation(authViewModel: AuthViewModel = koinViewModel()) {
+
     val navController = rememberNavController()
-    NavHost(navController, startDestination = Screens.MAP.name) {
+    val context = LocalContext.current
+    val userState = authViewModel.authState.collectAsState()
+    val user = userState.value
+
+    LaunchedEffect(user) {
+        user?.let {
+            navController.navigate(Screens.MAP.name) {
+                popUpTo(0)
+            }
+        }
+    }
+
+    NavHost(navController, startDestination = Screens.SPLASH.name) {
 
         composable(Screens.SPLASH.name) {
             SplashScreen(onSplashFinished = {
@@ -35,22 +52,14 @@ fun AppNavigation() {
         }
 
         composable(Screens.LOGIN.name) {
-            val authViewModel: AuthViewModel = koinViewModel()
-            val navController = rememberNavController() // o pasa el navController desde arriba si ya lo tienes
-
             LoginScreen(
-                onLoginSuccess = {
-                    navController.navigate(Screens.MAP.name) {
-                        popUpTo(Screens.LOGIN.name) { inclusive = true }
+                navController = navController,
+                onGoogleIdTokenReceived = { idToken ->
+                    authViewModel.loginWithGoogle(idToken) { success, msg ->
+                        if (!success) {
+                            Toast.makeText(context, "Authentication error", Toast.LENGTH_SHORT).show()
+                        }
                     }
-                },
-                onGoogleSignInClick = {
-                    // Lógica para iniciar Google Sign-In, por ejemplo:
-                    // authViewModel.startGoogleSignIn() o lanza el intent necesario
-                },
-                onForgotPasswordClick = {
-                    // Navegar a la pantalla de recuperación de contraseña, si existe
-                   // navController.navigate(Screens.FORGOT_PASSWORD.name)
                 },
                 authViewModel = authViewModel
             )
@@ -58,29 +67,21 @@ fun AppNavigation() {
 
         composable(Screens.SIGNUP.name) {
             SignUpScreen(
-                onSignUpSuccess = {
-                    navController.navigate(Screens.MAP.name) {
-                        popUpTo(Screens.SIGNUP.name) { inclusive = true }
-                    }
-                },
-                onBackToLoginClick = { navController.popBackStack() }
+                navController = navController,
+                authViewModel = authViewModel
             )
         }
 
         composable(Screens.MAP.name) {
-            MapScreen(
-                onCountryClicked = { countryCode ->
-                    navController.navigate("country/$countryCode")
-                }
-            )
+            MapScreen(onCountryClicked = { countryCode ->
+                navController.navigate("country/$countryCode")
+            })
         }
 
-        composable(
-            route = "${Screens.COUNTRY.name}/{countryCode}",
+        composable("${Screens.COUNTRY.name}/{countryCode}",
             arguments = listOf(navArgument("countryCode") { type = NavType.StringType })
         ) { backStackEntry ->
-            val countryCode = backStackEntry.arguments?.getString("countryCode")
-            if (countryCode != null) {
+            backStackEntry.arguments?.getString("countryCode")?.let { countryCode ->
                 // CountryScreen(countryCode)
             }
         }

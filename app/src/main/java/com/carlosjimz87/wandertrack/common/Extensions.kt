@@ -12,7 +12,7 @@ import com.carlosjimz87.wandertrack.common.Constants.MIN_ZOOM_LEVEL
 import com.carlosjimz87.wandertrack.domain.models.City
 import com.carlosjimz87.wandertrack.domain.models.Country
 import com.carlosjimz87.wandertrack.domain.models.CountryGeometry
-import com.carlosjimz87.wandertrack.ui.screens.mapscreen.MapViewModel
+import com.carlosjimz87.wandertrack.ui.screens.mapscreen.viewmodel.MapViewModel
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.LatLngBounds

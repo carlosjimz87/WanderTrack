@@ -1,4 +1,4 @@
-package com.carlosjimz87.wandertrack.ui.screens.mapscreen
+package com.carlosjimz87.wandertrack.ui.screens.mapscreen.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope

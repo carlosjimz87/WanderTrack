@@ -41,6 +41,7 @@ import com.carlosjimz87.wandertrack.ui.composables.map.BottomSheetDragHandle
 import com.carlosjimz87.wandertrack.ui.composables.map.DetectUserMapMovement
 import com.carlosjimz87.wandertrack.ui.composables.map.MapCanvas
 import com.carlosjimz87.wandertrack.ui.composables.map.MapHeaderInfo
+import com.carlosjimz87.wandertrack.ui.screens.mapscreen.viewmodel.MapViewModel
 import com.google.android.gms.maps.model.LatLng
 import com.google.maps.android.compose.rememberCameraPositionState
 import kotlinx.coroutines.launch

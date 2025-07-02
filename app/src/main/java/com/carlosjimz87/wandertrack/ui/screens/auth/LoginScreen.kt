@@ -1,4 +1,8 @@
 package com.carlosjimz87.wandertrack.ui.screens.auth
+import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.IntentSenderRequest
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -27,26 +31,50 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
+import androidx.navigation.NavController
+import com.carlosjimz87.wandertrack.BuildConfig
 import com.carlosjimz87.wandertrack.R
+import com.carlosjimz87.wandertrack.navigation.Screens
 import com.carlosjimz87.wandertrack.ui.composables.auth.GoogleButton
 import com.carlosjimz87.wandertrack.ui.composables.auth.LoginButtons
+import com.carlosjimz87.wandertrack.ui.screens.auth.viewmodel.AuthViewModel
+import com.google.android.gms.auth.api.identity.BeginSignInRequest
+import com.google.android.gms.auth.api.identity.Identity
 import org.koin.androidx.compose.koinViewModel
 
 @Composable
 fun LoginScreen(
-    onLoginSuccess: () -> Unit,
-    onGoogleSignInClick: () -> Unit,
-    onForgotPasswordClick: () -> Unit,
-    authViewModel: AuthViewModel = koinViewModel()
+    navController: NavController,
+    authViewModel: AuthViewModel = koinViewModel(),
+    onGoogleIdTokenReceived: (String) -> Unit
 ) {
     val context = LocalContext.current
     val user by authViewModel.authState.collectAsState()
+
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
+    var error by remember { mutableStateOf<String?>(null) }
+
+    val oneTapClient = remember { Identity.getSignInClient(context) }
+    val launcher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.StartIntentSenderForResult()
+    ) { result ->
+        try {
+            val credential = oneTapClient.getSignInCredentialFromIntent(result.data)
+            val idToken = credential.googleIdToken
+            if (idToken != null) {
+                onGoogleIdTokenReceived(idToken)
+            }
+        } catch (e: Exception) {
+            Toast.makeText(context, "Google Sign-In failed", Toast.LENGTH_SHORT).show()
+        }
+    }
 
     LaunchedEffect(user) {
         if (user != null) {
-            onLoginSuccess()
+            navController.navigate(Screens.MAP.name) {
+                popUpTo(0)
+            }
         }
     }
 
@@ -77,7 +105,28 @@ fun LoginScreen(
 
                 Spacer(modifier = Modifier.height(24.dp))
 
-                GoogleButton(onGoogleSignInClick = onGoogleSignInClick)
+                GoogleButton(onGoogleSignInClick = {
+
+                    val signInRequest = BeginSignInRequest.builder()
+                        .setGoogleIdTokenRequestOptions(
+                            BeginSignInRequest.GoogleIdTokenRequestOptions.builder()
+                                .setSupported(true)
+                                .setServerClientId(BuildConfig.GOOGLE_CLIENT_ID)
+                                .setFilterByAuthorizedAccounts(false)
+                                .build()
+                        )
+                        .build()
+
+                    oneTapClient.beginSignIn(signInRequest)
+                        .addOnSuccessListener { result ->
+                            launcher.launch(
+                                IntentSenderRequest.Builder(result.pendingIntent).build()
+                            )
+                        }
+                        .addOnFailureListener {
+                            Toast.makeText(context, "Google Sign-In init failed", Toast.LENGTH_SHORT).show()
+                        }
+                } )
 
                 Spacer(modifier = Modifier.height(24.dp))
 
@@ -104,13 +153,19 @@ fun LoginScreen(
 
                 Spacer(modifier = Modifier.height(8.dp))
 
-                TextButton(onClick = onForgotPasswordClick) {
+                TextButton(onClick = {
+                    // go to webview to handle forgotten password.
+                }) {
                     Text(context.getString(R.string.forgot_password), color = MaterialTheme.colorScheme.primary)
                 }
             }
 
             LoginButtons(
-                onSignInClick = {}
+                onSignInClick = {
+                    authViewModel.loginWithEmail(email, password) { success, msg ->
+                        if (!success) error = msg
+                    }
+                }
             )
         }
     }

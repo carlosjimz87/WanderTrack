@@ -5,8 +5,9 @@ import org.mockito.Mockito
 
 class FakeAuthRepository : AuthRepository {
 
-    var fakeUser: FirebaseUser? = null
+    private var fakeUser: FirebaseUser? = null
     var shouldFail = false
+    private var googleLoginSuccess = true
 
     override val currentUser: FirebaseUser?
         get() = fakeUser
@@ -20,15 +21,24 @@ class FakeAuthRepository : AuthRepository {
         }
     }
 
-    override fun loginWithGoogle(idToken: String, onResult: (Boolean, String?) -> Unit) {
-        login("", "", onResult)
-    }
-
     override fun signup(email: String, password: String, onResult: (Boolean, String?) -> Unit) {
         login(email, password, onResult)
     }
 
     override fun logout() {
         fakeUser = null
+    }
+
+    fun setGoogleLoginResult(success: Boolean) {
+        googleLoginSuccess = success
+    }
+
+    override fun loginWithGoogle(idToken: String, onResult: (Boolean, String?) -> Unit) {
+        if (googleLoginSuccess) {
+            fakeUser = Mockito.mock(FirebaseUser::class.java)
+            onResult(true, null)
+        } else {
+            onResult(false, "Error")
+        }
     }
 }

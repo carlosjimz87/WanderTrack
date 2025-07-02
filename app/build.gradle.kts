@@ -100,7 +100,6 @@ dependencies {
 
     // Firebase modules
     implementation(libs.firebase.auth.ktx)
-    implementation(libs.google.auth)
     implementation(libs.firebase.firestore.ktx)
     implementation(libs.firebase.storage.ktx)
     implementation(libs.firebase.config.ktx)
@@ -108,17 +107,18 @@ dependencies {
     implementation(libs.firebase.ml.modeldownloader.ktx)
     implementation(libs.firebase.crashlytics.ktx)
 
-    // Google Maps
+    // Google Services
     implementation(libs.maps.compose)
-    implementation(libs.play.services.maps)
+    implementation(libs.google.maps)
+    implementation(libs.google.auth)
+    implementation(libs.android.maps.utils)
+    implementation(libs.androidx.credentials)
+    implementation(libs.googleid)
 
     // Koin
     implementation(libs.koin.core)
     implementation(libs.koin.android)
     implementation(libs.koin.compose)
-
-    // Google Maps Utils
-    implementation(libs.android.maps.utils)
 
     testImplementation(libs.junit)
     testImplementation(libs.junit.jupiter)
