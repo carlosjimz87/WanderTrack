@@ -1,6 +1,8 @@
 package com.carlosjimz87.wandertrack.di
 
 import FirestoreRepositoryImpl
+import com.carlosjimz87.wandertrack.data.repo.AuthRepository
+import com.carlosjimz87.wandertrack.data.repo.AuthRepositoryImpl
 import com.carlosjimz87.wandertrack.data.repo.FirestoreRepository
 import com.carlosjimz87.wandertrack.data.repo.MapRepository
 import com.carlosjimz87.wandertrack.data.repo.MapRepositoryImpl
@@ -16,12 +18,13 @@ val appModule = module {
     // repositories
     single<MapRepository> { MapRepositoryImpl(androidContext()) }
     single<FirestoreRepository> { FirestoreRepositoryImpl() }
+    single<AuthRepository> { AuthRepositoryImpl() }
 
     // dummy userId provider (replace with real logic or injected service)
     factory<String>(qualifier = named("userId")) { "test_user_123" }
 
     // viewmodels
-    viewModel { AuthViewModel() }
+    viewModel { AuthViewModel(get()) }
     viewModel {
         val userId: String = get(named("userId"))
         MapViewModel(userId, get<MapRepository>(), get<FirestoreRepository>())

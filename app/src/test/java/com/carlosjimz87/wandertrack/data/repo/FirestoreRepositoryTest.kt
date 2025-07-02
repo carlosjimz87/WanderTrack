@@ -14,8 +14,8 @@ import org.junit.Test
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 
-@ExperimentalCoroutinesApi
-class FirestoreRepositoryImplTest {
+@OptIn(ExperimentalCoroutinesApi::class)
+class FirestoreRepositoryTest {
 
     private lateinit var repo: FakeFirestoreRepository
     private val testDispatcher = StandardTestDispatcher()

@@ -1,70 +1,49 @@
 package com.carlosjimz87.wandertrack.ui.screens.auth
 
 import androidx.lifecycle.ViewModel
-import com.google.firebase.auth.FirebaseAuth
+import com.carlosjimz87.wandertrack.data.repo.AuthRepository
 import com.google.firebase.auth.FirebaseUser
-import com.google.firebase.auth.GoogleAuthProvider
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
-class AuthViewModel : ViewModel() {
+class AuthViewModel(
+    private val authRepository: AuthRepository
+) : ViewModel() {
 
-    private val auth: FirebaseAuth = FirebaseAuth.getInstance()
-    private val _authState = MutableStateFlow(auth.currentUser)
+    private val _authState = MutableStateFlow(authRepository.currentUser)
     val authState: StateFlow<FirebaseUser?> = _authState.asStateFlow()
 
     private val _authScreenState = MutableStateFlow(AuthScreenState.START)
     val authScreenState: StateFlow<AuthScreenState> = _authScreenState.asStateFlow()
 
-    fun showLogin() {
-        _authScreenState.value = AuthScreenState.LOGIN
-    }
-
-    fun showSignup() {
-        _authScreenState.value = AuthScreenState.SIGNUP
-    }
-
-    fun showStart() {
-        _authScreenState.value = AuthScreenState.START
-    }
+    fun showLogin() { _authScreenState.value = AuthScreenState.LOGIN }
+    fun showSignup() { _authScreenState.value = AuthScreenState.SIGNUP }
+    fun showStart() { _authScreenState.value = AuthScreenState.START }
 
     fun login(email: String, password: String, onResult: (Boolean, String?) -> Unit) {
-        auth.signInWithEmailAndPassword(email, password)
-            .addOnSuccessListener {
-                _authState.value = auth.currentUser
-                onResult(true, null)
-            }
-            .addOnFailureListener {
-                onResult(false, it.message)
-            }
+        authRepository.login(email, password) { success, message ->
+            if (success) _authState.value = authRepository.currentUser
+            onResult(success, message)
+        }
     }
 
     fun loginWithGoogle(idToken: String, onResult: (Boolean, String?) -> Unit) {
-        val credential = GoogleAuthProvider.getCredential(idToken, null)
-        auth.signInWithCredential(credential)
-            .addOnSuccessListener {
-                _authState.value = auth.currentUser
-                onResult(true, null)
-            }
-            .addOnFailureListener {
-                onResult(false, it.message)
-            }
+        authRepository.loginWithGoogle(idToken) { success, message ->
+            if (success) _authState.value = authRepository.currentUser
+            onResult(success, message)
+        }
     }
 
     fun signup(email: String, password: String, onResult: (Boolean, String?) -> Unit) {
-        auth.createUserWithEmailAndPassword(email, password)
-            .addOnSuccessListener {
-                _authState.value = auth.currentUser
-                onResult(true, null)
-            }
-            .addOnFailureListener {
-                onResult(false, it.message)
-            }
+        authRepository.signup(email, password) { success, message ->
+            if (success) _authState.value = authRepository.currentUser
+            onResult(success, message)
+        }
     }
 
     fun logout() {
-        auth.signOut()
+        authRepository.logout()
         _authState.value = null
     }
 }
