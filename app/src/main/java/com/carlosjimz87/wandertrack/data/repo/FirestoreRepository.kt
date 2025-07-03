@@ -8,4 +8,5 @@ interface FirestoreRepository {
     suspend fun fetchUserVisits(userId: String): UserVisits  // visited countries + cities
     suspend fun updateCountryVisited(userId: String, code: String, visited: Boolean)
     suspend fun updateCityVisited(userId: String, countryCode: String, cityName: String, visited: Boolean)
+    suspend fun ensureUserDocument(userId: String)
 }

@@ -7,6 +7,7 @@ import com.carlosjimz87.wandertrack.utils.Logger
 import com.google.firebase.Firebase
 import com.google.firebase.firestore.CollectionReference
 import com.google.firebase.firestore.DocumentReference
+import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.firestore
 import kotlinx.coroutines.tasks.await
@@ -147,6 +148,14 @@ class FirestoreRepositoryImpl(
             }
         } catch (e: Exception) {
             e.printStackTrace()
+        }
+    }
+
+    override suspend fun ensureUserDocument(userId: String) {
+        val userDocRef = db.collection(userBasePath()).document(userId)
+        val snapshot = userDocRef.get().await()
+        if (!snapshot.exists()) {
+            userDocRef.set(mapOf("createdAt" to FieldValue.serverTimestamp())).await()
         }
     }
 }
