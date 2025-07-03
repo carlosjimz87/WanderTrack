@@ -45,14 +45,17 @@ import com.carlosjimz87.wandertrack.ui.screens.mapscreen.viewmodel.MapViewModel
 import com.google.android.gms.maps.model.LatLng
 import com.google.maps.android.compose.rememberCameraPositionState
 import kotlinx.coroutines.launch
-import org.koin.androidx.compose.koinViewModel
+import org.koin.androidx.compose.getViewModel
+import org.koin.core.parameter.parametersOf
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MapScreen(
-    viewModel: MapViewModel = koinViewModel(),
+    userId: String,
     onCountryClicked: (String) -> Unit
 ) {
+
+    val viewModel: MapViewModel = getViewModel(parameters = { parametersOf(userId) })
     val coroutineScope = rememberCoroutineScope()
     val visitedCountriesCodes by viewModel.visitedCountryCodes.collectAsState()
     val countryBorders by viewModel.countryBorders.collectAsState()

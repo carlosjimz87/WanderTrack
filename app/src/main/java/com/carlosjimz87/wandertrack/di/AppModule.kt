@@ -15,18 +15,14 @@ import org.koin.dsl.module
 
 val appModule = module {
 
-    // repositories
+    // Repositories
     single<MapRepository> { MapRepositoryImpl(androidContext()) }
     single<FirestoreRepository> { FirestoreRepositoryImpl() }
     single<AuthRepository> { AuthRepositoryImpl() }
 
-    // dummy userId provider (replace with real logic or injected service)
-    factory<String>(qualifier = named("userId")) { "test_user_123" }
-
-    // viewmodels
     viewModel { AuthViewModel(get()) }
-    viewModel {
-        val userId: String = get(named("userId"))
+
+    viewModel { (userId: String) ->
         MapViewModel(userId, get<MapRepository>(), get<FirestoreRepository>())
     }
 }

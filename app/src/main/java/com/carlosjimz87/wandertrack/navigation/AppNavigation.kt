@@ -73,10 +73,19 @@ fun AppNavigation(authViewModel: AuthViewModel = koinViewModel()) {
         }
 
         composable(Screens.MAP.name) {
-            MapScreen(onCountryClicked = { countryCode ->
-                navController.navigate("country/$countryCode")
-            })
+            val authViewModel: AuthViewModel = koinViewModel()
+            val user = authViewModel.authState.collectAsState().value
+
+            user?.uid?.let { userId ->
+                MapScreen(
+                    userId = userId,
+                    onCountryClicked = { countryCode ->
+                        navController.navigate("country/$countryCode")
+                    }
+                )
+            }
         }
+
 
         composable("${Screens.COUNTRY.name}/{countryCode}",
             arguments = listOf(navArgument("countryCode") { type = NavType.StringType })
