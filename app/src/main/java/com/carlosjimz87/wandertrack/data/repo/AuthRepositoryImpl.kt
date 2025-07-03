@@ -11,7 +11,7 @@ class AuthRepositoryImpl : AuthRepository {
     override val currentUser: FirebaseUser?
         get() = auth.currentUser
 
-    override fun login(email: String, password: String, onResult: (Boolean, String?) -> Unit) {
+    override fun loginWithEmail(email: String, password: String, onResult: (Boolean, String?) -> Unit) {
         auth.signInWithEmailAndPassword(email, password)
             .addOnSuccessListener { onResult(true, null) }
             .addOnFailureListener { onResult(false, it.message) }

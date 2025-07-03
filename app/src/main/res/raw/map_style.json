@@ -47,5 +47,19 @@
     "stylers": [
       { "visibility": "off" }
     ]
+  },
+  {
+    "featureType": "administrative.province",
+    "elementType": "labels",
+    "stylers": [
+      { "visibility": "off" }
+    ]
+  },
+  {
+    "featureType": "administrative.province",
+    "elementType": "geometry",
+    "stylers": [
+      { "visibility": "off" }
+    ]
   }
 ]

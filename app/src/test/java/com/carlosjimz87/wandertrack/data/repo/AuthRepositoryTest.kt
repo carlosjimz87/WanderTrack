@@ -41,7 +41,7 @@ class AuthRepositoryTest {
     fun `login success sets currentUser`() = runTest {
         var callbackSuccess = false
 
-        repo.login("test@test.com", "password") { success, _ ->
+        repo.loginWithEmail("test@test.com", "password") { success, _ ->
             callbackSuccess = success
         }
 
@@ -54,7 +54,7 @@ class AuthRepositoryTest {
         repo.shouldFail = true
         var callbackSuccess = true
 
-        repo.login("test@test.com", "password") { success, message ->
+        repo.loginWithEmail("test@test.com", "password") { success, message ->
             callbackSuccess = success
             assertEquals("Login failed", message)
         }
@@ -77,7 +77,7 @@ class AuthRepositoryTest {
 
     @Test
     fun `logout clears currentUser`() = runTest {
-        repo.login("test@test.com", "password") { _, _ -> }
+        repo.loginWithEmail("test@test.com", "password") { _, _ -> }
         assertNotNull(repo.currentUser)
 
         repo.logout()

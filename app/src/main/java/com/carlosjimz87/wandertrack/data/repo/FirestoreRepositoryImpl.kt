@@ -152,10 +152,16 @@ class FirestoreRepositoryImpl(
     }
 
     override suspend fun ensureUserDocument(userId: String) {
-        val userDocRef = db.collection(userBasePath()).document(userId)
-        val snapshot = userDocRef.get().await()
-        if (!snapshot.exists()) {
-            userDocRef.set(mapOf("createdAt" to FieldValue.serverTimestamp())).await()
+        try {
+            val userDoc = db.collection(userBasePath()).document(userId)
+            val snapshot = userDoc.get().await()
+
+            if (!snapshot.exists()) {
+                userDoc.set(mapOf("createdAt" to FieldValue.serverTimestamp())).await()
+                Logger.w("Created user document for $userId")
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
         }
     }
 }

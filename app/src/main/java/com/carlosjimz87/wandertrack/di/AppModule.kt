@@ -20,7 +20,7 @@ val appModule = module {
     single<FirestoreRepository> { FirestoreRepositoryImpl() }
     single<AuthRepository> { AuthRepositoryImpl() }
 
-    viewModel { AuthViewModel(get()) }
+    viewModel { AuthViewModel(get(), get()) }
 
     viewModel { (userId: String) ->
         MapViewModel(userId, get<MapRepository>(), get<FirestoreRepository>())

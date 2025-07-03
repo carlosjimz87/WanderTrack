@@ -12,7 +12,7 @@ class FakeAuthRepository : AuthRepository {
     override val currentUser: FirebaseUser?
         get() = fakeUser
 
-    override fun login(email: String, password: String, onResult: (Boolean, String?) -> Unit) {
+    override fun loginWithEmail(email: String, password: String, onResult: (Boolean, String?) -> Unit) {
         if (shouldFail) {
             onResult(false, "Login failed")
         } else {
@@ -22,7 +22,7 @@ class FakeAuthRepository : AuthRepository {
     }
 
     override fun signup(email: String, password: String, onResult: (Boolean, String?) -> Unit) {
-        login(email, password, onResult)
+        loginWithEmail(email, password, onResult)
     }
 
     override fun logout() {

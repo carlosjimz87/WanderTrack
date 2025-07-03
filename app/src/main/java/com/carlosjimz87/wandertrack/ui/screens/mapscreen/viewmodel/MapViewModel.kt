@@ -52,8 +52,6 @@ class MapViewModel(
         viewModelScope.launch {
             _isLoading.value = true
 
-            firestoreRepo.ensureUserDocument(userId)
-
             val countriesFromFirestore = firestoreRepo.fetchAllCountries(userId)
             _countries.value = countriesFromFirestore
 
