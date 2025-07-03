@@ -136,25 +136,23 @@ class MapViewModel(
 
         viewModelScope.launch {
             firestoreRepo.updateCityVisited(userId, countryCode, cityName, isNowVisited)
+
+            if (isNowVisited && !_visitedCountryCodes.value.contains(countryCode)) {
+                // Si se marca la ciudad y el país no estaba visitado, marcar el país
+                toggleCountryVisited(countryCode)
+            } else if (!isNowVisited) {
+                // Si se desmarca la ciudad, y no quedan ciudades visitadas, desmarcar el país
+                val remainingCities = _visitedCities.value[countryCode] ?: emptySet()
+                if (remainingCities.isEmpty() && _visitedCountryCodes.value.contains(countryCode)) {
+                    toggleCountryVisited(countryCode)
+                }
+            }
         }
     }
 
     fun isSameCountrySelected(latLng: LatLng): Boolean {
         val code = mapRepo.getCountryCodeFromLatLng(latLng)
         return selectedCountry.value?.code?.equals(code, ignoreCase = true) == true
-    }
-
-    fun getVisitedCountriesBounds(): LatLngBounds? {
-        if (_visitedCountryCodes.value.isEmpty()) return null
-
-        val boundsBuilder = LatLngBounds.builder()
-
-        _visitedCountryCodes.value.forEach { code ->
-            val geometry = mapRepo.getCountryGeometries()[code] ?: return@forEach
-            geometry.polygons.flatten().forEach { boundsBuilder.include(it) }
-        }
-
-        return boundsBuilder.build()
     }
 
     fun getVisitedCountriesCenterAndBounds(): Pair<LatLng, LatLngBounds>? {
