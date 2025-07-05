@@ -1,6 +1,5 @@
 package com.carlosjimz87.wandertrack.ui.screens.mapscreen
 
-import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -34,7 +33,6 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
@@ -52,6 +50,7 @@ import com.carlosjimz87.wandertrack.ui.composables.map.BottomSheetDragHandle
 import com.carlosjimz87.wandertrack.ui.composables.map.DetectUserMapMovement
 import com.carlosjimz87.wandertrack.ui.composables.map.MapCanvas
 import com.carlosjimz87.wandertrack.ui.composables.map.MapHeaderInfo
+import com.carlosjimz87.wandertrack.ui.composables.map.ProfileIconButton
 import com.carlosjimz87.wandertrack.ui.screens.mapscreen.viewmodel.MapViewModel
 import com.google.android.gms.maps.model.LatLng
 import com.google.maps.android.compose.rememberCameraPositionState
@@ -205,20 +204,12 @@ fun MapScreen(
                 modifier = Modifier.align(Alignment.TopStart)
             )
 
-            // Botón flotante de acceso a perfil en esquina superior derecha
-            IconButton(
+            ProfileIconButton(
                 onClick = { onProfileClick() },
                 modifier = Modifier
                     .align(Alignment.TopEnd)
                     .padding(16.dp)
-                    .background(MaterialTheme.colorScheme.background, shape = CircleShape)
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Person,
-                    contentDescription = "Profile",
-                    tint = MaterialTheme.colorScheme.tertiary
-                )
-            }
+            )
 
             if (isLoading) {
                 CircularProgressIndicator(
