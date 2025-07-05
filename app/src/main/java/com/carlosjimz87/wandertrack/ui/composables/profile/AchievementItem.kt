@@ -15,8 +15,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.carlosjimz87.wandertrack.domain.models.Achievement
+import com.carlosjimz87.wandertrack.ui.theme.WanderTrackTheme
 
 @Composable
 fun AchievementItem(achievement: Achievement) {
@@ -41,5 +43,41 @@ fun AchievementItem(achievement: Achievement) {
                 fontWeight = FontWeight.Bold
             )
         }
+    }
+}
+
+
+@Preview(
+    name = "AchievementItem Light",
+    showBackground = true,
+    backgroundColor = 0xFFF5F5F5
+)
+@Composable
+fun AchievementItemPreviewLight() {
+    WanderTrackTheme {
+        AchievementItem(
+            achievement = Achievement(
+                title = "✅",
+                description = "Completed your first trip!"
+            )
+        )
+    }
+}
+
+@Preview(
+    name = "AchievementItem Dark",
+    showBackground = true,
+    backgroundColor = 0xFF121212,
+    uiMode = android.content.res.Configuration.UI_MODE_NIGHT_YES
+)
+@Composable
+fun AchievementItemPreviewDark() {
+    WanderTrackTheme {
+        AchievementItem(
+            achievement = Achievement(
+                title = "✅",
+                description = "Completed your first trip!"
+            )
+        )
     }
 }

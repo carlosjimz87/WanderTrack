@@ -1,9 +1,12 @@
 import com.carlosjimz87.wandertrack.BuildConfig
 import com.carlosjimz87.wandertrack.data.repo.FirestoreRepository
+import com.carlosjimz87.wandertrack.domain.models.Achievement
 import com.carlosjimz87.wandertrack.domain.models.City
 import com.carlosjimz87.wandertrack.domain.models.Country
+import com.carlosjimz87.wandertrack.domain.models.ProfileData
 import com.carlosjimz87.wandertrack.domain.models.UserVisits
 import com.carlosjimz87.wandertrack.utils.Logger
+import com.carlosjimz87.wandertrack.utils.toProfileUiState
 import com.google.firebase.Firebase
 import com.google.firebase.firestore.CollectionReference
 import com.google.firebase.firestore.DocumentReference
@@ -162,6 +165,19 @@ class FirestoreRepositoryImpl(
             }
         } catch (e: Exception) {
             e.printStackTrace()
+        }
+    }
+
+    override suspend fun fetchUserProfile(userId: String): ProfileData? {
+        return try {
+            val doc = db.collection(userBasePath()).document(userId).get().await()
+
+            if (!doc.exists()) return null
+
+            return doc.toProfileUiState()
+        } catch (e: Exception) {
+            e.printStackTrace()
+            null
         }
     }
 }

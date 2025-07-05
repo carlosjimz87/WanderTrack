@@ -1,16 +1,23 @@
 package com.carlosjimz87.wandertrack.utils
 
-import android.content.Context
-import android.location.Geocoder
-import com.google.android.gms.maps.model.LatLng
+import com.carlosjimz87.wandertrack.domain.models.Achievement
+import com.carlosjimz87.wandertrack.domain.models.ProfileData
+import com.google.firebase.firestore.DocumentSnapshot
 
+fun DocumentSnapshot.toProfileUiState(): ProfileData {
+    val achievementsList = (get("achievements") as? List<Map<String, Any>>)?.map {
+        Achievement(
+            title = it["title"] as? String ?: "",
+            description = it["desc"] as? String ?: ""
+        )
+    } ?: emptyList()
 
-fun getCountryCodeFromLatLng(context: Context, latLng: LatLng): String? {
-    return try {
-        val geocoder = Geocoder(context)
-        val addresses = geocoder.getFromLocation(latLng.latitude, latLng.longitude, 1)
-        addresses?.firstOrNull()?.countryCode
-    } catch (e: Exception) {
-        null
-    }
+    return ProfileData(
+        username = getString("username") ?: "",
+        countriesVisited = (getLong("countries") ?: 0L).toInt(),
+        citiesVisited = (getLong("cities") ?: 0L).toInt(),
+        continentsVisited = (getLong("continents") ?: 0L).toInt(),
+        worldPercent = (getLong("world") ?: 0L).toInt(),
+        achievements = achievementsList
+    )
 }

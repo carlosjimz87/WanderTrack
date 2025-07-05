@@ -26,7 +26,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.carlosjimz87.wandertrack.R
-import com.carlosjimz87.wandertrack.domain.models.ProfileUiState
+import com.carlosjimz87.wandertrack.domain.models.ProfileData
 import com.carlosjimz87.wandertrack.ui.composables.auth.PrimaryButton
 import com.carlosjimz87.wandertrack.ui.composables.profile.AchievementItem
 import com.carlosjimz87.wandertrack.ui.composables.profile.StatItem
@@ -53,7 +53,7 @@ fun ProfileScreen(
 
 @Composable
 fun ProfileScreenContent(
-    profile: ProfileUiState,
+    profile: ProfileData,
     onEditProfile: () -> Unit,
     onLogout: () -> Unit,
     logoutText: String,
@@ -134,7 +134,7 @@ fun ProfileScreenContent(
 fun ProfileScreenPreview() {
     WanderTrackTheme {
         ProfileScreenContent(
-            profile = ProfileUiState(
+            profile = ProfileData(
                 username = "Jane Doe",
                 countriesVisited = 12,
                 citiesVisited = 34,
@@ -159,7 +159,7 @@ fun ProfileScreenPreview() {
 fun ProfileScreenPreviewDark() {
     WanderTrackTheme {
         ProfileScreenContent(
-            profile = ProfileUiState(
+            profile = ProfileData(
                 username = "Jane Doe",
                 countriesVisited = 12,
                 citiesVisited = 34,

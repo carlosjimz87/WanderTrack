@@ -4,25 +4,32 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
-import com.carlosjimz87.wandertrack.domain.models.Achievement
-import com.carlosjimz87.wandertrack.domain.models.ProfileUiState
+import androidx.lifecycle.viewModelScope
+import com.carlosjimz87.wandertrack.data.repo.AuthRepository
+import com.carlosjimz87.wandertrack.data.repo.FirestoreRepository
+import com.carlosjimz87.wandertrack.domain.models.ProfileData
+import kotlinx.coroutines.launch
 
-class ProfileViewModel : ViewModel() {
+class ProfileViewModel(
+    private val firestoreRepository: FirestoreRepository,
+    private val authRepository: AuthRepository
+) : ViewModel() {
 
-    // Expose as val for immutability in UI
-    var profileState by mutableStateOf(
-        ProfileUiState(
-            username = "Olivia",
-            countriesVisited = 7,
-            worldPercent = 4,
-            citiesVisited = 32,
-            continentsVisited = 2,
-            achievements = listOf(
-                Achievement("️✅", "First country visited", 0),
-                Achievement("10", "10 countries reached", 0),
-                Achievement("🚩", "All cities in a country", 0)
-            )
-        )
-    )
+    var profileState by mutableStateOf(ProfileData())
         private set
+
+    init {
+        loadProfile()
+    }
+
+    fun loadProfile() {
+        val userId = authRepository.currentUser?.uid ?: return
+
+        viewModelScope.launch {
+            val profile = firestoreRepository.fetchUserProfile(userId)
+            if (profile != null) {
+                profileState = profile
+            }
+        }
+    }
 }

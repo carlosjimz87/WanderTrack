@@ -1,6 +1,7 @@
 package com.carlosjimz87.wandertrack.data.repo
 
 import com.carlosjimz87.wandertrack.domain.models.Country
+import com.carlosjimz87.wandertrack.domain.models.ProfileData
 import com.carlosjimz87.wandertrack.domain.models.UserVisits
 
 interface FirestoreRepository {
@@ -9,4 +10,5 @@ interface FirestoreRepository {
     suspend fun updateCountryVisited(userId: String, code: String, visited: Boolean)
     suspend fun updateCityVisited(userId: String, countryCode: String, cityName: String, visited: Boolean)
     suspend fun ensureUserDocument(userId: String)
+    suspend fun fetchUserProfile(userId: String): ProfileData?
 }
