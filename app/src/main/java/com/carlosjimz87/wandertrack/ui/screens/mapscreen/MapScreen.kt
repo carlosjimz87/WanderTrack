@@ -1,10 +1,14 @@
 package com.carlosjimz87.wandertrack.ui.screens.mapscreen
 
+import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBarsPadding
@@ -25,6 +29,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalWindowInfo
@@ -118,20 +123,34 @@ fun MapScreen(
         sheetPeekHeight = 0.dp,
         sheetSwipeEnabled = true,
         sheetDragHandle = {
-            BottomSheetDragHandle(selectedCountry?.visited == true)
+            null
         },
         sheetContent = {
-            selectedCountry?.let { country ->
-                CountryBottomSheetContent(
-                    countryName = country.name,
-                    countryCode = country.code,
-                    countryVisited = country.visited,
-                    countryCities = country.cities,
-                    onToggleCityVisited = { viewModel.toggleCityVisited(country.code, it) },
-                    onToggleVisited = { viewModel.toggleCountryVisited(it) },
-                    onDismiss = { viewModel.clearSelectedCountry() }
-                )
-            } ?: Spacer(modifier = Modifier.height(1.dp))
+            val hiddenOffset = if (bottomSheetScaffoldState.bottomSheetState.currentValue == SheetValue.Hidden) 10.dp else 0.dp
+
+            Column(
+                modifier = Modifier
+                    .offset(y = hiddenOffset)
+                    .fillMaxWidth()
+                    .background(MaterialTheme.colorScheme.primary)
+            ) {
+                selectedCountry?.let { country ->
+                    BottomSheetDragHandle(country.visited)
+
+                    CountryBottomSheetContent(
+                        countryName = country.name,
+                        countryCode = country.code,
+                        countryVisited = country.visited,
+                        countryCities = country.cities,
+                        onToggleCityVisited = { viewModel.toggleCityVisited(country.code, it) },
+                        onToggleVisited = { viewModel.toggleCountryVisited(it) },
+                        onDismiss = {
+                            Log.d("DISMISS", "DISMISS")
+                            viewModel.clearSelectedCountry()
+                        }
+                    )
+                } ?: Spacer(modifier = Modifier.height(1.dp))
+            }
         }
     ) { innerPadding ->
         Box(

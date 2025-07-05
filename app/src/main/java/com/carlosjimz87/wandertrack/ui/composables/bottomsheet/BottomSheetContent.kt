@@ -93,7 +93,7 @@ fun CountryBottomSheetContent(
                     ) {
                         Text(
                             text = if (expanded) context.getString(R.string.show_less) else context.getString(
-                                R.string.show_less
+                                R.string.show_more
                             ),
                             color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.8f)
                         )
