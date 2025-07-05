@@ -21,9 +21,9 @@ object Constants {
         Country(
             code = "IT",
             name = "Italy",
-            visited = false,
+            visited = true,
             cities = listOf(
-                City(name = "Rome", latitude = 41.9028, longitude = 12.4964),
+                City(name = "Rome", latitude = 41.9028, longitude = 12.4964, visited = true),
                 City(name = "Venice", latitude = 45.4, longitude = 12.3)
             )
         ),

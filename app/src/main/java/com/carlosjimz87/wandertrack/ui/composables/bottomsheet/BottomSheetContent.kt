@@ -109,7 +109,25 @@ fun CountryBottomSheetContent(
 @Composable
 private fun CountryBottomSheetContentPreview() {
     WanderTrackTheme {
-        val country = Constants.countries.first()
+        val country = Constants.countries[0]
+        CountryBottomSheetContent(
+            countryName = country.name,
+            countryCode = country.code,
+            countryVisited = country.visited,
+            countryCities = country.cities,
+            onToggleCityVisited = {},
+            onToggleVisited = {},
+            onDismiss = {}
+        )
+    }
+}
+
+
+@Preview
+@Composable
+private fun CountryBottomSheetContentPreview2() {
+    WanderTrackTheme {
+        val country = Constants.countries[1]
         CountryBottomSheetContent(
             countryName = country.name,
             countryCode = country.code,

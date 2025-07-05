@@ -24,7 +24,6 @@ class MapViewModel(
 ) : ViewModel() {
 
     private val _userMovedMap = MutableStateFlow(false)
-    val userMovedMap = _userMovedMap.asStateFlow()
 
     private val _countries = MutableStateFlow<List<Country>>(emptyList())
     val countries = _countries.asStateFlow()
@@ -33,7 +32,6 @@ class MapViewModel(
     val visitedCountryCodes = _visitedCountryCodes.asStateFlow()
 
     private val _visitedCities = MutableStateFlow<Map<String, Set<String>>>(emptyMap())
-    val visitedCities = _visitedCities.asStateFlow()
 
     private val _selectedCountry = MutableStateFlow<Country?>(null)
     val selectedCountry = _selectedCountry.asStateFlow()
@@ -55,15 +53,11 @@ class MapViewModel(
             val countriesFromFirestore = firestoreRepo.fetchAllCountries(userId)
             _countries.value = countriesFromFirestore
 
-            _visitedCountryCodes.value = countriesFromFirestore
-                .filter { it.visited }
-                .map { it.code }
-                .toSet()
-
-            _visitedCities.value = countriesFromFirestore.associate { country ->
-                country.code to country.cities.filter { it.visited }.map { it.name }.toSet()
+            _visitedCountryCodes.value =
+                countriesFromFirestore.filter { it.visited }.map { it.code }.toSet()
+            _visitedCities.value = countriesFromFirestore.associate {
+                it.code to it.cities.filter { it.visited }.map { it.name }.toSet()
             }
-
             _countryBorders.value = mapRepo.getCountryGeometries()
 
             _isLoading.value = false
@@ -83,28 +77,19 @@ class MapViewModel(
     }
 
     suspend fun resolveCountryFromLatLng(latLng: LatLng): LatLngBounds? {
-        val code = withContext(Dispatchers.Default) {
-            mapRepo.getCountryCodeFromLatLng(latLng)
-        }
-
+        val code = withContext(Dispatchers.Default) { mapRepo.getCountryCodeFromLatLng(latLng) }
         Logger.w("Resolved country from click: $code")
 
-        val country = code?.let { getCountryByCode(_countries.value, it) }
-        _selectedCountry.value = country
-
+        _selectedCountry.value = code?.let { getCountryByCode(_countries.value, it) }
         return code?.let { mapRepo.getCountryBounds()[it] }
     }
 
     fun toggleCountryVisited(code: String) {
         val isVisitedNow = !_visitedCountryCodes.value.contains(code)
 
-        _visitedCountryCodes.update { current ->
-            if (isVisitedNow) current + code else current - code
-        }
-
-        _selectedCountry.update { current ->
-            if (current?.code == code) current.copy(visited = isVisitedNow) else current
-        }
+        _visitedCountryCodes.update { if (isVisitedNow) it + code else it - code }
+        updateCountryVisitedInList(code, isVisitedNow)
+        updateSelectedCountryVisited(code, isVisitedNow)
 
         viewModelScope.launch {
             firestoreRepo.updateCountryVisited(userId, code, isVisitedNow)
@@ -112,40 +97,28 @@ class MapViewModel(
     }
 
     fun toggleCityVisited(countryCode: String, cityName: String) {
-        var isNowVisited = false
+        val isNowVisited = _visitedCities.value[countryCode]?.contains(cityName) != true
+
         _visitedCities.update { current ->
-            val currentSet = current[countryCode] ?: emptySet()
-            val updatedSet = if (currentSet.contains(cityName)) {
-                isNowVisited = false
-                currentSet - cityName
-            } else {
-                isNowVisited = true
-                currentSet + cityName
+            val updatedSet = (current[countryCode] ?: emptySet()).let {
+                if (isNowVisited) it + cityName else it - cityName
             }
             current + (countryCode to updatedSet)
         }
 
-        _selectedCountry.update { current ->
-            if (current?.code == countryCode) {
-                val updatedCities = current.cities.map {
-                    if (it.name == cityName) it.copy(visited = isNowVisited) else it
-                }
-                current.copy(cities = updatedCities)
-            } else current
-        }
+        updateCityVisitedInList(countryCode, cityName, isNowVisited)
+        updateSelectedCityVisited(countryCode, cityName, isNowVisited)
 
         viewModelScope.launch {
             firestoreRepo.updateCityVisited(userId, countryCode, cityName, isNowVisited)
 
-            if (isNowVisited && !_visitedCountryCodes.value.contains(countryCode)) {
-                // Si se marca la ciudad y el país no estaba visitado, marcar el país
+            val remainingCities = _visitedCities.value[countryCode]?.size ?: 0
+            val countryVisited = _visitedCountryCodes.value.contains(countryCode)
+
+            if (isNowVisited && !countryVisited) {
                 toggleCountryVisited(countryCode)
-            } else if (!isNowVisited) {
-                // Si se desmarca la ciudad, y no quedan ciudades visitadas, desmarcar el país
-                val remainingCities = _visitedCities.value[countryCode] ?: emptySet()
-                if (remainingCities.isEmpty() && _visitedCountryCodes.value.contains(countryCode)) {
-                    toggleCountryVisited(countryCode)
-                }
+            } else if (!isNowVisited && remainingCities == 0 && countryVisited) {
+                toggleCountryVisited(countryCode)
             }
         }
     }
@@ -159,24 +132,51 @@ class MapViewModel(
         val codes = _visitedCountryCodes.value
         if (codes.isEmpty()) return null
 
-        val geometries = mapRepo.getCountryGeometries()
-
-        val allPoints = codes.flatMap { code ->
-            geometries[code]?.polygons?.flatten() ?: emptyList()
-        }
-
+        val allPoints =
+            codes.flatMap { mapRepo.getCountryGeometries()[it]?.polygons?.flatten().orEmpty() }
         if (allPoints.isEmpty()) return null
 
-        // Calcular bounds
-        val boundsBuilder = LatLngBounds.builder()
-        allPoints.forEach { boundsBuilder.include(it) }
+        val boundsBuilder = LatLngBounds.builder().apply { allPoints.forEach { include(it) } }
         val bounds = boundsBuilder.build()
 
-        // Calcular centroide
-        val avgLat = allPoints.map { it.latitude }.average()
-        val avgLng = allPoints.map { it.longitude }.average()
-        val center = LatLng(avgLat, avgLng)
+        val center = LatLng(
+            allPoints.map { it.latitude }.average(),
+            allPoints.map { it.longitude }.average()
+        )
+        return center to bounds
+    }
 
-        return Pair(center, bounds)
+    private fun updateCountryVisitedInList(code: String, visited: Boolean) {
+        _countries.update { list ->
+            list.map { if (it.code == code) it.copy(visited = visited) else it }
+        }
+    }
+
+    private fun updateSelectedCountryVisited(code: String, visited: Boolean) {
+        _selectedCountry.update { current ->
+            if (current?.code == code) current.copy(visited = visited) else current
+        }
+    }
+
+    private fun updateCityVisitedInList(countryCode: String, cityName: String, visited: Boolean) {
+        _countries.update { list ->
+            list.map { country ->
+                if (country.code == countryCode) {
+                    country.copy(cities = country.cities.map {
+                        if (it.name == cityName) it.copy(visited = visited) else it
+                    })
+                } else country
+            }
+        }
+    }
+
+    private fun updateSelectedCityVisited(countryCode: String, cityName: String, visited: Boolean) {
+        _selectedCountry.update { current ->
+            if (current?.code == countryCode) {
+                current.copy(cities = current.cities.map {
+                    if (it.name == cityName) it.copy(visited = visited) else it
+                })
+            } else current
+        }
     }
 }
