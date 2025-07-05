@@ -8,6 +8,7 @@ import com.carlosjimz87.wandertrack.data.repo.MapRepository
 import com.carlosjimz87.wandertrack.data.repo.MapRepositoryImpl
 import com.carlosjimz87.wandertrack.ui.screens.auth.viewmodel.AuthViewModel
 import com.carlosjimz87.wandertrack.ui.screens.mapscreen.viewmodel.MapViewModel
+import com.carlosjimz87.wandertrack.ui.screens.profile.viewmodel.ProfileViewModel
 import org.koin.android.ext.koin.androidContext
 import org.koin.androidx.viewmodel.dsl.viewModel
 import org.koin.core.qualifier.named
@@ -20,9 +21,10 @@ val appModule = module {
     single<FirestoreRepository> { FirestoreRepositoryImpl() }
     single<AuthRepository> { AuthRepositoryImpl() }
 
+    // Viewmodels
     viewModel { AuthViewModel(get(), get()) }
-
     viewModel { (userId: String) ->
         MapViewModel(userId, get<MapRepository>(), get<FirestoreRepository>())
     }
+    viewModel{ ProfileViewModel() }
 }

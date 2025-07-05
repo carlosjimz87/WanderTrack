@@ -14,6 +14,7 @@ import com.carlosjimz87.wandertrack.ui.screens.auth.LoginScreen
 import com.carlosjimz87.wandertrack.ui.screens.auth.SignUpScreen
 import com.carlosjimz87.wandertrack.ui.screens.auth.viewmodel.AuthViewModel
 import com.carlosjimz87.wandertrack.ui.screens.mapscreen.MapScreen
+import com.carlosjimz87.wandertrack.ui.screens.profile.ProfileScreen
 import com.carlosjimz87.wandertrack.ui.screens.splash.SplashScreen
 import org.koin.androidx.compose.koinViewModel
 
@@ -77,20 +78,15 @@ fun AppNavigation(authViewModel: AuthViewModel = koinViewModel()) {
             user?.uid?.let { userId ->
                 MapScreen(
                     userId = userId,
-                    onCountryClicked = { countryCode ->
-                        navController.navigate("country/$countryCode")
+                    onProfileClick = {
+                        navController.navigate(Screens.PROFILE.name)
                     }
                 )
             }
         }
 
-
-        composable("${Screens.COUNTRY.name}/{countryCode}",
-            arguments = listOf(navArgument("countryCode") { type = NavType.StringType })
-        ) { backStackEntry ->
-            backStackEntry.arguments?.getString("countryCode")?.let { countryCode ->
-                // CountryScreen(countryCode)
-            }
+        composable(Screens.PROFILE.name) {
+            ProfileScreen()
         }
     }
 }

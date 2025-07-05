@@ -17,6 +17,7 @@
     <string name="email_address">Email</string>
     <string name="password">Password</string>
     <string name="forgot_password">Forgot password?</string>
+    <string name="logout">Log out</string>
 
 
     <string name="visited">Visited</string>

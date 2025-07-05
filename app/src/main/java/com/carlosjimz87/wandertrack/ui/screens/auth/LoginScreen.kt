@@ -36,7 +36,7 @@ import com.carlosjimz87.wandertrack.BuildConfig
 import com.carlosjimz87.wandertrack.R
 import com.carlosjimz87.wandertrack.navigation.Screens
 import com.carlosjimz87.wandertrack.ui.composables.auth.GoogleButton
-import com.carlosjimz87.wandertrack.ui.composables.auth.LoginButtons
+import com.carlosjimz87.wandertrack.ui.composables.auth.PrimaryButton
 import com.carlosjimz87.wandertrack.ui.screens.auth.viewmodel.AuthViewModel
 import com.google.android.gms.auth.api.identity.BeginSignInRequest
 import com.google.android.gms.auth.api.identity.Identity
@@ -160,8 +160,9 @@ fun LoginScreen(
                 }
             }
 
-            LoginButtons(
-                onSignInClick = {
+            PrimaryButton(
+                text = context.getString(R.string.sign_in),
+                onClick = {
                     authViewModel.loginWithEmail(email, password) { success, msg ->
                         if (!success) error = msg
                     }

@@ -12,9 +12,14 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBarsPadding
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.BottomSheetScaffold
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SheetValue
 import androidx.compose.material3.rememberBottomSheetScaffoldState
@@ -57,7 +62,7 @@ import org.koin.core.parameter.parametersOf
 @Composable
 fun MapScreen(
     userId: String,
-    onCountryClicked: (String) -> Unit
+    onProfileClick: () -> Unit,
 ) {
 
     val viewModel: MapViewModel = getViewModel(parameters = { parametersOf(userId) })
@@ -145,7 +150,6 @@ fun MapScreen(
                         onToggleCityVisited = { viewModel.toggleCityVisited(country.code, it) },
                         onToggleVisited = { viewModel.toggleCountryVisited(it) },
                         onDismiss = {
-                            Log.d("DISMISS", "DISMISS")
                             viewModel.clearSelectedCountry()
                         }
                     )
@@ -197,6 +201,21 @@ fun MapScreen(
                 visitedCountriesCount = visitedCountriesCodes.size,
                 modifier = Modifier.align(Alignment.TopStart)
             )
+
+            // Botón flotante de acceso a perfil en esquina superior derecha
+            IconButton(
+                onClick = { onProfileClick() },
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .padding(16.dp)
+                    .background(Color.White, shape = CircleShape)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Person,
+                    contentDescription = "Profile",
+                    tint = Color.Black
+                )
+            }
 
             if (isLoading) {
                 CircularProgressIndicator(
