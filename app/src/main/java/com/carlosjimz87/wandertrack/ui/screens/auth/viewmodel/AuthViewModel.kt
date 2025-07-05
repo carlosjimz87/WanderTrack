@@ -84,6 +84,7 @@ class AuthViewModel(
         viewModelScope.launch {
             try {
                 firestoreRepository.ensureUserDocument(userId)
+                firestoreRepository.recalculateAndUpdateStats(userId)
                 onResult(true, null)
             } catch (e: Exception) {
                 e.printStackTrace()

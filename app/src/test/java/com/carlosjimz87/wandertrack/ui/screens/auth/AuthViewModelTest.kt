@@ -1,12 +1,14 @@
 package com.carlosjimz87.wandertrack.ui.screens.auth
 
-import com.carlosjimz87.wandertrack.data.repo.FakeAuthRepository
+import com.carlosjimz87.wandertrack.data.repo.fakes.FakeAuthRepository
+import com.carlosjimz87.wandertrack.data.repo.fakes.FakeFirestoreRepository
 import com.carlosjimz87.wandertrack.ui.screens.auth.state.AuthScreenState
 import com.carlosjimz87.wandertrack.ui.screens.auth.viewmodel.AuthViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
@@ -22,15 +24,17 @@ import org.junit.jupiter.api.Assertions.assertTrue
 @OptIn(ExperimentalCoroutinesApi::class)
 class AuthViewModelTest {
 
-    private lateinit var repo: FakeAuthRepository
+    private lateinit var authRepo: FakeAuthRepository
+    private lateinit var firestoreRepo: FakeFirestoreRepository
     private lateinit var viewModel: AuthViewModel
     private val testDispatcher = StandardTestDispatcher()
 
     @Before
     fun setup() {
         Dispatchers.setMain(testDispatcher)
-        repo = FakeAuthRepository()
-        viewModel = AuthViewModel(repo)
+        authRepo = FakeAuthRepository()
+        firestoreRepo = FakeFirestoreRepository()
+        viewModel = AuthViewModel(authRepo, firestoreRepo)
     }
 
     @After
@@ -48,7 +52,7 @@ class AuthViewModelTest {
 
     @Test
     fun `login failure does not update authState`() = runTest {
-        repo.shouldFail = true
+        authRepo.shouldFail = true
 
         viewModel.loginWithEmail("test@test.com", "password") { success, message ->
             assertFalse(success)
@@ -95,7 +99,7 @@ class AuthViewModelTest {
 
     @Test
     fun `loginWithGoogle updates authState on success`() = runTest {
-        repo.setGoogleLoginResult(success = true)
+        authRepo.setGoogleLoginResult(success = true)
 
         var callbackSuccess = false
 
@@ -103,13 +107,15 @@ class AuthViewModelTest {
             callbackSuccess = success
         }
 
+        advanceUntilIdle() // Ensures coroutine updates are completed
+
         assertTrue(callbackSuccess)
         assertNotNull(viewModel.authState.value)
     }
 
     @Test
     fun `loginWithGoogle does not update authState on failure`() = runTest {
-        repo.setGoogleLoginResult(success = false)
+        authRepo.setGoogleLoginResult(success = false)
 
         var callbackSuccess = true
 

@@ -11,4 +11,5 @@ interface FirestoreRepository {
     suspend fun updateCityVisited(userId: String, countryCode: String, cityName: String, visited: Boolean)
     suspend fun ensureUserDocument(userId: String)
     suspend fun fetchUserProfile(userId: String): ProfileData?
+    suspend fun recalculateAndUpdateStats(userId: String)
 }

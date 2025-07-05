@@ -1,5 +1,6 @@
 package com.carlosjimz87.wandertrack.data.repo
 
+import com.carlosjimz87.wandertrack.data.repo.fakes.FakeAuthRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher

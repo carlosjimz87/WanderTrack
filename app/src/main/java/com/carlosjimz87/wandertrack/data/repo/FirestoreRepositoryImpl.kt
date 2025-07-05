@@ -5,6 +5,7 @@ import com.carlosjimz87.wandertrack.domain.models.City
 import com.carlosjimz87.wandertrack.domain.models.Country
 import com.carlosjimz87.wandertrack.domain.models.ProfileData
 import com.carlosjimz87.wandertrack.domain.models.UserVisits
+import com.carlosjimz87.wandertrack.utils.AchievementsCalculator
 import com.carlosjimz87.wandertrack.utils.Logger
 import com.carlosjimz87.wandertrack.utils.toProfileUiState
 import com.google.firebase.Firebase
@@ -121,6 +122,7 @@ class FirestoreRepositoryImpl(
             } else {
                 docRef.delete().await()
             }
+            recalculateAndUpdateStats(userId)
         } catch (e: Exception) {
             e.printStackTrace()
         }
@@ -149,6 +151,8 @@ class FirestoreRepositoryImpl(
             } else {
                 docRef.set(mapOf("cities" to cities.toList())).await()
             }
+
+            recalculateAndUpdateStats(userId)
         } catch (e: Exception) {
             e.printStackTrace()
         }
@@ -178,6 +182,69 @@ class FirestoreRepositoryImpl(
         } catch (e: Exception) {
             e.printStackTrace()
             null
+        }
+    }
+
+    override suspend fun recalculateAndUpdateStats(userId: String) {
+        try {
+            // Fetch visited countries subcollection
+            val visitedCountriesSnapshot = visitedCountriesCol(userId)
+                .get().await()
+
+            val countriesVisited = visitedCountriesSnapshot.size()
+
+            // Fetch visited cities subcollection
+            val visitedCitiesSnapshot = db.collection(userBasePath())
+                .document(userId).collection(VISITED_CITIES).get().await()
+
+            val totalCitiesVisited = visitedCitiesSnapshot.documents.sumOf { doc ->
+                val cities = doc.get("cities") as? List<String> ?: emptyList()
+                cities.size
+            }
+
+            // Fetch meta to calculate continents and world percent (optional but recommended)
+            val metaSnapshot = db.collection(META).document(COUNTRIES).collection("all").get().await()
+
+            val visitedCountryCodes = visitedCountriesSnapshot.documents.map { it.id }.toSet()
+            val totalCountries = metaSnapshot.size()
+            val visitedContinents = mutableSetOf<String>()
+
+            for (doc in metaSnapshot.documents) {
+                val code = doc.getString("code") ?: continue
+                if (visitedCountryCodes.contains(code)) {
+                    val continent = doc.getString("continent") ?: continue
+                    visitedContinents.add(continent)
+                }
+            }
+
+            val continentsVisited = visitedContinents.size
+            val worldPercent = if (totalCountries > 0) {
+                (visitedCountryCodes.size * 100) / totalCountries
+            } else 0
+
+            // Calculate achievements using your isolated helper
+            val achievements = AchievementsCalculator.calculateAchievements(
+                countriesVisited = countriesVisited,
+                citiesVisited = totalCitiesVisited,
+                continentsVisited = continentsVisited,
+                worldPercent = worldPercent
+            ).map {
+                mapOf("title" to it.title, "desc" to it.description)
+            }
+
+            // Update user document with new stats and achievements
+            db.collection(userBasePath()).document(userId).update(
+                mapOf(
+                    "countries" to countriesVisited,
+                    "cities" to totalCitiesVisited,
+                    "continents" to continentsVisited,
+                    "world" to worldPercent,
+                    "achievements" to achievements
+                )
+            ).await()
+
+        } catch (e: Exception) {
+            e.printStackTrace()
         }
     }
 }
