@@ -2,7 +2,6 @@ package com.carlosjimz87.wandertrack.navigation
 
 import android.widget.Toast
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.NavType
@@ -23,25 +22,24 @@ fun AppNavigation(authViewModel: AuthViewModel = koinViewModel()) {
 
     val navController = rememberNavController()
     val context = LocalContext.current
-    val userState = authViewModel.authState.collectAsState()
-    val user = userState.value
-
-    LaunchedEffect(user) {
-        user?.let {
-            navController.navigate(Screens.MAP.name) {
-                popUpTo(0)
-            }
-        }
-    }
 
     NavHost(navController, startDestination = Screens.SPLASH.name) {
 
         composable(Screens.SPLASH.name) {
-            SplashScreen(onSplashFinished = {
-                navController.navigate(Screens.AUTH.name) {
-                    popUpTo(Screens.SPLASH.name) { inclusive = true }
+            val user = authViewModel.authState.collectAsState().value
+            SplashScreen(
+                onSplashFinished = {
+                    if (user != null) {
+                        navController.navigate(Screens.MAP.name) {
+                            popUpTo(Screens.SPLASH.name) { inclusive = true }
+                        }
+                    } else {
+                        navController.navigate(Screens.AUTH.name) {
+                            popUpTo(Screens.SPLASH.name) { inclusive = true }
+                        }
+                    }
                 }
-            })
+            )
         }
 
         composable(Screens.AUTH.name) {
