@@ -1,5 +1,6 @@
 package com.carlosjimz87.wandertrack.ui.composables.auth
 
+import android.content.res.Configuration
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -21,7 +22,7 @@ fun PrimaryButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     containerColor: Color = MaterialTheme.colorScheme.primaryContainer,
-    contentColor: Color = MaterialTheme.colorScheme.onPrimary,
+    contentColor: Color = MaterialTheme.colorScheme.surface,
     shape: RoundedCornerShape = RoundedCornerShape(16.dp),
     height: Int = 56
 ) {
@@ -31,6 +32,7 @@ fun PrimaryButton(
             containerColor = containerColor,
             contentColor = contentColor
         ),
+        elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp),
         shape = shape,
         modifier = modifier
             .fillMaxWidth()
@@ -43,6 +45,23 @@ fun PrimaryButton(
 @Preview(showBackground = true)
 @Composable
 fun PrimaryButtonsPreview() {
+    WanderTrackTheme {
+        Column {
+            PrimaryButton(
+                text = "Sign In",
+                onClick = {}
+            )
+        }
+    }
+}
+
+@Preview(
+    showBackground = true,
+    uiMode = Configuration.UI_MODE_NIGHT_YES,
+    backgroundColor = 0xFF121212 // Optional: dark background
+)
+@Composable
+fun PrimaryButtonsPreviewDark() {
     WanderTrackTheme {
         Column {
             PrimaryButton(

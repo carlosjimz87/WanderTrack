@@ -1,65 +1,9 @@
 [
-  {
-    "featureType": "administrative.country",
-    "elementType": "labels.text",
-    "stylers": [
-      { "visibility": "off" }
-    ]
-  },
-  {
-    "featureType": "water",
-    "elementType": "labels.text",
-    "stylers": [
-      { "visibility": "off" }
-    ]
-  },
-  {
-    "featureType": "administrative.country",
-    "elementType": "geometry.stroke",
-    "stylers": [
-      { "color": "#A6D8D2" }
-    ]
-  },
-  {
-    "featureType": "landscape",
-    "elementType": "geometry",
-    "stylers": [
-      { "color": "#FEFAF5" }
-    ]
-  },
-  {
-    "featureType": "water",
-    "elementType": "geometry",
-    "stylers": [
-      { "color": "#A6D8D2" }
-    ]
-  },
-  {
-    "featureType": "all",
-    "elementType": "labels.icon",
-    "stylers": [
-      { "visibility": "off" }
-    ]
-  },
-  {
-    "featureType": "road",
-    "elementType": "all",
-    "stylers": [
-      { "visibility": "off" }
-    ]
-  },
-  {
-    "featureType": "administrative.province",
-    "elementType": "labels",
-    "stylers": [
-      { "visibility": "off" }
-    ]
-  },
-  {
-    "featureType": "administrative.province",
-    "elementType": "geometry",
-    "stylers": [
-      { "visibility": "off" }
-    ]
-  }
+  { "featureType": "administrative.country", "elementType": "geometry.stroke", "stylers": [ { "color": "#A6D8D2" } ] },
+  { "featureType": "administrative.province", "elementType": "geometry", "stylers": [ { "visibility": "off" } ] },
+  { "featureType": "landscape", "elementType": "geometry", "stylers": [ { "color": "#FEFAF5" } ] },
+  { "featureType": "water", "elementType": "geometry", "stylers": [ { "color": "#A6D8D2" } ] },
+  { "featureType": "all", "elementType": "labels.icon", "stylers": [ { "visibility": "off" } ] },
+  { "featureType": "road", "elementType": "all", "stylers": [ { "visibility": "off" } ] },
+  { "featureType": "all", "elementType": "labels.text", "stylers": [ { "visibility": "off" } ] }
 ]

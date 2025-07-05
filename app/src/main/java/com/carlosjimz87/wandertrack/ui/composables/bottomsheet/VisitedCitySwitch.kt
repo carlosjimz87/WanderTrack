@@ -4,7 +4,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.graphics.Color
 
 @Composable
 fun VisitedCitySwitch(isVisited: Boolean, onToggle: () -> Unit) {
@@ -12,10 +11,10 @@ fun VisitedCitySwitch(isVisited: Boolean, onToggle: () -> Unit) {
         checked = isVisited,
         onCheckedChange = { onToggle() },
         colors = SwitchDefaults.colors(
-            checkedThumbColor = MaterialTheme.colorScheme.primaryContainer,
-            checkedTrackColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.4f),
-            uncheckedThumbColor = Color(0xFFB0B0B0),
-            uncheckedTrackColor = Color(0xFFE0E0E0)
+            checkedThumbColor = MaterialTheme.colorScheme.onPrimary,           // White or Black depending on mode
+            checkedTrackColor = MaterialTheme.colorScheme.primary,             // AccentPink or AccentPinkDark
+            uncheckedThumbColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f), // Soft gray thumb
+            uncheckedTrackColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f) // Soft blue-gray track
         )
     )
 }

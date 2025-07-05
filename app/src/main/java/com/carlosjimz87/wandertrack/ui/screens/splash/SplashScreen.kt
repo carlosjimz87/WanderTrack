@@ -6,6 +6,7 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -33,7 +34,7 @@ import com.airbnb.lottie.compose.rememberLottieComposition
 import com.carlosjimz87.wandertrack.R
 import com.carlosjimz87.wandertrack.ui.screens.splash.viewmodel.SplashViewModel
 import com.carlosjimz87.wandertrack.ui.theme.AccentPink
-import com.carlosjimz87.wandertrack.ui.theme.Black
+import com.carlosjimz87.wandertrack.ui.theme.AccentPinkDark
 import kotlinx.coroutines.delay
 
 @Composable
@@ -45,6 +46,7 @@ fun SplashScreen(
     val animationOffset = (-50).dp
     val logoOffset = animationOffset - 90.dp
     val context = LocalContext.current
+    val isDarkMode = isSystemInDarkTheme()
 
     // Lottie composition y animación
     val composition by rememberLottieComposition(LottieCompositionSpec.RawRes(R.raw.splash_anim))
@@ -90,7 +92,7 @@ fun SplashScreen(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(AccentPink),
+            .background(if (isDarkMode) AccentPink else AccentPinkDark),
         contentAlignment = Alignment.Center
     ) {
 
@@ -126,7 +128,7 @@ fun SplashScreen(
                 Text(
                     text = context.getString(R.string.app_name),
                     style = MaterialTheme.typography.titleLarge,
-                    color = Black
+                    color = MaterialTheme.colorScheme.background
                 )
             }
         }

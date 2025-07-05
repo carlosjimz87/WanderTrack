@@ -3,6 +3,7 @@ package com.carlosjimz87.wandertrack.ui.composables.map
 import android.content.Context
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
@@ -74,16 +75,16 @@ fun MapCanvas(
         visitedPolygons.forEach { polygonData ->
             Polygon(
                 points = polygonData.points,
-                fillColor = AccentPink.copy(alpha = 0.5f),
-                strokeColor = AccentPink,
+                fillColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f),
+                strokeColor = MaterialTheme.colorScheme.primary,
                 strokeWidth = 4f
             )
         }
         selectedPolygons.forEach { polygonData ->
             Polygon(
                 points = polygonData.points,
-                fillColor = Color.Gray.copy(alpha = 0.4f),
-                strokeColor = Color.DarkGray,
+                fillColor = MaterialTheme.colorScheme.secondary.copy(alpha = 0.4f),
+                strokeColor = MaterialTheme.colorScheme.secondary,
                 strokeWidth = 4f,
                 zIndex = 2f
             )

@@ -35,6 +35,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalWindowInfo
@@ -87,6 +88,8 @@ fun MapScreen(
 
     var hasCenteredMap by remember { mutableStateOf(false) }
     var hasFocusedOnBottomSheet by remember { mutableStateOf(false) }
+    val fillColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.3f).toArgb()  // Semi-transparent fill
+    val strokeColor = MaterialTheme.colorScheme.primary.toArgb()                   // Solid border
 
     DetectUserMapMovement(lastClickLatLng, cameraPositionState.position.target) {
         viewModel.notifyUserMovedMap()
@@ -208,12 +211,12 @@ fun MapScreen(
                 modifier = Modifier
                     .align(Alignment.TopEnd)
                     .padding(16.dp)
-                    .background(Color.White, shape = CircleShape)
+                    .background(MaterialTheme.colorScheme.background, shape = CircleShape)
             ) {
                 Icon(
                     imageVector = Icons.Default.Person,
                     contentDescription = "Profile",
-                    tint = Color.Black
+                    tint = MaterialTheme.colorScheme.tertiary
                 )
             }
 

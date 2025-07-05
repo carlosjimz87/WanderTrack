@@ -1,5 +1,6 @@
 package com.carlosjimz87.wandertrack.ui.screens.profile
 
+import android.content.res.Configuration
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -25,6 +26,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.carlosjimz87.wandertrack.R
+import com.carlosjimz87.wandertrack.domain.models.ProfileUiState
 import com.carlosjimz87.wandertrack.ui.composables.auth.PrimaryButton
 import com.carlosjimz87.wandertrack.ui.composables.profile.AchievementItem
 import com.carlosjimz87.wandertrack.ui.composables.profile.StatItem
@@ -39,15 +41,31 @@ fun ProfileScreen(
     profileViewModel: ProfileViewModel = koinViewModel()
 ) {
     val context = LocalContext.current
-    val profile = profileViewModel.profileState.value
+    val profile = profileViewModel.profileState
 
+    ProfileScreenContent(
+        profile = profile,
+        onEditProfile = { /* TODO Edit */ },
+        onLogout = { authViewModel.logout() },
+        logoutText = context.getString(R.string.logout)
+    )
+}
+
+@Composable
+fun ProfileScreenContent(
+    profile: ProfileUiState,
+    onEditProfile: () -> Unit,
+    onLogout: () -> Unit,
+    logoutText: String,
+    modifier: Modifier = Modifier
+) {
     Column(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
             .padding(24.dp)
     ) {
-        Text("Profile", style = MaterialTheme.typography.titleMedium)
+        Text("Profile", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onBackground)
 
         Spacer(Modifier.height(24.dp))
 
@@ -58,19 +76,18 @@ fun ProfileScreen(
                     .background(MaterialTheme.colorScheme.surfaceVariant, CircleShape),
                 contentAlignment = Alignment.Center
             ) {
-                // Replace with real image logic if available
                 Text("👩‍🦰", fontSize = MaterialTheme.typography.headlineMedium.fontSize)
             }
             Spacer(Modifier.width(16.dp))
             Column {
-                Text(profile.username, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.displayLarge)
-                Text("Edit profile", modifier = Modifier.clickable { /* TODO Edit */ }, style = MaterialTheme.typography.headlineSmall)
+                Text(profile.username, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.displayLarge, color = MaterialTheme.colorScheme.onBackground)
+                Text("Edit profile", modifier = Modifier.clickable { onEditProfile() }, style = MaterialTheme.typography.headlineSmall, color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.4f))
             }
         }
 
         HorizontalDivider(Modifier.padding(vertical = 24.dp))
 
-        Text("Stats", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.displayLarge, modifier = Modifier.padding(bottom = 12.dp))
+        Text("Stats", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.displayLarge, modifier = Modifier.padding(bottom = 12.dp), color = MaterialTheme.colorScheme.onBackground)
 
         Row(horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
             StatItem("${profile.countriesVisited}", "Countries")
@@ -81,31 +98,78 @@ fun ProfileScreen(
 
         HorizontalDivider(Modifier.padding(vertical = 24.dp))
 
-        Text("Achievements", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.displayLarge, modifier = Modifier.padding(bottom = 12.dp))
+        Text("Achievements", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.displayLarge, modifier = Modifier.padding(bottom = 12.dp), color = MaterialTheme.colorScheme.onBackground)
 
-        Row(horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
-            profile.achievements.forEach {
-                AchievementItem(it)
+        if(profile.achievements.isNotEmpty()){
+
+            Row(horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
+                profile.achievements.forEach {
+                    AchievementItem(it)
+                }
             }
+        } else {
+            Text(
+                text = "No achievements yet.",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
+                modifier = Modifier.padding(vertical = 8.dp)
+            )
         }
 
         Spacer(Modifier.weight(1f))
 
         PrimaryButton(
-            text = context.getString(R.string.logout),
-            onClick = {
-                authViewModel.logout()
-            }
+            text = logoutText,
+            onClick = onLogout
         )
     }
 }
 
+
 @Preview(
     showBackground = true,
+    backgroundColor = 0xFFF5F5F5
 )
 @Composable
 fun ProfileScreenPreview() {
     WanderTrackTheme {
-        ProfileScreen()
+        ProfileScreenContent(
+            profile = ProfileUiState(
+                username = "Jane Doe",
+                countriesVisited = 12,
+                citiesVisited = 34,
+                continentsVisited = 3,
+                worldPercent = 18,
+                achievements = listOf()
+            ),
+            onEditProfile = {},
+            onLogout = {},
+            logoutText = "Logout"
+        )
+    }
+}
+
+
+@Preview(
+    showBackground = true,
+    uiMode = Configuration.UI_MODE_NIGHT_YES,
+    backgroundColor = 0xFF121212 // Optional: dark background
+)
+@Composable
+fun ProfileScreenPreviewDark() {
+    WanderTrackTheme {
+        ProfileScreenContent(
+            profile = ProfileUiState(
+                username = "Jane Doe",
+                countriesVisited = 12,
+                citiesVisited = 34,
+                continentsVisited = 3,
+                worldPercent = 18,
+                achievements = listOf()
+            ),
+            onEditProfile = {},
+            onLogout = {},
+            logoutText = "Logout"
+        )
     }
 }
