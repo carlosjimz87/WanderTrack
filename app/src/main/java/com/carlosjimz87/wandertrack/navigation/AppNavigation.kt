@@ -4,11 +4,9 @@ import android.widget.Toast
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.platform.LocalContext
-import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import androidx.navigation.navArgument
 import com.carlosjimz87.wandertrack.ui.screens.auth.AuthScreen
 import com.carlosjimz87.wandertrack.ui.screens.auth.LoginScreen
 import com.carlosjimz87.wandertrack.ui.screens.auth.SignUpScreen
@@ -86,7 +84,7 @@ fun AppNavigation(authViewModel: AuthViewModel = koinViewModel()) {
         }
 
         composable(Screens.PROFILE.name) {
-            ProfileScreen()
+            ProfileScreen(navController = navController)
         }
     }
 }

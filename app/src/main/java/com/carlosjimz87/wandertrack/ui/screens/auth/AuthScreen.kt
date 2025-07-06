@@ -18,10 +18,12 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.carlosjimz87.wandertrack.R
+import com.carlosjimz87.wandertrack.common.SetBottomBarColor
 import com.carlosjimz87.wandertrack.ui.composables.auth.AuthButtons
 import com.carlosjimz87.wandertrack.ui.composables.auth.PlanetAndLogo
 import com.carlosjimz87.wandertrack.ui.composables.auth.calculateResponsiveFontSize
@@ -37,8 +39,11 @@ fun AuthScreen(
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
     ) {
+        val context = LocalContext.current
         val screenHeight = this@BoxWithConstraints.maxHeight
         val screenWidth = this@BoxWithConstraints.maxWidth
+
+        context.SetBottomBarColor()
 
         val titleFontSize = calculateResponsiveFontSize(screenWidth)
 

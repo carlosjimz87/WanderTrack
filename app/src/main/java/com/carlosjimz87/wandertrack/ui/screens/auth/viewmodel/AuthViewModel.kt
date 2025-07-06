@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.carlosjimz87.wandertrack.data.repo.AuthRepository
 import com.carlosjimz87.wandertrack.data.repo.FirestoreRepository
 import com.carlosjimz87.wandertrack.ui.screens.auth.state.AuthScreenState
+import com.carlosjimz87.wandertrack.utils.Logger
 import com.google.firebase.auth.FirebaseUser
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -35,8 +36,10 @@ class AuthViewModel(
             if (success) {
                 _authState.value = authRepository.currentUser
                 ensureUserDocument(onResult)
+                onResult(true, null)
             } else {
                 onResult(false, message)
+                Logger.e("Error in email login [$message]")
             }
         }
     }
@@ -55,6 +58,7 @@ class AuthViewModel(
         }
     }
 
+
     fun signup(
         email: String,
         password: String,
@@ -62,8 +66,7 @@ class AuthViewModel(
     ) {
         authRepository.signup(email, password) { success, message ->
             if (success) {
-                _authState.value = authRepository.currentUser
-                ensureUserDocument(onResult)
+                onResult(true, "Account created. Please verify your email before logging in.")
             } else {
                 onResult(false, message)
             }
@@ -91,5 +94,9 @@ class AuthViewModel(
                 onResult(false, "Failed to setup Firestore")
             }
         }
+    }
+
+    fun resendVerificationEmail(onResult: (Boolean, String?) -> Unit) {
+        authRepository.resendVerificationEmail(onResult)
     }
 }

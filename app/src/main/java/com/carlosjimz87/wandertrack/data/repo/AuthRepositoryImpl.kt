@@ -11,9 +11,21 @@ class AuthRepositoryImpl : AuthRepository {
     override val currentUser: FirebaseUser?
         get() = auth.currentUser
 
+    companion object{
+        const val VERIFY_EMAIL_FIRST = "Please verify your email address before signing in."
+    }
+
     override fun loginWithEmail(email: String, password: String, onResult: (Boolean, String?) -> Unit) {
         auth.signInWithEmailAndPassword(email, password)
-            .addOnSuccessListener { onResult(true, null) }
+            .addOnSuccessListener { authResult ->
+                val user = authResult.user
+                if (user != null && user.isEmailVerified) {
+                    onResult(true, null)
+                } else {
+                    auth.signOut()
+                    onResult(false, VERIFY_EMAIL_FIRST)
+                }
+            }
             .addOnFailureListener { onResult(false, it.message) }
     }
 
@@ -26,11 +38,25 @@ class AuthRepositoryImpl : AuthRepository {
 
     override fun signup(email: String, password: String, onResult: (Boolean, String?) -> Unit) {
         auth.createUserWithEmailAndPassword(email, password)
-            .addOnSuccessListener { onResult(true, null) }
+            .addOnSuccessListener {
+                auth.currentUser?.sendEmailVerification()
+                onResult(true, null)
+            }
             .addOnFailureListener { onResult(false, it.message) }
     }
 
     override fun logout() {
         auth.signOut()
+    }
+
+    override fun resendVerificationEmail(onResult: (Boolean, String?) -> Unit) {
+        val user = auth.currentUser
+        if (user != null) {
+            user.sendEmailVerification()
+                .addOnSuccessListener { onResult(true, "Verification email sent.") }
+                .addOnFailureListener { onResult(false, "Failed to send verification email.") }
+        } else {
+            onResult(false, "User not found.")
+        }
     }
 }

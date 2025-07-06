@@ -32,6 +32,7 @@ import com.airbnb.lottie.compose.LottieConstants
 import com.airbnb.lottie.compose.animateLottieCompositionAsState
 import com.airbnb.lottie.compose.rememberLottieComposition
 import com.carlosjimz87.wandertrack.R
+import com.carlosjimz87.wandertrack.common.SetBottomBarColor
 import com.carlosjimz87.wandertrack.ui.screens.splash.viewmodel.SplashViewModel
 import com.carlosjimz87.wandertrack.ui.theme.AccentPink
 import com.carlosjimz87.wandertrack.ui.theme.AccentPinkDark
@@ -42,11 +43,13 @@ fun SplashScreen(
     onSplashFinished: () -> Unit,
     minSplashTimeMs: Long = 3000L,
     splashViewModel: SplashViewModel = remember { SplashViewModel() }
-) {
+)  {
     val animationOffset = (-50).dp
     val logoOffset = animationOffset - 90.dp
     val context = LocalContext.current
     val isDarkMode = isSystemInDarkTheme()
+
+    context.SetBottomBarColor(AccentPinkDark)
 
     // Lottie composition y animación
     val composition by rememberLottieComposition(LottieCompositionSpec.RawRes(R.raw.splash_anim))

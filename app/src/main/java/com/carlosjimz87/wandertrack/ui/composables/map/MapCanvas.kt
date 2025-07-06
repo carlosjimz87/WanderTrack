@@ -9,13 +9,13 @@ import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import com.carlosjimz87.wandertrack.R
+import com.carlosjimz87.wandertrack.common.Constants.MAX_ZOOM_LEVEL
+import com.carlosjimz87.wandertrack.common.Constants.MIN_ZOOM_LEVEL
 import com.carlosjimz87.wandertrack.domain.models.Country
 import com.carlosjimz87.wandertrack.domain.models.CountryGeometry
 import com.carlosjimz87.wandertrack.domain.models.PolygonData
-import com.carlosjimz87.wandertrack.ui.theme.AccentPink
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MapStyleOptions
 import com.google.maps.android.compose.CameraPositionState
@@ -62,8 +62,8 @@ fun MapCanvas(
             isBuildingEnabled = false,
             mapType = MapType.NORMAL,
             isMyLocationEnabled = false,
-            minZoomPreference = 2f,
-            maxZoomPreference = 6f
+            minZoomPreference = MIN_ZOOM_LEVEL,
+            maxZoomPreference = MAX_ZOOM_LEVEL
         ),
         cameraPositionState = cameraPositionState,
         uiSettings = MapUiSettings(

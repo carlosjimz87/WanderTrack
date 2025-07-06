@@ -4,8 +4,8 @@ import androidx.compose.ui.graphics.Color
 
 val AccentPink = Color(0xFFF8B9BC) // light pink
 val AccentPinkDark = Color(0xFFEE5662) // intense pink
-val SecondaryBlue = Color(0xFFA6D8D2) // balanced gray-blue
-val SecondaryBlueDark = Color(0xFF199AB5) // balanced blue
+val SecondaryBlue = Color(0xFF9CB0AD) // balanced gray-blue
+val SecondaryBlueDark = Color(0xFF5F959D) // balanced blue
 val TertiaryNeutral = Color(0xFFFBF7F1) // light white
 val TertiaryPink = Color(0xFFEECCB5)    // light pink
 val White = Color(0xFFFEFAF5) // white

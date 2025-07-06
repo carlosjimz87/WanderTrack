@@ -7,5 +7,6 @@ interface AuthRepository {
     fun loginWithEmail(email: String, password: String, onResult: (Boolean, String?) -> Unit)
     fun loginWithGoogle(idToken: String, onResult: (Boolean, String?) -> Unit)
     fun signup(email: String, password: String, onResult: (Boolean, String?) -> Unit)
+    fun resendVerificationEmail(onResult: (Boolean, String?) -> Unit)
     fun logout()
 }

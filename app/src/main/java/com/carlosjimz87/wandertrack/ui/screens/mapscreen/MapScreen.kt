@@ -11,14 +11,10 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBarsPadding
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Person
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material3.BottomSheetScaffold
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SheetValue
 import androidx.compose.material3.rememberBottomSheetScaffoldState
@@ -34,10 +30,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.toArgb
-import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.unit.dp
+import com.carlosjimz87.wandertrack.common.SetBottomBarColor
 import com.carlosjimz87.wandertrack.common.animateFocusOnSelectedCountry
 import com.carlosjimz87.wandertrack.common.animateToVisitedCountries
 import com.carlosjimz87.wandertrack.common.calculateBottomOffset
@@ -52,6 +49,7 @@ import com.carlosjimz87.wandertrack.ui.composables.map.MapCanvas
 import com.carlosjimz87.wandertrack.ui.composables.map.MapHeaderInfo
 import com.carlosjimz87.wandertrack.ui.composables.map.ProfileIconButton
 import com.carlosjimz87.wandertrack.ui.screens.mapscreen.viewmodel.MapViewModel
+import com.carlosjimz87.wandertrack.ui.theme.AccentPink
 import com.google.android.gms.maps.model.LatLng
 import com.google.maps.android.compose.rememberCameraPositionState
 import kotlinx.coroutines.launch
@@ -64,7 +62,6 @@ fun MapScreen(
     userId: String,
     onProfileClick: () -> Unit,
 ) {
-
     val viewModel: MapViewModel = getViewModel(parameters = { parametersOf(userId) })
     val coroutineScope = rememberCoroutineScope()
     val visitedCountriesCodes by viewModel.visitedCountryCodes.collectAsState()
@@ -78,17 +75,17 @@ fun MapScreen(
             skipHiddenState = false
         )
     )
+    val context = LocalContext.current
     val density = LocalDensity.current
     val containerSize = LocalWindowInfo.current.containerSize
-    val configuration = LocalConfiguration.current
-    val mapViewHeight = remember(configuration) { containerSize.height }
-    val mapViewWidth = remember(configuration) { containerSize.width }
+    val screenWidth = containerSize.width
+    val screenHeight = containerSize.height
     var lastClickLatLng by remember { mutableStateOf<LatLng?>(null) }
 
     var hasCenteredMap by remember { mutableStateOf(false) }
     var hasFocusedOnBottomSheet by remember { mutableStateOf(false) }
-    val fillColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.3f).toArgb()  // Semi-transparent fill
-    val strokeColor = MaterialTheme.colorScheme.primary.toArgb()                   // Solid border
+
+    context.SetBottomBarColor(AccentPink)
 
     DetectUserMapMovement(lastClickLatLng, cameraPositionState.position.target) {
         viewModel.notifyUserMovedMap()
@@ -114,7 +111,7 @@ fun MapScreen(
                     selectedCountry = selectedCountry!!,
                     countryBorders = countryBorders,
                     bottomSheetState = bottomSheetScaffoldState.bottomSheetState,
-                    mapViewHeightPx = mapViewHeight,
+                    mapViewHeightPx = screenHeight,
                     density = density
                 )
                 hasFocusedOnBottomSheet = true
@@ -129,17 +126,18 @@ fun MapScreen(
         scaffoldState = bottomSheetScaffoldState,
         sheetPeekHeight = 0.dp,
         sheetSwipeEnabled = true,
-        sheetDragHandle = {
-            null
-        },
+        sheetDragHandle = { null },
         sheetContent = {
             val hiddenOffset = if (bottomSheetScaffoldState.bottomSheetState.currentValue == SheetValue.Hidden) 10.dp else 0.dp
+            val maxContentWidth = 600.dp
 
             Column(
                 modifier = Modifier
                     .offset(y = hiddenOffset)
                     .fillMaxWidth()
                     .background(MaterialTheme.colorScheme.primary)
+                    .widthIn(max = maxContentWidth)
+                    .align(Alignment.CenterHorizontally)
             ) {
                 selectedCountry?.let { country ->
                     BottomSheetDragHandle(country.visited)
@@ -151,9 +149,7 @@ fun MapScreen(
                         countryCities = country.cities,
                         onToggleCityVisited = { viewModel.toggleCityVisited(country.code, it) },
                         onToggleVisited = { viewModel.toggleCountryVisited(it) },
-                        onDismiss = {
-                            viewModel.clearSelectedCountry()
-                        }
+                        onDismiss = { viewModel.clearSelectedCountry() }
                     )
                 } ?: Spacer(modifier = Modifier.height(1.dp))
             }
@@ -185,11 +181,11 @@ fun MapScreen(
                             safeAnimateToBounds(
                                 cameraPositionState = cameraPositionState,
                                 bounds = it,
-                                mapWidth = mapViewWidth,
-                                mapHeight = mapViewHeight,
+                                mapWidth = screenWidth,
+                                mapHeight = screenHeight,
                                 bottomOffset = calculateBottomOffset(
                                     bottomSheetScaffoldState.bottomSheetState.currentValue,
-                                    mapViewHeight
+                                    screenHeight
                                 )
                             )
                         }
@@ -205,7 +201,7 @@ fun MapScreen(
             )
 
             ProfileIconButton(
-                onClick = { onProfileClick() },
+                onClick = onProfileClick,
                 modifier = Modifier
                     .align(Alignment.TopEnd)
                     .padding(16.dp)

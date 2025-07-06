@@ -1,5 +1,7 @@
 [versions]
 agp = "8.9.2"
+gs = "4.4.3"
+crashlytics = "3.0.4"
 androidMapsUtils = "3.7.0"
 coreSplashscreen = "1.0.1"
 coreTesting = "2.2.0"
@@ -80,6 +82,6 @@ play-services-tasks = { module = "com.google.android.gms:play-services-tasks", v
 android-application = { id = "com.android.application", version.ref = "agp" }
 kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
-google-services = { id = "com.google.gms.google-services", version = "4.4.3" }
-crashlytics = { id = "com.google.firebase.crashlytics", version = "3.0.4" }
+google-services = { id = "com.google.gms.google-services", version.ref = "gs" }
+crashlytics = { id = "com.google.firebase.crashlytics", version.ref = "crashlytics" }
 

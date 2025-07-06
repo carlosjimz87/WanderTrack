@@ -1,18 +1,23 @@
 package com.carlosjimz87.wandertrack.common
 
+import android.app.Activity
+import android.content.Context
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.SheetState
 import androidx.compose.material3.SheetValue
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.runtime.SideEffect
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.unit.Density
-import androidx.compose.ui.unit.Dp
+import androidx.core.view.WindowCompat
 import com.carlosjimz87.wandertrack.common.Constants.ANIMATION_DURATION
 import com.carlosjimz87.wandertrack.common.Constants.MIN_ZOOM_LEVEL
 import com.carlosjimz87.wandertrack.domain.models.City
 import com.carlosjimz87.wandertrack.domain.models.Country
 import com.carlosjimz87.wandertrack.domain.models.CountryGeometry
 import com.carlosjimz87.wandertrack.ui.screens.mapscreen.viewmodel.MapViewModel
+import com.carlosjimz87.wandertrack.ui.theme.White
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.LatLngBounds
@@ -152,4 +157,13 @@ suspend fun animateFocusOnSelectedCountry(
         CameraUpdateFactory.newLatLngZoom(adjustedCenter, zoomLevel),
         durationMs = ANIMATION_DURATION
     )
+}
+
+@Composable
+fun Context.SetBottomBarColor(color: Color = White){
+    val window = (this as Activity).window
+    WindowCompat.setDecorFitsSystemWindows(window, false)
+    SideEffect {
+        window.navigationBarColor = color.toArgb() // Your red splash color
+    }
 }
