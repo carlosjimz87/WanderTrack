@@ -5,8 +5,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.carlosjimz87.wandertrack.data.repo.AuthRepository
-import com.carlosjimz87.wandertrack.data.repo.FirestoreRepository
+import com.carlosjimz87.wandertrack.domain.repo.AuthRepository
+import com.carlosjimz87.wandertrack.domain.repo.FirestoreRepository
 import com.carlosjimz87.wandertrack.domain.models.ProfileData
 import kotlinx.coroutines.launch
 

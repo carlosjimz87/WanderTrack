@@ -1,4 +1,4 @@
-package com.carlosjimz87.wandertrack.data.repo
+package com.carlosjimz87.wandertrack.domain.repo
 
 import com.carlosjimz87.wandertrack.domain.models.Country
 import com.carlosjimz87.wandertrack.domain.models.ProfileData

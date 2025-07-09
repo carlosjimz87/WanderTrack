@@ -1,5 +1,6 @@
 package com.carlosjimz87.wandertrack.data.repo
 
+import com.carlosjimz87.wandertrack.domain.repo.AuthRepository
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.auth.GoogleAuthProvider

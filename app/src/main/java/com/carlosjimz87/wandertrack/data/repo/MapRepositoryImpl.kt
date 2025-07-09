@@ -2,6 +2,7 @@ package com.carlosjimz87.wandertrack.data.repo
 
 import android.content.Context
 import com.carlosjimz87.wandertrack.domain.models.CountryGeometry
+import com.carlosjimz87.wandertrack.domain.repo.MapRepository
 import com.carlosjimz87.wandertrack.utils.fetchCountriesGeoJson
 import com.carlosjimz87.wandertrack.utils.getCountryCodeFromLatLngOffline
 import com.google.android.gms.maps.model.LatLng

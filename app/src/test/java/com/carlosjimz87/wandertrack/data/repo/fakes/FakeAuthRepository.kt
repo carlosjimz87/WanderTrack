@@ -1,10 +1,9 @@
 package com.carlosjimz87.wandertrack.data.repo.fakes
 
-import com.carlosjimz87.wandertrack.data.repo.AuthRepository
+import com.carlosjimz87.wandertrack.domain.repo.AuthRepository
 import com.google.firebase.auth.FirebaseUser
 import io.mockk.every
 import io.mockk.mockk
-import org.mockito.Mockito
 
 class FakeAuthRepository : AuthRepository {
 

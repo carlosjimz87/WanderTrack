@@ -2,8 +2,8 @@ package com.carlosjimz87.wandertrack.ui.screens.mapscreen.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.carlosjimz87.wandertrack.data.repo.FirestoreRepository
-import com.carlosjimz87.wandertrack.data.repo.MapRepository
+import com.carlosjimz87.wandertrack.domain.repo.FirestoreRepository
+import com.carlosjimz87.wandertrack.domain.repo.MapRepository
 import com.carlosjimz87.wandertrack.domain.models.Country
 import com.carlosjimz87.wandertrack.domain.models.CountryGeometry
 import com.carlosjimz87.wandertrack.utils.Logger

@@ -1,6 +1,5 @@
 import com.carlosjimz87.wandertrack.BuildConfig
-import com.carlosjimz87.wandertrack.data.repo.FirestoreRepository
-import com.carlosjimz87.wandertrack.domain.models.Achievement
+import com.carlosjimz87.wandertrack.domain.repo.FirestoreRepository
 import com.carlosjimz87.wandertrack.domain.models.City
 import com.carlosjimz87.wandertrack.domain.models.Country
 import com.carlosjimz87.wandertrack.domain.models.ProfileData

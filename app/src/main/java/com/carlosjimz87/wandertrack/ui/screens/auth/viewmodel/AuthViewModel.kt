@@ -2,8 +2,8 @@ package com.carlosjimz87.wandertrack.ui.screens.auth.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.carlosjimz87.wandertrack.data.repo.AuthRepository
-import com.carlosjimz87.wandertrack.data.repo.FirestoreRepository
+import com.carlosjimz87.wandertrack.domain.repo.AuthRepository
+import com.carlosjimz87.wandertrack.domain.repo.FirestoreRepository
 import com.carlosjimz87.wandertrack.ui.screens.auth.state.AuthScreenState
 import com.carlosjimz87.wandertrack.utils.Logger
 import com.google.firebase.auth.FirebaseUser
