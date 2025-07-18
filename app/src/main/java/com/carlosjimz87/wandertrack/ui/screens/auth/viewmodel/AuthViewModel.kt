@@ -58,7 +58,6 @@ class AuthViewModel(
         }
     }
 
-
     fun signup(
         email: String,
         password: String,
@@ -66,6 +65,7 @@ class AuthViewModel(
     ) {
         authRepository.signup(email, password) { success, message ->
             if (success) {
+                _authState.value = authRepository.currentUser
                 onResult(true, "Account created. Please verify your email before logging in.")
             } else {
                 onResult(false, message)

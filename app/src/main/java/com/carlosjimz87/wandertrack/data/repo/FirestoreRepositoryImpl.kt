@@ -115,12 +115,19 @@ class FirestoreRepositoryImpl(
 
     override suspend fun updateCountryVisited(userId: String, code: String, visited: Boolean) {
         val docRef = visitedCountriesCol(userId).document(code)
+        val citiesDocRef = visitedCitiesDoc(userId, code)
+
         try {
             if (visited) {
                 docRef.set(mapOf("visited" to true)).await()
             } else {
+                // 1. Delete the country from visited_countries
                 docRef.delete().await()
+
+                // 2. Delete all cities visited in this country
+                citiesDocRef.delete().await()
             }
+
             recalculateAndUpdateStats(userId)
         } catch (e: Exception) {
             e.printStackTrace()

@@ -91,6 +91,33 @@ class MapViewModel(
         updateCountryVisitedInList(code, isVisitedNow)
         updateSelectedCountryVisited(code, isVisitedNow)
 
+        if (!isVisitedNow) {
+            // 🧠 Clear visited cities for that country from visitedCities
+            _visitedCities.update { current ->
+                current - code
+            }
+
+            // 🧠 Unmark cities in countries list
+            _countries.update { list ->
+                list.map { country ->
+                    if (country.code == code) {
+                        country.copy(
+                            cities = country.cities.map { it.copy(visited = false) }
+                        )
+                    } else country
+                }
+            }
+
+            // 🧠 Unmark cities in selectedCountry
+            _selectedCountry.update { current ->
+                if (current?.code == code) {
+                    current.copy(
+                        cities = current.cities.map { it.copy(visited = false) }
+                    )
+                } else current
+            }
+        }
+
         viewModelScope.launch {
             firestoreRepo.updateCountryVisited(userId, code, isVisitedNow)
         }

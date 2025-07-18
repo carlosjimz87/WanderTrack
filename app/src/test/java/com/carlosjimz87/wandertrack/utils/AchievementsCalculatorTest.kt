@@ -86,7 +86,7 @@ class AchievementsCalculatorTest {
 
         assertTrue(achievements.any { it.title == "🎉" })
         assertTrue(achievements.any { it.title == "🚀" })
-        assertTrue(achievements.any { it.title == "🏆" })
+        assertTrue(achievements.any { it.title == "🗺️" })
     }
 
     @Test
