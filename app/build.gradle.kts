@@ -99,6 +99,9 @@ dependencies {
     implementation(libs.androidx.navigation3.runtime)
     implementation(libs.androidx.navigation3.ui)
 
+    // Datastore
+    implementation(libs.androidx.datastore.preferences)
+
     // Firebase BoM
     implementation(platform(libs.firebase.bom))
 

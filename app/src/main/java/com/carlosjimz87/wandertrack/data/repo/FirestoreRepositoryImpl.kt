@@ -1,9 +1,9 @@
 import com.carlosjimz87.wandertrack.BuildConfig
 import com.carlosjimz87.wandertrack.domain.repo.FirestoreRepository
-import com.carlosjimz87.wandertrack.domain.models.City
-import com.carlosjimz87.wandertrack.domain.models.Country
-import com.carlosjimz87.wandertrack.domain.models.ProfileData
-import com.carlosjimz87.wandertrack.domain.models.UserVisits
+import com.carlosjimz87.wandertrack.domain.models.map.City
+import com.carlosjimz87.wandertrack.domain.models.map.Country
+import com.carlosjimz87.wandertrack.domain.models.profile.ProfileData
+import com.carlosjimz87.wandertrack.domain.models.profile.UserVisits
 import com.carlosjimz87.wandertrack.utils.AchievementsCalculator
 import com.carlosjimz87.wandertrack.utils.Logger
 import com.carlosjimz87.wandertrack.utils.toProfileUiState

@@ -1,7 +1,7 @@
 package com.carlosjimz87.wandertrack.utils
 
-import com.carlosjimz87.wandertrack.domain.models.Achievement
-import com.carlosjimz87.wandertrack.domain.models.ProfileData
+import com.carlosjimz87.wandertrack.domain.models.profile.Achievement
+import com.carlosjimz87.wandertrack.domain.models.profile.ProfileData
 import com.google.firebase.firestore.DocumentSnapshot
 
 fun DocumentSnapshot.toProfileUiState(): ProfileData {

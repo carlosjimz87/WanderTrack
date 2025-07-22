@@ -7,7 +7,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.carlosjimz87.wandertrack.domain.repo.AuthRepository
 import com.carlosjimz87.wandertrack.domain.repo.FirestoreRepository
-import com.carlosjimz87.wandertrack.domain.models.ProfileData
+import com.carlosjimz87.wandertrack.domain.models.profile.ProfileData
 import kotlinx.coroutines.launch
 
 class ProfileViewModel(

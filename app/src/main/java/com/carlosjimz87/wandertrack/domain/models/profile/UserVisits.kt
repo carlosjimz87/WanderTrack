@@ -1,4 +1,4 @@
-package com.carlosjimz87.wandertrack.domain.models
+package com.carlosjimz87.wandertrack.domain.models.profile
 
 data class UserVisits(
     val countryCodes: Set<String> = emptySet(),

@@ -13,9 +13,9 @@ import androidx.compose.ui.platform.LocalContext
 import com.carlosjimz87.wandertrack.R
 import com.carlosjimz87.wandertrack.common.Constants.MAX_ZOOM_LEVEL
 import com.carlosjimz87.wandertrack.common.Constants.MIN_ZOOM_LEVEL
-import com.carlosjimz87.wandertrack.domain.models.Country
-import com.carlosjimz87.wandertrack.domain.models.CountryGeometry
-import com.carlosjimz87.wandertrack.domain.models.PolygonData
+import com.carlosjimz87.wandertrack.domain.models.map.Country
+import com.carlosjimz87.wandertrack.domain.models.map.CountryGeometry
+import com.carlosjimz87.wandertrack.domain.models.map.PolygonData
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MapStyleOptions
 import com.google.maps.android.compose.CameraPositionState

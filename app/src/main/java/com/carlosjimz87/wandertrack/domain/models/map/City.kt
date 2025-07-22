@@ -1,4 +1,4 @@
-package com.carlosjimz87.wandertrack.domain.models
+package com.carlosjimz87.wandertrack.domain.models.map
 
 data class City(
     val name: String,

@@ -3,25 +3,27 @@ package com.carlosjimz87.wandertrack.navigation
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.remember
+import com.carlosjimz87.wandertrack.domain.models.NavController
+import com.carlosjimz87.wandertrack.domain.models.Screens
 
 @Composable
 fun rememberMyNavController(
-    initial: Screen = Screen.Splash
-): NavController<Screen> {
+    initial: Screens = Screens.Splash
+): NavController<Screens> {
     val stack = remember {
         mutableStateListOf(initial)
     }
 
     return remember(stack) {
-        object : NavController<Screen> {
-            override val current: Screen
+        object : NavController<Screens> {
+            override val current: Screens
                 get() = stack.last()
 
-            override fun navigate(screen: Screen) {
+            override fun navigate(screen: Screens) {
                 stack.add(screen)
             }
 
-            override fun replace(screen: Screen) {
+            override fun replace(screen: Screens) {
                 stack.clear()
                 stack.add(screen)
             }
@@ -30,7 +32,7 @@ fun rememberMyNavController(
                 if (stack.size > 1) stack.removeAt(stack.lastIndex)
             }
 
-            override val backStack: List<Screen>
+            override val backStack: List<Screens>
                 get() = stack
         }
     }

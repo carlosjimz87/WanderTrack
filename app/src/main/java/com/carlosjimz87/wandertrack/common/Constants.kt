@@ -1,13 +1,15 @@
 package com.carlosjimz87.wandertrack.common
 
-import com.carlosjimz87.wandertrack.domain.models.City
-import com.carlosjimz87.wandertrack.domain.models.Country
+import com.carlosjimz87.wandertrack.domain.models.map.City
+import com.carlosjimz87.wandertrack.domain.models.map.Country
 
 object Constants {
 
     const val ANIMATION_DURATION = 600
     const val MIN_ZOOM_LEVEL = 2f
     const val MAX_ZOOM_LEVEL = 21f
+    const val USER_PREFS_KEY = "user_prefs"
+    const val LAST_SCREEN_KEY = "last_screen"
 
     val countries = listOf(
         Country(

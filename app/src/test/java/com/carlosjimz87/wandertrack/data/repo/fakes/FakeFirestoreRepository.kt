@@ -1,10 +1,10 @@
 package com.carlosjimz87.wandertrack.data.repo.fakes
 
 import com.carlosjimz87.wandertrack.domain.repo.FirestoreRepository
-import com.carlosjimz87.wandertrack.domain.models.Achievement
-import com.carlosjimz87.wandertrack.domain.models.Country
-import com.carlosjimz87.wandertrack.domain.models.ProfileData
-import com.carlosjimz87.wandertrack.domain.models.UserVisits
+import com.carlosjimz87.wandertrack.domain.models.profile.Achievement
+import com.carlosjimz87.wandertrack.domain.models.map.Country
+import com.carlosjimz87.wandertrack.domain.models.profile.ProfileData
+import com.carlosjimz87.wandertrack.domain.models.profile.UserVisits
 import com.carlosjimz87.wandertrack.utils.AchievementsCalculator
 
 class FakeFirestoreRepository : FirestoreRepository {

@@ -1,6 +1,6 @@
 package com.carlosjimz87.wandertrack.domain.repo
 
-import com.carlosjimz87.wandertrack.domain.models.CountryGeometry
+import com.carlosjimz87.wandertrack.domain.models.map.CountryGeometry
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.LatLngBounds
 

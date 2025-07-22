@@ -1,4 +1,4 @@
-package com.carlosjimz87.wandertrack.navigation
+package com.carlosjimz87.wandertrack.domain.models
 
 interface NavController<T> {
     val current: T

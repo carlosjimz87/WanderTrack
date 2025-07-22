@@ -12,7 +12,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.carlosjimz87.wandertrack.R
-import com.carlosjimz87.wandertrack.domain.models.Country
+import com.carlosjimz87.wandertrack.domain.models.map.Country
 
 @Composable
 fun MapHeaderInfo(

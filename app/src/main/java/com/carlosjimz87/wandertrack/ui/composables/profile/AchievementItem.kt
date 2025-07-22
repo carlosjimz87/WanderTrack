@@ -17,7 +17,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.carlosjimz87.wandertrack.domain.models.Achievement
+import com.carlosjimz87.wandertrack.domain.models.profile.Achievement
 import com.carlosjimz87.wandertrack.ui.theme.WanderTrackTheme
 
 @Composable

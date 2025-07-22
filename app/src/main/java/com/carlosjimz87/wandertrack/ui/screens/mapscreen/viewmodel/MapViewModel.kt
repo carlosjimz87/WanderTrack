@@ -4,8 +4,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.carlosjimz87.wandertrack.domain.repo.FirestoreRepository
 import com.carlosjimz87.wandertrack.domain.repo.MapRepository
-import com.carlosjimz87.wandertrack.domain.models.Country
-import com.carlosjimz87.wandertrack.domain.models.CountryGeometry
+import com.carlosjimz87.wandertrack.domain.models.map.Country
+import com.carlosjimz87.wandertrack.domain.models.map.CountryGeometry
 import com.carlosjimz87.wandertrack.utils.Logger
 import com.carlosjimz87.wandertrack.utils.getCountryByCode
 import com.google.android.gms.maps.model.LatLng

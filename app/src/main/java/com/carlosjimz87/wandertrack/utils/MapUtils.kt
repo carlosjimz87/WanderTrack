@@ -3,8 +3,8 @@ package com.carlosjimz87.wandertrack.utils
 import android.content.Context
 import com.carlosjimz87.wandertrack.R
 import com.carlosjimz87.wandertrack.common.Constants.countryNameToIso2
-import com.carlosjimz87.wandertrack.domain.models.Country
-import com.carlosjimz87.wandertrack.domain.models.CountryGeometry
+import com.carlosjimz87.wandertrack.domain.models.map.Country
+import com.carlosjimz87.wandertrack.domain.models.map.CountryGeometry
 import com.google.android.gms.maps.model.LatLng
 import com.google.maps.android.PolyUtil
 import org.json.JSONArray

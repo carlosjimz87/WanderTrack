@@ -1,8 +1,8 @@
 package com.carlosjimz87.wandertrack.domain.repo
 
-import com.carlosjimz87.wandertrack.domain.models.Country
-import com.carlosjimz87.wandertrack.domain.models.ProfileData
-import com.carlosjimz87.wandertrack.domain.models.UserVisits
+import com.carlosjimz87.wandertrack.domain.models.map.Country
+import com.carlosjimz87.wandertrack.domain.models.profile.ProfileData
+import com.carlosjimz87.wandertrack.domain.models.profile.UserVisits
 
 interface FirestoreRepository {
     suspend fun fetchAllCountries(userId: String): List<Country>           // from meta

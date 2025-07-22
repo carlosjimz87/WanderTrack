@@ -27,7 +27,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.carlosjimz87.wandertrack.R
 import com.carlosjimz87.wandertrack.common.Constants
-import com.carlosjimz87.wandertrack.domain.models.City
+import com.carlosjimz87.wandertrack.domain.models.map.City
 import com.carlosjimz87.wandertrack.ui.theme.WanderTrackTheme
 
 @Composable

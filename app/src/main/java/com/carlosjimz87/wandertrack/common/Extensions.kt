@@ -13,9 +13,9 @@ import androidx.compose.ui.unit.Density
 import androidx.core.view.WindowCompat
 import com.carlosjimz87.wandertrack.common.Constants.ANIMATION_DURATION
 import com.carlosjimz87.wandertrack.common.Constants.MIN_ZOOM_LEVEL
-import com.carlosjimz87.wandertrack.domain.models.City
-import com.carlosjimz87.wandertrack.domain.models.Country
-import com.carlosjimz87.wandertrack.domain.models.CountryGeometry
+import com.carlosjimz87.wandertrack.domain.models.map.City
+import com.carlosjimz87.wandertrack.domain.models.map.Country
+import com.carlosjimz87.wandertrack.domain.models.map.CountryGeometry
 import com.carlosjimz87.wandertrack.ui.screens.mapscreen.viewmodel.MapViewModel
 import com.carlosjimz87.wandertrack.ui.theme.White
 import com.google.android.gms.maps.CameraUpdateFactory

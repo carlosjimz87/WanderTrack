@@ -1,8 +1,8 @@
 package com.carlosjimz87.wandertrack.data.repo
 
 import com.carlosjimz87.wandertrack.data.repo.fakes.FakeFirestoreRepository
-import com.carlosjimz87.wandertrack.domain.models.City
-import com.carlosjimz87.wandertrack.domain.models.Country
+import com.carlosjimz87.wandertrack.domain.models.map.City
+import com.carlosjimz87.wandertrack.domain.models.map.Country
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher

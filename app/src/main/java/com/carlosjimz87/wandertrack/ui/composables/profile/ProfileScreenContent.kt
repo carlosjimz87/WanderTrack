@@ -38,8 +38,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.carlosjimz87.wandertrack.R
-import com.carlosjimz87.wandertrack.domain.models.Achievement
-import com.carlosjimz87.wandertrack.domain.models.ProfileData
+import com.carlosjimz87.wandertrack.domain.models.profile.Achievement
+import com.carlosjimz87.wandertrack.domain.models.profile.ProfileData
 import com.carlosjimz87.wandertrack.ui.composables.auth.PrimaryButton
 import com.carlosjimz87.wandertrack.ui.composables.auth.calculateResponsiveFontSize
 import com.carlosjimz87.wandertrack.ui.theme.WanderTrackTheme

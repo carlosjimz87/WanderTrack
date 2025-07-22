@@ -1,4 +1,4 @@
-package com.carlosjimz87.wandertrack.domain.models
+package com.carlosjimz87.wandertrack.domain.models.map
 
 import com.google.android.gms.maps.model.LatLng
 
