@@ -1,11 +1,10 @@
 package com.carlosjimz87.wandertrack.navigation
 
-enum class Screens {
-    AUTH,
-    MAP,
-    PROFILE,
-    TEST,
-    SPLASH,
-    LOGIN,
-    SIGNUP
+sealed class Screen {
+    object Splash : Screen()
+    object Auth : Screen()
+    object Login : Screen()
+    object SignUp : Screen()
+    data class Map(val userId: String) : Screen()
+    object Profile : Screen()
 }

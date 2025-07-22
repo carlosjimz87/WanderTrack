@@ -1,22 +1,19 @@
 package com.carlosjimz87.wandertrack.ui.screens.auth
 
 import android.widget.Toast
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
-import androidx.navigation.NavController
 import com.carlosjimz87.wandertrack.BuildConfig
 import com.carlosjimz87.wandertrack.R
 import com.carlosjimz87.wandertrack.common.SetBottomBarColor
-import com.carlosjimz87.wandertrack.navigation.Screens
 import com.carlosjimz87.wandertrack.ui.composables.auth.LoginScreenContent
 import com.carlosjimz87.wandertrack.ui.screens.auth.viewmodel.AuthViewModel
 import com.carlosjimz87.wandertrack.utils.Logger
@@ -26,20 +23,12 @@ import org.koin.androidx.compose.koinViewModel
 
 @Composable
 fun LoginScreen(
-    navController: NavController,
     authViewModel: AuthViewModel = koinViewModel(),
-    onGoogleIdTokenReceived: (String) -> Unit
+    onGoogleIdTokenReceived: (String) -> Unit,
+    onBack: () -> Unit
 ) {
     val context = LocalContext.current
-    val user by authViewModel.authState.collectAsState()
-
-    LaunchedEffect(user) {
-        if (user != null && user!!.isEmailVerified) {
-            navController.navigate(Screens.MAP.name) {
-                popUpTo(0)
-            }
-        }
-    }
+    BackHandler(onBack = onBack)
 
     context.SetBottomBarColor()
 
@@ -75,13 +64,7 @@ fun LoginScreen(
         onPasswordChange = { password = it },
         onSignInClick = {
             authViewModel.loginWithEmail(email, password) { success, msg ->
-                if (success) {
-                    navController.navigate(Screens.MAP.name) {
-                        popUpTo(0)
-                    }
-                } else {
-                    error = msg
-                }
+                if (!success) error = msg
             }
         },
         onGoogleSignInClick = {

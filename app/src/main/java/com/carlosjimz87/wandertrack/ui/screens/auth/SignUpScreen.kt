@@ -1,29 +1,32 @@
 package com.carlosjimz87.wandertrack.ui.screens.auth
 
 import android.widget.Toast
+import androidx.activity.compose.BackHandler
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
-import androidx.navigation.NavController
 import com.carlosjimz87.wandertrack.R
-import com.carlosjimz87.wandertrack.navigation.Screens
 import com.carlosjimz87.wandertrack.ui.composables.auth.SignUpScreenContent
 import com.carlosjimz87.wandertrack.ui.screens.auth.viewmodel.AuthViewModel
 import org.koin.androidx.compose.koinViewModel
 
 @Composable
 fun SignUpScreen(
-navController: NavController,
-authViewModel: AuthViewModel = koinViewModel()
+    authViewModel: AuthViewModel = koinViewModel(),
+    onNavigateToLogin: () -> Unit,
+    onBack: () -> Unit
 ) {
     val context = LocalContext.current
+    BackHandler(onBack = onBack)
+
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var confirmPassword by remember { mutableStateOf("") }
     var error by remember { mutableStateOf<String?>(null) }
+
 
     SignUpScreenContent(
         email = email,
@@ -41,15 +44,10 @@ authViewModel: AuthViewModel = koinViewModel()
                     error = msg
                     if (success) {
                         Toast.makeText(context, msg ?: "", Toast.LENGTH_LONG).show()
-                        navController.popBackStack() // Vuelves al login tras signup
                     }
                 }
             }
         },
-        onSignInClick = {
-            navController.navigate(Screens.LOGIN.name) {
-                popUpTo(0)
-            }
-        }
+        onSignInClick = onNavigateToLogin
     )
 }

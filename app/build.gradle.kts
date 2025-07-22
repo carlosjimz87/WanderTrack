@@ -17,12 +17,12 @@ val secretsProperties = Properties().apply {
 
 android {
     namespace = "com.carlosjimz87.wandertrack"
-    compileSdk = 35
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "com.carlosjimz87.wandertrack"
         minSdk = 23
-        targetSdk = 35
+        targetSdk = 36
         versionCode = 1
         versionName = "1.0"
 
@@ -94,6 +94,10 @@ dependencies {
     // Lottie & Splashscreen
     implementation(libs.lottie.compose)
     implementation(libs.androidx.core.splashscreen)
+
+    // Nav3
+    implementation(libs.androidx.navigation3.runtime)
+    implementation(libs.androidx.navigation3.ui)
 
     // Firebase BoM
     implementation(platform(libs.firebase.bom))

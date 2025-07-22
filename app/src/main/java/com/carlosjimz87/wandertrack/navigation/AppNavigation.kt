@@ -2,11 +2,9 @@ package com.carlosjimz87.wandertrack.navigation
 
 import android.widget.Toast
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.platform.LocalContext
-import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.composable
-import androidx.navigation.compose.rememberNavController
 import com.carlosjimz87.wandertrack.ui.screens.auth.AuthScreen
 import com.carlosjimz87.wandertrack.ui.screens.auth.LoginScreen
 import com.carlosjimz87.wandertrack.ui.screens.auth.SignUpScreen
@@ -19,91 +17,84 @@ import org.koin.androidx.compose.koinViewModel
 
 @Composable
 fun AppNavigation(authViewModel: AuthViewModel = koinViewModel()) {
-    val navController = rememberNavController()
+    val controller = rememberMyNavController()
     val context = LocalContext.current
+    val currentScreen = controller.backStack.last()
+    val firebaseUser = authViewModel.authState.collectAsState().value
 
-    NavHost(navController, startDestination = Screens.SPLASH.name) {
-
-        composable(Screens.SPLASH.name) {
-            Logger.d( "Navigated to: SPLASH")
-            val user = authViewModel.authState.collectAsState().value
-            SplashScreen(
-                onSplashFinished = {
-                    if (user != null) {
-                        Logger.d( "User authenticated. Navigating to: MAP")
-                        navController.navigate(Screens.MAP.name) {
-                            popUpTo(Screens.SPLASH.name) { inclusive = true }
-                        }
-                    } else {
-                        Logger.d( "User not authenticated. Navigating to: AUTH")
-                        navController.navigate(Screens.AUTH.name) {
-                            popUpTo(Screens.SPLASH.name) { inclusive = true }
-                        }
-                    }
-                }
-            )
+    LaunchedEffect(currentScreen) {
+        Logger.d("Navigated to: ${'$'}currentScreen")
+    }
+    LaunchedEffect(firebaseUser) {
+        if ((currentScreen is Screen.Map || currentScreen is Screen.Profile) && firebaseUser == null) {
+            controller.replace(Screen.Auth)
         }
+    }
 
-        composable(Screens.AUTH.name) {
-            Logger.d( "Navigated to: AUTH")
-            AuthScreen(
-                onGetStartedClick = {
-                    Logger.d( "Navigating to: SIGNUP")
-                    navController.navigate(Screens.SIGNUP.name)
-                },
-                onSignInClick = {
-                    Logger.d( "Navigating to: LOGIN")
-                    navController.navigate(Screens.LOGIN.name)
+    when (val screen = currentScreen) {
+        is Screen.Splash -> SplashScreen(
+            onSplashFinished = {
+                if (firebaseUser != null) {
+                    controller.replace(Screen.Map(firebaseUser.uid))
+                } else {
+                    controller.replace(Screen.Auth)
                 }
-            )
-        }
+            }
+        )
 
-        composable(Screens.LOGIN.name) {
-            Logger.d( "Navigated to: LOGIN")
+        is Screen.Auth -> AuthScreen(
+            onGetStartedClick = { controller.navigate(Screen.SignUp) },
+            onSignInClick = { controller.navigate(Screen.Login) }
+        )
+
+        is Screen.Login -> {
+            LaunchedEffect(firebaseUser) {
+                if (firebaseUser != null && firebaseUser.isEmailVerified) {
+                    controller.replace(Screen.Map(firebaseUser.uid))
+                }
+            }
+
             LoginScreen(
-                navController = navController,
                 onGoogleIdTokenReceived = { idToken ->
-                    Logger.d( "Google ID Token received. Attempting login.")
                     authViewModel.loginWithGoogle(idToken) { success, msg ->
                         if (!success) {
-                            Logger.d( "Google login failed: $msg")
-                            Toast.makeText(context, "Authentication error", Toast.LENGTH_SHORT).show()
-                        } else {
-                            Logger.d( "Google login successful")
+                            Toast.makeText(context, "Authentication error", Toast.LENGTH_SHORT)
+                                .show()
                         }
                     }
                 },
-                authViewModel = authViewModel
+                onBack = { controller.replace(Screen.Auth) }
             )
         }
 
-        composable(Screens.SIGNUP.name) {
-            Logger.d( "Navigated to: SIGNUP")
+        is Screen.SignUp -> {
+            LaunchedEffect(firebaseUser) {
+                if (firebaseUser != null) {
+                    controller.replace(Screen.Map(firebaseUser.uid))
+                }
+            }
             SignUpScreen(
-                navController = navController,
-                authViewModel = authViewModel
+                onNavigateToLogin = {
+                    controller.replace(Screen.Login)
+                },
+                onBack = {
+                    controller.replace(Screen.Auth)
+                }
             )
         }
 
-        composable(Screens.MAP.name) {
-            Logger.d( "Navigated to: MAP")
-            val authViewModel: AuthViewModel = koinViewModel()
-            val user = authViewModel.authState.collectAsState().value
+        is Screen.Map -> MapScreen(
+            userId = screen.userId,
+            onProfileClick = { controller.navigate(Screen.Profile) }
+        )
 
-            user?.uid?.let { userId ->
-                MapScreen(
-                    userId = userId,
-                    onProfileClick = {
-                        Logger.d( "Navigating to: PROFILE")
-                        navController.navigate(Screens.PROFILE.name)
-                    }
-                )
-            } ?: Logger.d( "User not found for MAP screen")
-        }
-
-        composable(Screens.PROFILE.name) {
-            Logger.d( "Navigated to: PROFILE")
-            ProfileScreen(navController = navController)
-        }
+        is Screen.Profile -> ProfileScreen(
+            onLogout = {
+                controller.replace(Screen.Auth)
+            },
+            onBack = {
+                controller.pop()
+            }
+        )
     }
 }
