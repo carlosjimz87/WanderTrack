@@ -1,6 +1,7 @@
 package com.carlosjimz87.wandertrack.ui.composables.map
 
 import android.content.Context
+import androidx.compose.foundation.background
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
@@ -56,7 +57,8 @@ fun MapCanvas(
     }
 
     GoogleMap(
-        modifier = Modifier.fillMaxSize(),
+        modifier = Modifier.fillMaxSize()
+            .background(MaterialTheme.colorScheme.surfaceVariant),
         properties = MapProperties(
             mapStyleOptions = getMapStyle(context),
             isBuildingEnabled = false,

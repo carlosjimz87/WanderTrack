@@ -30,7 +30,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalWindowInfo
@@ -44,6 +43,7 @@ import com.carlosjimz87.wandertrack.common.safeAnimateToBounds
 import com.carlosjimz87.wandertrack.common.shouldAnimateFocusOnSelectedCountry
 import com.carlosjimz87.wandertrack.common.shouldAnimateToVisitedCountries
 import com.carlosjimz87.wandertrack.common.shouldResetFocus
+import com.carlosjimz87.wandertrack.domain.models.Screens
 import com.carlosjimz87.wandertrack.ui.composables.bottomsheet.CountryBottomSheetContent
 import com.carlosjimz87.wandertrack.ui.composables.map.BottomSheetDragHandle
 import com.carlosjimz87.wandertrack.ui.composables.map.MapCanvas
@@ -56,18 +56,25 @@ import com.google.android.gms.maps.model.LatLng
 import com.google.maps.android.compose.rememberCameraPositionState
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
-import org.koin.androidx.compose.getViewModel
+import org.koin.androidx.compose.koinViewModel
 import org.koin.core.parameter.parametersOf
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MapScreen(
     userId: String,
+    from: Screens.Map.Source = Screens.Map.Source.Default,
     onProfileClick: () -> Unit,
 ) {
-    val viewModel: MapViewModel = getViewModel(parameters = { parametersOf(userId) })
+    val viewModel: MapViewModel = koinViewModel(parameters = { parametersOf(userId) })
+
+    LaunchedEffect(from) {
+        viewModel.setNavigationSource(from)
+    }
+
     val coroutineScope = rememberCoroutineScope()
     val visitedCountriesCodes by viewModel.visitedCountryCodes.collectAsState()
+    val cameFrom by viewModel.cameFrom.collectAsState()
 
     val countryBorders by viewModel.countryBorders.collectAsState()
     val selectedCountry by viewModel.selectedCountry.collectAsState()
@@ -123,6 +130,8 @@ fun MapScreen(
         bottomSheetScaffoldState.bottomSheetState.currentValue,
         selectedCountry
     ) {
+        if (cameFrom == Screens.Map.Source.BackFromProfile) return@LaunchedEffect
+
         when {
             shouldAnimateToVisitedCountries(visitedCountriesCodes, hasCenteredMap) -> {
                 isAnimatingCamera = true

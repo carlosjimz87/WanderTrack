@@ -2,6 +2,7 @@ package com.carlosjimz87.wandertrack.ui.screens.mapscreen.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.carlosjimz87.wandertrack.domain.models.Screens
 import com.carlosjimz87.wandertrack.domain.models.map.Country
 import com.carlosjimz87.wandertrack.domain.models.map.CountryGeometry
 import com.carlosjimz87.wandertrack.domain.repo.FirestoreRepository
@@ -48,6 +49,13 @@ class MapViewModel(
 
     private val _lastCameraPosition = MutableStateFlow<CameraPosition?>(null)
     val lastCameraPosition: StateFlow<CameraPosition?> = _lastCameraPosition.asStateFlow()
+
+    private val _cameFrom = MutableStateFlow(Screens.Map.Source.Default)
+    val cameFrom = _cameFrom.asStateFlow()
+
+    fun setNavigationSource(from: Screens.Map.Source) {
+        _cameFrom.value = from
+    }
 
     init {
         loadData()

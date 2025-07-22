@@ -3,8 +3,13 @@ package com.carlosjimz87.wandertrack.navigation
 import android.widget.Toast
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.ExperimentalAnimationApi
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.togetherWith
 import androidx.compose.animation.with
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -70,7 +75,17 @@ fun AppNavigation(
 
     AnimatedContent(
         targetState = currentScreen,
-        transitionSpec = { fadeIn() with fadeOut() }
+        transitionSpec = {
+            if (targetState.order > initialState.order) {
+                // Forward
+                slideInHorizontally { it } + fadeIn(tween(500, easing = FastOutSlowInEasing)) togetherWith
+                        slideOutHorizontally { -it } + fadeOut(tween(500, easing = FastOutSlowInEasing))
+            } else {
+                // Back
+                slideInHorizontally { -it } + fadeIn(tween(500, easing = FastOutSlowInEasing)) togetherWith
+                        slideOutHorizontally { it } + fadeOut(tween(500, easing = FastOutSlowInEasing))
+            }
+        }
     ) { screen ->
         when (screen) {
             is Screens.Splash -> SplashScreen(
@@ -130,7 +145,7 @@ fun AppNavigation(
                 onLogout = { controller.replace(Screens.Auth) },
                 onBack = {
                     if (firebaseUser != null) {
-                        controller.replace(Screens.Map(firebaseUser.uid))
+                        controller.replace(Screens.Map(firebaseUser.uid, Screens.Map.Source.BackFromProfile))
                     } else {
                         controller.replace(Screens.Auth)
                     }
