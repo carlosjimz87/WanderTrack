@@ -2,16 +2,19 @@ package com.carlosjimz87.wandertrack.ui.screens.mapscreen.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.carlosjimz87.wandertrack.domain.repo.FirestoreRepository
-import com.carlosjimz87.wandertrack.domain.repo.MapRepository
 import com.carlosjimz87.wandertrack.domain.models.map.Country
 import com.carlosjimz87.wandertrack.domain.models.map.CountryGeometry
+import com.carlosjimz87.wandertrack.domain.repo.FirestoreRepository
+import com.carlosjimz87.wandertrack.domain.repo.MapRepository
+import com.carlosjimz87.wandertrack.managers.StoreManager
 import com.carlosjimz87.wandertrack.utils.Logger
 import com.carlosjimz87.wandertrack.utils.getCountryByCode
+import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.LatLngBounds
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -21,6 +24,7 @@ class MapViewModel(
     private val userId: String,
     private val mapRepo: MapRepository,
     private val firestoreRepo: FirestoreRepository,
+    private val storeManager: StoreManager
 ) : ViewModel() {
 
     private val _userMovedMap = MutableStateFlow(false)
@@ -41,6 +45,9 @@ class MapViewModel(
 
     private val _countryBorders = MutableStateFlow<Map<String, CountryGeometry>>(emptyMap())
     val countryBorders = _countryBorders.asStateFlow()
+
+    private val _lastCameraPosition = MutableStateFlow<CameraPosition?>(null)
+    val lastCameraPosition: StateFlow<CameraPosition?> = _lastCameraPosition.asStateFlow()
 
     init {
         loadData()
@@ -64,8 +71,9 @@ class MapViewModel(
         }
     }
 
-    fun notifyUserMovedMap() {
+    fun notifyUserMovedMap(position: CameraPosition) {
         _userMovedMap.value = true
+        _lastCameraPosition.value = position
     }
 
     fun resetUserMovedFlag() {

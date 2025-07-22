@@ -18,9 +18,9 @@ import com.carlosjimz87.wandertrack.domain.models.map.Country
 fun MapHeaderInfo(
     selectedCountry: Country?,
     visitedCountriesCount: Int,
+    visitedCitiesCount: Int,
     modifier: Modifier = Modifier
 ) {
-    val visitedCitiesCount = selectedCountry?.cities?.count { it.visited } ?: 0
     val context = LocalContext.current
 
     Column(

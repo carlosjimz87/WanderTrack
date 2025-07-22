@@ -37,8 +37,7 @@ fun CountryBottomSheetContent(
     countryVisited: Boolean,
     countryCities: List<City>,
     onToggleCityVisited: (String) -> Unit,
-    onToggleVisited: (String) -> Unit,
-    onDismiss: () -> Unit
+    onToggleVisited: (String) -> Unit
 ) {
     val context = LocalContext.current
     var expanded by remember { mutableStateOf(false) }
@@ -116,8 +115,7 @@ private fun CountryBottomSheetContentPreview() {
             countryVisited = country.visited,
             countryCities = country.cities,
             onToggleCityVisited = {},
-            onToggleVisited = {},
-            onDismiss = {}
+            onToggleVisited = {}
         )
     }
 }
@@ -134,8 +132,7 @@ private fun CountryBottomSheetContentPreview2() {
             countryVisited = country.visited,
             countryCities = country.cities,
             onToggleCityVisited = {},
-            onToggleVisited = {},
-            onDismiss = {}
+            onToggleVisited = {}
         )
     }
 }

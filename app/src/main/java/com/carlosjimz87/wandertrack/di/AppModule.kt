@@ -27,7 +27,7 @@ val appModule = module {
     // Viewmodels
     viewModel { AuthViewModel(get(), get()) }
     viewModel { (userId: String) ->
-        MapViewModel(userId, get<MapRepository>(), get<FirestoreRepository>())
+        MapViewModel(userId, get<MapRepository>(), get<FirestoreRepository>(), get())
     }
     viewModel { ProfileViewModel(get(), get()) }
 }
