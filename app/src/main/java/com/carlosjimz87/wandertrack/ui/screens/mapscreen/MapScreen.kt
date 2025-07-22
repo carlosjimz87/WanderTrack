@@ -1,6 +1,7 @@
 package com.carlosjimz87.wandertrack.ui.screens.mapscreen
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -13,7 +14,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material3.BottomSheetScaffold
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SheetValue
@@ -35,6 +35,11 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
+import com.airbnb.lottie.compose.LottieAnimation
+import com.airbnb.lottie.compose.LottieCompositionSpec
+import com.airbnb.lottie.compose.LottieConstants
+import com.airbnb.lottie.compose.rememberLottieComposition
+import com.carlosjimz87.wandertrack.R
 import com.carlosjimz87.wandertrack.common.SetBottomBarColor
 import com.carlosjimz87.wandertrack.common.animateFocusOnSelectedCountry
 import com.carlosjimz87.wandertrack.common.animateToVisitedCountries
@@ -86,6 +91,7 @@ fun MapScreen(
     val cameraPositionState = rememberCameraPositionState {
         position = lastCameraPosition ?: CameraPosition.fromLatLngZoom(LatLng(0.0, 0.0), 2f)
     }
+    val composition by rememberLottieComposition(getLoadingAnimationResource())
 
     val bottomSheetScaffoldState = rememberBottomSheetScaffoldState(
         bottomSheetState = rememberStandardBottomSheetState(
@@ -259,13 +265,24 @@ fun MapScreen(
                         .zIndex(1f),
                     contentAlignment = Alignment.Center
                 ) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(48.dp),
-                        color = MaterialTheme.colorScheme.primary,
-                        strokeWidth = 4.dp
+                    LottieAnimation(
+                        composition,
+                        iterations = LottieConstants.IterateForever,
+                        modifier = Modifier.size(150.dp),
                     )
                 }
             }
         }
+    }
+}
+
+
+@Composable
+private fun getLoadingAnimationResource(): LottieCompositionSpec.RawRes {
+
+    return if (isSystemInDarkTheme()) {
+        LottieCompositionSpec.RawRes(R.raw.dark_loading_anim)
+    } else {
+        LottieCompositionSpec.RawRes(R.raw.loading_anim)
     }
 }

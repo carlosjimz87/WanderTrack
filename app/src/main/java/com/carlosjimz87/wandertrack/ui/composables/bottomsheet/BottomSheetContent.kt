@@ -53,9 +53,14 @@ fun CountryBottomSheetContent(
 ) {
     val context = LocalContext.current
     var expanded by remember { mutableStateOf(false) }
-    val visitedCities = countryCities.visited()
-    val previewCities = visitedCities.take(3)
-
+    val visitedCities by remember(countryCities) {
+        mutableStateOf(countryCities.visited())
+    }
+    val previewCities by remember(visitedCities) {
+        mutableStateOf(visitedCities.take(3))
+    }
+    val toggleCity: (City) -> Unit = { onToggleCityVisited(it.name) }
+    val hasMoreThanThreeCities = remember { countryCities.size > 3 || visitedCities.size > 3 }
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -91,11 +96,11 @@ fun CountryBottomSheetContent(
                         .fillMaxWidth()
                         .heightIn(max = 280.dp)
                 ) {
-                    itemsIndexed(countryCities) { index, city ->
+                    itemsIndexed(countryCities, key = { _, city -> city.name }) { index, city ->
                         CityRow(
                             cityName = city.name,
                             isVisited = city.visited,
-                            onToggle = { onToggleCityVisited(city.name) }
+                            onToggle = { toggleCity(city) }
                         )
                         if (index != countryCities.size - 1) {
                             HorizontalDivider(
@@ -105,37 +110,12 @@ fun CountryBottomSheetContent(
                     }
                 }
             } else {
-                Box(modifier = Modifier.fillMaxWidth()) {
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(12.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.align(Alignment.Center)
-                    ) {
-                        previewCities.forEach { city ->
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(4.dp)
-                            ) {
-                                Box(
-                                    modifier = Modifier
-                                        .size(8.dp)
-                                        .background(Color.Red, shape = CircleShape)
-                                )
-                                Text(
-                                    text = city.name,
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurface
-                                )
-                            }
-                        }
-                    }
-                }
-
+                CompactCityRow(previewCities)
                 Spacer(modifier = Modifier.height(8.dp))
             }
         }
 
-        if (countryCities.size > 3 || visitedCities.size > 3) {
+        if (hasMoreThanThreeCities) {
             TextButton(
                 modifier = Modifier.align(Alignment.CenterHorizontally),
                 onClick = { expanded = !expanded }

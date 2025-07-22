@@ -25,7 +25,7 @@ fun ProfileIconButton(onClick: () -> Unit, modifier: Modifier = Modifier) {
         Icon(
             imageVector = Icons.Default.Person,
             contentDescription = "Profile",
-            tint = MaterialTheme.colorScheme.primary
+            tint = MaterialTheme.colorScheme.primaryContainer
         )
     }
 }
