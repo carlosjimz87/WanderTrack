@@ -1,9 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <style name="Theme.WanderTrack" parent="android:Theme.Material.Light.NoActionBar">
-        <item name="android:windowBackground">@android:color/transparent</item>
-        <item name="android:windowSplashScreenBackground">@android:color/transparent</item>
-        <item name="android:windowSplashScreenAnimatedIcon">@drawable/transparent</item>
-        <item name="android:windowSplashScreenAnimationDuration">0</item>
+        <!-- Replaces the transparent background -->
+        <item name="android:windowBackground">@color/primary</item>
+
+        <!-- Optional: improve splash screen smoothness -->
+        <item name="android:windowSplashScreenBackground">@color/primary</item>
+        <item name="android:windowSplashScreenAnimatedIcon">@drawable/logo_full</item>
+        <item name="android:windowSplashScreenAnimationDuration">300</item>
+
+        <!-- Link to custom animation style -->
+        <item name="android:windowAnimationStyle">@style/AppWindowAnimation</item>
     </style>
 </resources>

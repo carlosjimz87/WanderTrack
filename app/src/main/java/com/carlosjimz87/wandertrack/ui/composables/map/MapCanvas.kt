@@ -6,9 +6,13 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Modifier
 import com.carlosjimz87.wandertrack.common.Constants.MAX_ZOOM_LEVEL
 import com.carlosjimz87.wandertrack.common.Constants.MIN_ZOOM_LEVEL
@@ -39,6 +43,23 @@ fun MapCanvas(
     val mapStyle = remember(isDarkTheme) {
         stylesManager.getMapStyle(isDarkTheme)
     }
+
+    // 👇 Delay rendering the GoogleMap by one frame after first composition
+    var shouldShowMap by remember { mutableStateOf(false) }
+    LaunchedEffect(mapStyle) {
+        withFrameNanos { shouldShowMap = true }
+    }
+
+    if (!shouldShowMap) {
+        // Avoid showing default map while waiting
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(MaterialTheme.colorScheme.surfaceVariant)
+        )
+        return
+    }
+
     val visitedPolygons by remember(visitedCountriesCodes, countryBorders) {
         derivedStateOf {
             visitedCountriesCodes.flatMap { code ->
@@ -60,7 +81,8 @@ fun MapCanvas(
     }
 
     GoogleMap(
-        modifier = Modifier.fillMaxSize()
+        modifier = Modifier
+            .fillMaxSize()
             .background(MaterialTheme.colorScheme.surfaceVariant),
         properties = MapProperties(
             mapStyleOptions = mapStyle,

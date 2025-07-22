@@ -2,4 +2,7 @@
 <resources>
     <color name="black">#FF0B131F</color>
     <color name="white">#FFFEFAF5</color>
+    <color name="surfaceVariant">#FFFBF7F1</color> <!-- matches TertiaryNeutral -->
+    <color name="primary">#FFF8B9BC</color> <!-- matches AccentPink -->
+    <color name="primaryDark">#FFEE5662</color>
 </resources>
