@@ -2,6 +2,7 @@ package com.carlosjimz87.wandertrack.common
 
 import android.app.Activity
 import android.content.Context
+import android.content.res.Resources
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.SheetState
 import androidx.compose.material3.SheetValue
@@ -144,14 +145,13 @@ suspend fun animateFocusOnSelectedCountry(
     val latRange = bounds.northeast.latitude - bounds.southwest.latitude
 
     // Calcula offset para mover el centro del país hacia arriba (para no quedar oculto)
-    val latOffset = latRange * (bottomSheetHeightDp.value / mapViewHeightDp.value) * 1.3f // factor ajustable
-
+    val latOffset = latRange * (bottomSheetHeightDp.value / mapViewHeightDp.value) * 0.02f
     val adjustedCenter = LatLng(
         bounds.center.latitude + latOffset,
         bounds.center.longitude
     )
 
-    val zoomLevel = calculateZoomLevel(bounds)
+    val zoomLevel = calculateZoomLevel(bounds) - 0.5f // Reduce zoom level slightly to fit the country better
 
     cameraPositionState.animate(
         CameraUpdateFactory.newLatLngZoom(adjustedCenter, zoomLevel),
