@@ -49,6 +49,7 @@ import com.carlosjimz87.wandertrack.common.shouldAnimateFocusOnSelectedCountry
 import com.carlosjimz87.wandertrack.common.shouldAnimateToVisitedCountries
 import com.carlosjimz87.wandertrack.common.shouldResetFocus
 import com.carlosjimz87.wandertrack.domain.models.Screens
+import com.carlosjimz87.wandertrack.managers.StylesManager
 import com.carlosjimz87.wandertrack.ui.composables.bottomsheet.CountryBottomSheetContent
 import com.carlosjimz87.wandertrack.ui.composables.map.BottomSheetDragHandle
 import com.carlosjimz87.wandertrack.ui.composables.map.MapCanvas
@@ -62,6 +63,7 @@ import com.google.maps.android.compose.rememberCameraPositionState
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
+import org.koin.compose.getKoin
 import org.koin.core.parameter.parametersOf
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -72,6 +74,7 @@ fun MapScreen(
     onProfileClick: () -> Unit,
 ) {
     val viewModel: MapViewModel = koinViewModel(parameters = { parametersOf(userId) })
+    val stylesManager: StylesManager = getKoin().get()
 
     LaunchedEffect(from) {
         viewModel.setNavigationSource(from)
@@ -91,7 +94,10 @@ fun MapScreen(
     val cameraPositionState = rememberCameraPositionState {
         position = lastCameraPosition ?: CameraPosition.fromLatLngZoom(LatLng(0.0, 0.0), 2f)
     }
-    val composition by rememberLottieComposition(getLoadingAnimationResource())
+
+    val isDarkTheme = isSystemInDarkTheme()
+
+    val composition by rememberLottieComposition(stylesManager.getAnimationStyles(isDarkTheme))
 
     val bottomSheetScaffoldState = rememberBottomSheetScaffoldState(
         bottomSheetState = rememberStandardBottomSheetState(
@@ -273,16 +279,5 @@ fun MapScreen(
                 }
             }
         }
-    }
-}
-
-
-@Composable
-private fun getLoadingAnimationResource(): LottieCompositionSpec.RawRes {
-
-    return if (isSystemInDarkTheme()) {
-        LottieCompositionSpec.RawRes(R.raw.dark_loading_anim)
-    } else {
-        LottieCompositionSpec.RawRes(R.raw.loading_anim)
     }
 }

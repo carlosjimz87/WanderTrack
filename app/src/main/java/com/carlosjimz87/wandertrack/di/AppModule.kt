@@ -1,12 +1,13 @@
 package com.carlosjimz87.wandertrack.di
 
 import FirestoreRepositoryImpl
-import com.carlosjimz87.wandertrack.domain.repo.AuthRepository
 import com.carlosjimz87.wandertrack.data.repo.AuthRepositoryImpl
+import com.carlosjimz87.wandertrack.data.repo.MapRepositoryImpl
+import com.carlosjimz87.wandertrack.domain.repo.AuthRepository
 import com.carlosjimz87.wandertrack.domain.repo.FirestoreRepository
 import com.carlosjimz87.wandertrack.domain.repo.MapRepository
-import com.carlosjimz87.wandertrack.data.repo.MapRepositoryImpl
 import com.carlosjimz87.wandertrack.managers.StoreManager
+import com.carlosjimz87.wandertrack.managers.StylesManager
 import com.carlosjimz87.wandertrack.ui.screens.auth.viewmodel.AuthViewModel
 import com.carlosjimz87.wandertrack.ui.screens.mapscreen.viewmodel.MapViewModel
 import com.carlosjimz87.wandertrack.ui.screens.profile.viewmodel.ProfileViewModel
@@ -23,6 +24,7 @@ val appModule = module {
 
     // Managers
     single { StoreManager(androidContext()) }
+    single { StylesManager(androidContext()) }
 
     // Viewmodels
     viewModel { AuthViewModel(get(), get()) }
