@@ -2,6 +2,7 @@ package com.carlosjimz87.wandertrack.ui.screens.auth.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.carlosjimz87.wandertrack.common.formatUsername
 import com.carlosjimz87.wandertrack.domain.repo.AuthRepository
 import com.carlosjimz87.wandertrack.domain.repo.FirestoreRepository
 import com.carlosjimz87.wandertrack.ui.screens.auth.state.AuthScreenState
@@ -99,4 +100,10 @@ class AuthViewModel(
     fun resendVerificationEmail(onResult: (Boolean, String?) -> Unit) {
         authRepository.resendVerificationEmail(onResult)
     }
+
+    val userEmail: String?
+        get() = _authState.value?.email
+
+    val userName: String?
+        get() = userEmail?.formatUsername()
 }

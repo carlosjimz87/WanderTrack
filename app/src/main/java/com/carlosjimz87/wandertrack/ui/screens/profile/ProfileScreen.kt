@@ -22,6 +22,7 @@ fun ProfileScreen(
 ) {
     val context = LocalContext.current
     val user by authViewModel.authState.collectAsState()
+    profileViewModel.loadProfile(authViewModel.userName)
     val profile = profileViewModel.profileState
 
     context.SetBottomBarColor()

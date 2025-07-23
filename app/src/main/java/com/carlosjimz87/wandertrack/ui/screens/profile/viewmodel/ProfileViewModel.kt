@@ -24,16 +24,25 @@ class ProfileViewModel(
         loadProfile()
     }
 
-    fun loadProfile() {
+    fun loadProfile(username: String? = null) {
         val userId = authRepository.currentUser?.uid ?: return
 
         viewModelScope.launch {
             avatarUrl = authRepository.currentUser?.photoUrl?.toString()
 
-            val profile = firestoreRepository.fetchUserProfile(userId)
+            val profile = firestoreRepository.fetchUserProfile(userId)?.copy(
+                username = username?.formatUsername() ?: "Unknown User",
+            )
             if (profile != null) {
                 profileState = profile
             }
         }
+    }
+
+    private fun String.formatUsername(): String {
+        // use regex to extract the username from the email
+        return this.substringBefore('@').replace('.', ' ').replace('_', ' ')
+            .split(" ")
+            .joinToString(" ")
     }
 }

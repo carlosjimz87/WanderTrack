@@ -167,3 +167,17 @@ fun Context.SetBottomBarColor(color: Color = White){
         window.navigationBarColor = color.toArgb() // Your red splash color
     }
 }
+const val MAX_USERNAME_LENGTH = 12
+fun String.formatUsername(): String {
+    val formatted = this.substringBefore('@')
+        .replace('.', ' ')
+        .replace('_', ' ')
+        .split(" ")
+        .joinToString(" ") { it.replaceFirstChar { c -> c.uppercaseChar() } }
+
+    return if (formatted.length > MAX_USERNAME_LENGTH) {
+        formatted.take(MAX_USERNAME_LENGTH) + "…"
+    } else {
+        formatted
+    }
+}
