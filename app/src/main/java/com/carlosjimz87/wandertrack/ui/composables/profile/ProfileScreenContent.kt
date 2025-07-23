@@ -7,7 +7,6 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -18,6 +17,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBars
@@ -26,12 +26,10 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -41,7 +39,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
@@ -51,7 +48,6 @@ import com.carlosjimz87.wandertrack.domain.models.profile.Achievement
 import com.carlosjimz87.wandertrack.domain.models.profile.ProfileData
 import com.carlosjimz87.wandertrack.ui.composables.auth.PrimaryButton
 import com.carlosjimz87.wandertrack.ui.composables.auth.calculateResponsiveFontSize
-import com.carlosjimz87.wandertrack.ui.theme.AccentPinkDark
 import com.carlosjimz87.wandertrack.ui.theme.WanderTrackTheme
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -65,7 +61,6 @@ fun ProfileScreenContent(
     avatarUrl: String? = null,
     onDeleteAccountClick: () -> Unit
 ) {
-    val context = LocalContext.current
     BoxWithConstraints(
         modifier = modifier
             .fillMaxSize()
@@ -162,36 +157,18 @@ fun ProfileScreenContent(
                 )
             }
 
-            Spacer(Modifier.height(12.dp))
-
-            OutlinedButton(
-                onClick = onDeleteAccountClick,
-                colors = ButtonDefaults.outlinedButtonColors(
-                    contentColor = MaterialTheme.colorScheme.primaryContainer
-                ),
-                border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary),
-                shape = RoundedCornerShape(16.dp),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(56.dp)
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Delete,
-                    contentDescription = stringResource(R.string.delete_account),
-                    tint = MaterialTheme.colorScheme.primaryContainer,
-                    modifier = Modifier.size(24.dp)
-                )
-                Spacer(Modifier.width(4.dp))
-                Text(stringResource(R.string.delete_account), style = MaterialTheme.typography.headlineSmall)
-            }
-
-            Spacer(Modifier.height(4.dp))
-
-            PrimaryButton(
-                text = logoutText,
-                onClick = onLogout
-            )
         }
+        ProfileButtons(
+            onLogoutClick = onLogout,
+            onDeleteAccountClick = onDeleteAccountClick,
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .fillMaxWidth()
+                .padding(
+                    bottom = 16.dp + WindowInsets.navigationBars.asPaddingValues()
+                        .calculateBottomPadding()
+                )
+        )
     }
 }
 

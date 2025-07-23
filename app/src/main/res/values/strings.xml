@@ -48,6 +48,7 @@
     <string name="resend_verification_email">Resend verification email.</string>
     <string name="delete_your_account">Delete your account?</string>
     <string name="account_permanently_deleted_msg">This action cannot be undone. Your account and all associated data will be permanently deleted.</string>
+    <string name="delete">Delete</string>
     <string name="accept">Accept</string>
     <string name="cancel">Cancel</string>
     <string name="error_deleting_account">An error occurred while deleting your account</string>

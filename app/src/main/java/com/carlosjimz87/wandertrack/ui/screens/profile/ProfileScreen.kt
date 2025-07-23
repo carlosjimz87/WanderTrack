@@ -12,7 +12,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import com.carlosjimz87.wandertrack.R
 import com.carlosjimz87.wandertrack.common.SetBottomBarColor
-import com.carlosjimz87.wandertrack.ui.composables.profile.DeleteAccountDialog
+import com.carlosjimz87.wandertrack.ui.composables.profile.DestructiveActionDialog
 import com.carlosjimz87.wandertrack.ui.composables.profile.ProfileScreenContent
 import com.carlosjimz87.wandertrack.ui.screens.auth.viewmodel.AuthViewModel
 import com.carlosjimz87.wandertrack.ui.screens.profile.viewmodel.ProfileViewModel
@@ -51,7 +51,7 @@ fun ProfileScreen(
     )
 
     if (showDeleteDialog) {
-        DeleteAccountDialog(
+        DestructiveActionDialog(
             onConfirm = {
                 showDeleteDialog = false
                 authViewModel.deleteAccount { success, message ->

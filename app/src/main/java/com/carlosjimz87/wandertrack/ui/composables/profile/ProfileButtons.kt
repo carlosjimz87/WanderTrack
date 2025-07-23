@@ -1,4 +1,4 @@
-package com.carlosjimz87.wandertrack.ui.composables.auth
+package com.carlosjimz87.wandertrack.ui.composables.profile
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -6,12 +6,18 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
@@ -22,30 +28,25 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.carlosjimz87.wandertrack.R
+import com.carlosjimz87.wandertrack.ui.composables.auth.PrimaryButton
 import com.carlosjimz87.wandertrack.ui.theme.WanderTrackTheme
 import com.carlosjimz87.wandertrack.ui.theme.White
 
 @Composable
-fun BoxScope.AuthButtons(
-    onGetStartedClick: () -> Unit,
-    onSignInClick: () -> Unit,
+fun ProfileButtons(
+    onLogoutClick: () -> Unit,
+    onDeleteAccountClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .align(Alignment.BottomCenter)
             .padding(horizontal = 32.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        PrimaryButton(
-            text = stringResource(R.string.get_started),
-            onClick = onGetStartedClick
-        )
-
         OutlinedButton(
-            onClick = onSignInClick,
+            onClick = onDeleteAccountClick,
             colors = ButtonDefaults.outlinedButtonColors(
                 contentColor = MaterialTheme.colorScheme.onPrimary
             ),
@@ -55,8 +56,20 @@ fun BoxScope.AuthButtons(
                 .fillMaxWidth()
                 .height(56.dp)
         ) {
-            Text("Sign In", style = MaterialTheme.typography.headlineSmall)
+            Icon(
+                imageVector = Icons.Default.Delete,
+                contentDescription = stringResource(R.string.delete_account),
+                tint = MaterialTheme.colorScheme.primaryContainer,
+                modifier = Modifier.size(24.dp)
+            )
+            Spacer(Modifier.width(4.dp))
+            Text(stringResource(R.string.delete_account), style = MaterialTheme.typography.headlineSmall)
         }
+
+        PrimaryButton(
+            text = stringResource(R.string.logout),
+            onClick = onLogoutClick
+        )
     }
 }
 
@@ -67,9 +80,9 @@ fun AuthButtonsPreview() {
         Box(
             modifier = Modifier.fillMaxSize().background(White)
         ) {
-            AuthButtons(
-                onGetStartedClick = {},
-                onSignInClick = {}
+            ProfileButtons(
+                onLogoutClick = {},
+                onDeleteAccountClick = {}
             )
         }
     }

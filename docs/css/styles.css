@@ -1,0 +1,79 @@
+/* Shared styles for WanderTrack legal pages */
+body {
+  max-width: 800px;
+  margin: 40px auto;
+  font-family: sans-serif;
+  padding: 0 20px;
+  line-height: 1.6;
+  background: #fff;
+  color: #333;
+}
+h1#title {
+  color: #c0392b;  /* Delete page headline */
+  margin-bottom: 0.5em;
+}
+
+h1 {
+  color: #c3e50; /* Delete page headline */
+  margin-bottom: 0.5em;
+}
+
+h2 {
+  color: #2c3e50; /* Section headings */
+  margin-top: 1.5em;
+}
+
+/* Buttons everywhere */
+a.button {
+  display: inline-block;
+  margin-top: 1em;
+  padding: 0.75em 1.5em;
+  background-color: #c0392b;
+  color: white;
+  text-decoration: none;
+  border-radius: 4px;
+  font-weight: bold;
+}
+
+a.button:hover {
+  background-color: #a02923;
+}
+
+/* Index‐page overrides */
+.index h1 {
+  color: #2c3e50;
+  margin-bottom: 1.5em;
+  text-align: center;
+}
+
+.index a.button {
+  background-color: #2c3e50;
+}
+
+.index a.button:hover {
+  background-color: #1f2a36;
+}
+
+/* Image styling */
+img {
+  max-width: 100%;
+  height: auto;
+  max-height: 400px;
+  margin: 1em 0;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  object-fit: cover;
+}
+
+.image-row {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+.image-row {
+  display: flex;
+  gap: 2em;
+  flex-wrap: wrap;
+  justify-content: center;
+  border: none;
+}
