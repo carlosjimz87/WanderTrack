@@ -169,15 +169,10 @@ fun Context.SetBottomBarColor(color: Color = White){
 }
 const val MAX_USERNAME_LENGTH = 12
 fun String.formatUsername(): String {
-    val formatted = this.substringBefore('@')
+    val name = substringBefore('@')
         .replace('.', ' ')
         .replace('_', ' ')
         .split(" ")
         .joinToString(" ") { it.replaceFirstChar { c -> c.uppercaseChar() } }
-
-    return if (formatted.length > MAX_USERNAME_LENGTH) {
-        formatted.take(MAX_USERNAME_LENGTH) + "…"
-    } else {
-        formatted
-    }
+    return if (name.length > MAX_USERNAME_LENGTH) name.take(MAX_USERNAME_LENGTH) + "…" else name
 }

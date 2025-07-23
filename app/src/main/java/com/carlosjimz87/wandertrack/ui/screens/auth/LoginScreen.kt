@@ -6,10 +6,9 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.platform.LocalContext
 import com.carlosjimz87.wandertrack.BuildConfig
 import com.carlosjimz87.wandertrack.R
@@ -29,75 +28,61 @@ fun LoginScreen(
 ) {
     val context = LocalContext.current
     BackHandler(onBack = onBack)
-
     context.SetBottomBarColor()
 
-    var email by remember { mutableStateOf("") }
-    var password by remember { mutableStateOf("") }
-    var error by remember { mutableStateOf<String?>(null) }
+    val emailState = rememberSaveable { mutableStateOf("") }
+    val passwordState = rememberSaveable { mutableStateOf("") }
+    val errorState = rememberSaveable { mutableStateOf<String?>(null) }
 
     val oneTapClient = remember { Identity.getSignInClient(context) }
-    val launcher = rememberLauncherForActivityResult(
+    val googleLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.StartIntentSenderForResult()
     ) { result ->
-        try {
-            val credential = oneTapClient.getSignInCredentialFromIntent(result.data)
-            val idToken = credential.googleIdToken
-            if (idToken != null) {
-                onGoogleIdTokenReceived(idToken)
-            }
-        } catch (e: Exception) {
-            Toast.makeText(
-                context,
-                context.getString(R.string.google_sign_failed),
-                Toast.LENGTH_SHORT
-            ).show()
-            Logger.e("LoginScreen: Google sign in failed [${e.localizedMessage}]")
+        runCatching {
+            oneTapClient.getSignInCredentialFromIntent(result.data).googleIdToken
+        }.onSuccess { token ->
+            token?.let { onGoogleIdTokenReceived(it) }
+        }.onFailure {
+            Toast.makeText(context, R.string.google_sign_failed, Toast.LENGTH_SHORT).show()
+            Logger.e("Google sign in failed: ${it.localizedMessage}")
         }
     }
 
     LoginScreenContent(
-        email = email,
-        password = password,
-        error = error,
-        onEmailChange = { email = it },
-        onPasswordChange = { password = it },
+        email = emailState.value,
+        password = passwordState.value,
+        error = errorState.value,
+        onEmailChange = { emailState.value = it },
+        onPasswordChange = { passwordState.value = it },
         onSignInClick = {
-            authViewModel.loginWithEmail(email, password) { success, msg ->
-                if (!success) error = msg
+            authViewModel.loginWithEmail(emailState.value, passwordState.value) { success, msg ->
+                if (!success) errorState.value = msg
             }
         },
         onGoogleSignInClick = {
-            val signInRequest = BeginSignInRequest.builder()
+            val request = BeginSignInRequest.builder()
                 .setGoogleIdTokenRequestOptions(
                     BeginSignInRequest.GoogleIdTokenRequestOptions.builder()
                         .setSupported(true)
                         .setServerClientId(BuildConfig.GOOGLE_CLIENT_ID)
                         .setFilterByAuthorizedAccounts(false)
                         .build()
-                )
-                .build()
+                ).build()
 
-            oneTapClient.beginSignIn(signInRequest)
+            oneTapClient.beginSignIn(request)
                 .addOnSuccessListener { result ->
-                    launcher.launch(
-                        IntentSenderRequest.Builder(result.pendingIntent).build()
-                    )
+                    googleLauncher.launch(IntentSenderRequest.Builder(result.pendingIntent).build())
                 }
-                .addOnFailureListener { err ->
-                    Toast.makeText(
-                        context,
-                        context.getString(R.string.google_sign_failed),
-                        Toast.LENGTH_SHORT
-                    ).show()
-                    Logger.e("LoginScreen: Google sign in failed [${err.localizedMessage}]")
+                .addOnFailureListener {
+                    Toast.makeText(context, R.string.google_sign_failed, Toast.LENGTH_SHORT).show()
+                    Logger.e("Google sign in failed: ${it.localizedMessage}")
                 }
         },
         onForgotPasswordClick = {
-            // Handle forgot password navigation or logic here
+            // TODO: Implement forgot password
         },
         resendVerificationEmail = {
-            authViewModel.resendVerificationEmail { success, msg ->
+            authViewModel.resendVerificationEmail { _, msg ->
                 Toast.makeText(context, msg ?: "", Toast.LENGTH_SHORT).show()
             }
         }

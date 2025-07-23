@@ -13,19 +13,37 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.systemBars
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.carlosjimz87.wandertrack.R
@@ -45,8 +63,18 @@ fun LoginScreenContent(
     resendVerificationEmail: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val isEmailValid = remember(email) { Patterns.EMAIL_ADDRESS.matcher(email).matches() }
-    val isFormValid = isEmailValid && password.isNotBlank()
+    val focusManager = LocalFocusManager.current
+    val emailFocusRequester = remember { FocusRequester() }
+    val passwordFocusRequester = remember { FocusRequester() }
+    var passwordVisible by rememberSaveable { mutableStateOf(false) }
+
+    val isEmailValid = remember(email) {
+        Patterns.EMAIL_ADDRESS.matcher(email.trim()).matches()
+    }
+    val isFormValid = isEmailValid && password.trim().isNotEmpty()
+
+    val emailSanitized = remember(email) { email.replace(Regex("[<>\"']"), "") }
+    val passwordSanitized = remember(password) { password.replace(Regex("[<>\"']"), "") }
 
     BoxWithConstraints(
         modifier = modifier
@@ -55,8 +83,8 @@ fun LoginScreenContent(
             .padding(WindowInsets.systemBars.asPaddingValues())
             .padding(24.dp)
     ) {
-        val screenHeight = this@BoxWithConstraints.maxHeight
-        val screenWidth = this@BoxWithConstraints.maxWidth
+        val screenHeight = maxHeight
+        val screenWidth = maxWidth
         val titleFontSize = calculateResponsiveFontSize(screenWidth)
 
         Column(
@@ -66,7 +94,7 @@ fun LoginScreenContent(
         ) {
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
-                modifier = Modifier.fillMaxWidth(1f)
+                modifier = Modifier.fillMaxWidth()
             ) {
                 Spacer(modifier = Modifier.height(screenHeight * 0.05f))
 
@@ -74,7 +102,9 @@ fun LoginScreenContent(
                     text = stringResource(R.string.welcome_back),
                     style = MaterialTheme.typography.titleMedium.copy(fontSize = titleFontSize),
                     color = MaterialTheme.colorScheme.onPrimary,
+                    modifier = Modifier.semantics { heading() }
                 )
+
                 Text(
                     text = stringResource(R.string.sign_in_account),
                     style = MaterialTheme.typography.bodyLarge,
@@ -83,35 +113,79 @@ fun LoginScreenContent(
 
                 Spacer(modifier = Modifier.height(24.dp))
 
-                GoogleButton(onGoogleSignInClick = onGoogleSignInClick)
+                GoogleButton(
+                    onGoogleSignInClick = onGoogleSignInClick,
+                    modifier = Modifier.semantics {
+                        contentDescription = "Sign in with Google"
+                    }
+                )
 
                 Spacer(modifier = Modifier.height(24.dp))
 
                 OutlinedTextField(
-                    value = email,
-                    onValueChange = onEmailChange,
+                    value = emailSanitized,
+                    onValueChange = {
+                        onEmailChange(it.replace(Regex("[<>\"']"), ""))
+                    },
                     label = { Text(stringResource(R.string.email_address)) },
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .focusRequester(emailFocusRequester),
+                    keyboardOptions = KeyboardOptions(
+                        keyboardType = KeyboardType.Email,
+                        imeAction = ImeAction.Next
+                    ),
+                    keyboardActions = KeyboardActions(
+                        onNext = { passwordFocusRequester.requestFocus() }
+                    ),
                     isError = email.isNotBlank() && !isEmailValid,
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
+                    singleLine = true,
                     colors = OutlinedTextFieldDefaults.colors()
                 )
 
                 Spacer(modifier = Modifier.height(24.dp))
 
                 OutlinedTextField(
-                    value = password,
-                    onValueChange = onPasswordChange,
+                    value = passwordSanitized,
+                    onValueChange = {
+                        onPasswordChange(it.replace(Regex("[<>\"']"), ""))
+                    },
                     label = { Text(stringResource(R.string.password)) },
-                    modifier = Modifier.fillMaxWidth(),
-                    visualTransformation = PasswordVisualTransformation(),
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .focusRequester(passwordFocusRequester),
+                    keyboardOptions = KeyboardOptions(
+                        keyboardType = KeyboardType.Password,
+                        imeAction = ImeAction.Done
+                    ),
+                    keyboardActions = KeyboardActions(
+                        onDone = {
+                            focusManager.clearFocus()
+                            if (isFormValid) onSignInClick()
+                        }
+                    ),
+                    singleLine = true,
+                    visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                    trailingIcon = {
+                        val icon = if (passwordVisible) Icons.Default.VisibilityOff else Icons.Default.Visibility
+                        val desc = if (passwordVisible) "Hide password" else "Show password"
+                        IconButton(
+                            onClick = { passwordVisible = !passwordVisible }
+                        ) {
+                            Icon(imageVector = icon, contentDescription = desc)
+                        }
+                    },
                     colors = OutlinedTextFieldDefaults.colors()
                 )
 
                 Spacer(modifier = Modifier.height(8.dp))
 
-                TextButton(onClick = onForgotPasswordClick) {
+                TextButton(
+                    onClick = onForgotPasswordClick,
+                    modifier = Modifier.semantics {
+                        contentDescription = "Forgot password"
+                    }
+                ) {
                     Text(
                         stringResource(R.string.forgot_password),
                         color = MaterialTheme.colorScheme.primary
@@ -122,19 +196,24 @@ fun LoginScreenContent(
                     Spacer(modifier = Modifier.height(16.dp))
                     PrimaryButton(
                         text = stringResource(R.string.resend_verification_email),
-                        onClick = { resendVerificationEmail() }
+                        onClick = resendVerificationEmail
                     )
                 }
             }
 
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
-                modifier = Modifier.fillMaxWidth(1f)
+                modifier = Modifier.fillMaxWidth()
             ) {
                 PrimaryButton(
                     text = stringResource(R.string.sign_in),
-                    onClick = onSignInClick,
-                    enabled = isFormValid
+                    onClick = {
+                        if (isEmailValid) onSignInClick()
+                    },
+                    enabled = isFormValid,
+                    modifier = Modifier.semantics {
+                        contentDescription = "Sign in with email and password"
+                    }
                 )
             }
         }

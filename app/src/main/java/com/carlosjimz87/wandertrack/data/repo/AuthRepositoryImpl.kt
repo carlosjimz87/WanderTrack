@@ -60,4 +60,11 @@ class AuthRepositoryImpl : AuthRepository {
             onResult(false, "User not found.")
         }
     }
+
+    override fun sendPasswordResetEmail(email: String, onResult: (Boolean, String?) -> Unit) {
+        auth.sendPasswordResetEmail(email)
+            .addOnCompleteListener {
+                onResult(it.isSuccessful, if (it.isSuccessful) null else it.exception?.message)
+            }
+    }
 }

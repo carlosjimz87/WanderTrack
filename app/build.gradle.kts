@@ -88,6 +88,9 @@ dependencies {
     implementation(libs.androidx.material3)
     implementation(libs.navigation.compose)
 
+    // Material Icons Extended
+    implementation(libs.androidx.material.icons.extended)
+
     // Google Fonts
     implementation(libs.androidx.ui.text.google.fonts)
 
