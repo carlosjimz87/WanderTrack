@@ -97,6 +97,35 @@ class AuthViewModel(
         }
     }
 
+    fun deleteAccount(
+        onResult: (Boolean, String?) -> Unit
+    ) {
+        val user = authRepository.currentUser
+        if (user == null) {
+            onResult(false, "User not logged in")
+            return
+        }
+
+        viewModelScope.launch {
+            try {
+                // 🔥 Eliminar documento de Firestore
+                firestoreRepository.deleteUserDocument(user.uid)
+
+                // 🔐 Eliminar cuenta de Firebase Auth
+                user.delete().addOnCompleteListener { task ->
+                    if (task.isSuccessful) {
+                        _authState.value = null
+                        onResult(true, null)
+                    } else {
+                        onResult(false, task.exception?.message)
+                    }
+                }
+            } catch (e: Exception) {
+                onResult(false, "Error deleting account: ${e.message}")
+            }
+        }
+    }
+
     fun resendVerificationEmail(onResult: (Boolean, String?) -> Unit) {
         authRepository.resendVerificationEmail(onResult)
     }

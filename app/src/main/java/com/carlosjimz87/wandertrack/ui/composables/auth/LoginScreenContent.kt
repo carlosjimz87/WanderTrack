@@ -142,6 +142,13 @@ fun LoginScreenContent(
                     singleLine = true,
                     colors = OutlinedTextFieldDefaults.colors()
                 )
+                if (!isEmailValid && email.isNotBlank()) {
+                    Text(
+                        text = stringResource(R.string.invalid_email),
+                        color = MaterialTheme.colorScheme.error,
+                        style = MaterialTheme.typography.labelSmall
+                    )
+                }
 
                 Spacer(modifier = Modifier.height(24.dp))
 

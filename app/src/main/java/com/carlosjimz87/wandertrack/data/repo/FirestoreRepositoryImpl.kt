@@ -164,6 +164,10 @@ class FirestoreRepositoryImpl(
         }
     }
 
+    override suspend fun deleteUserDocument(userId: String) {
+        db.collection("users").document(userId).delete().await()
+    }
+
     override suspend fun ensureUserDocument(userId: String) {
         try {
             val userDoc = db.collection(userBasePath()).document(userId)

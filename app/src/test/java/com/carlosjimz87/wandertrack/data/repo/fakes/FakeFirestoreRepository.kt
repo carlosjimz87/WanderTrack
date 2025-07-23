@@ -75,6 +75,12 @@ class FakeFirestoreRepository : FirestoreRepository {
         return _userStats[userId]
     }
 
+    override suspend fun deleteUserDocument(userId: String) {
+        _userVisitedCountries.remove(userId)
+        _userVisitedCities.remove(userId)
+        _userStats.remove(userId)
+    }
+
     override suspend fun recalculateAndUpdateStats(userId: String) {
         val visitedCountries = _userVisitedCountries[userId] ?: emptySet()
         val visitedCitiesMap = _userVisitedCities[userId] ?: emptyMap()
