@@ -91,6 +91,9 @@ dependencies {
     // Google Fonts
     implementation(libs.androidx.ui.text.google.fonts)
 
+    // Coil for image loading
+    implementation(libs.coil.compose)
+
     // Lottie & Splashscreen
     implementation(libs.lottie.compose)
     implementation(libs.androidx.core.splashscreen)

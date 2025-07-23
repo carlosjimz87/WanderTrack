@@ -8,7 +8,6 @@ import com.carlosjimz87.wandertrack.domain.models.map.CountryGeometry
 import com.carlosjimz87.wandertrack.domain.repo.FirestoreRepository
 import com.carlosjimz87.wandertrack.domain.repo.MapRepository
 import com.carlosjimz87.wandertrack.managers.StoreManager
-import com.carlosjimz87.wandertrack.utils.Logger
 import com.carlosjimz87.wandertrack.utils.getCountryByCode
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
@@ -94,7 +93,6 @@ class MapViewModel(
 
     suspend fun resolveCountryFromLatLng(latLng: LatLng): LatLngBounds? {
         val code = withContext(Dispatchers.Default) { mapRepo.getCountryCodeFromLatLng(latLng) }
-        Logger.w("Resolved country from click: $code")
 
         _selectedCountry.value = code?.let { getCountryByCode(_countries.value, it) }
         return code?.let { mapRepo.getCountryBounds()[it] }

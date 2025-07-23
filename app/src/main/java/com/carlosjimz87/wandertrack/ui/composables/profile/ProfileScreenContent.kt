@@ -47,11 +47,12 @@ import com.carlosjimz87.wandertrack.ui.theme.WanderTrackTheme
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun ProfileScreenContent(
+    modifier: Modifier = Modifier,
     profile: ProfileData,
     onEditProfile: () -> Unit,
     onLogout: () -> Unit,
     logoutText: String,
-    modifier: Modifier = Modifier
+    avatarUrl: String? = null,
 ) {
     BoxWithConstraints(
         modifier = modifier
@@ -79,14 +80,7 @@ fun ProfileScreenContent(
             Spacer(Modifier.height(24.dp))
 
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Box(
-                    modifier = Modifier
-                        .size(avatarSize)
-                        .background(MaterialTheme.colorScheme.surfaceVariant, CircleShape),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text("👩‍🦰", fontSize = (titleFontSize * 1.2f))
-                }
+                ProfileAvatar(size = avatarSize, fontSize = titleFontSize, url = avatarUrl)
                 Spacer(Modifier.width(16.dp))
                 Column {
                     Text(

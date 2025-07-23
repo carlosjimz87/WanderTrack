@@ -17,6 +17,8 @@ class ProfileViewModel(
 
     var profileState by mutableStateOf(ProfileData())
         private set
+    var avatarUrl by mutableStateOf<String?>(null)
+        private set
 
     init {
         loadProfile()
@@ -26,6 +28,8 @@ class ProfileViewModel(
         val userId = authRepository.currentUser?.uid ?: return
 
         viewModelScope.launch {
+            avatarUrl = authRepository.currentUser?.photoUrl?.toString()
+
             val profile = firestoreRepository.fetchUserProfile(userId)
             if (profile != null) {
                 profileState = profile

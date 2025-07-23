@@ -37,6 +37,7 @@ fun ProfileScreen(
         profile = profile,
         onEditProfile = { /* TODO Edit */ },
         onLogout = { authViewModel.logout() },
-        logoutText = context.getString(R.string.logout)
+        logoutText = context.getString(R.string.logout),
+        avatarUrl = profileViewModel.avatarUrl,
     )
 }
