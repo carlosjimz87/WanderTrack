@@ -20,6 +20,7 @@
     <string name="invalid_email">Invalid email</string>
     <string name="confirm_password">Confirm password</string>
     <string name="logout">Log out</string>
+    <string name="delete_account">Delete account</string>
 
 
     <string name="visited">Visited</string>
@@ -45,6 +46,12 @@
     <string name="passwords_do_not_match">Passwords do not match</string>
     <string name="verify_email_first">Please verify your email address before signing in.</string>
     <string name="resend_verification_email">Resend verification email.</string>
+    <string name="delete_your_account">Delete your account?</string>
+    <string name="account_permanently_deleted_msg">This action cannot be undone. Your account and all associated data will be permanently deleted.</string>
+    <string name="accept">Accept</string>
+    <string name="cancel">Cancel</string>
+    <string name="error_deleting_account">An error occurred while deleting your account</string>
+    <string name="account_deleted_successfully">Your account has been deleted successfully.</string>
 
 
 </resources>

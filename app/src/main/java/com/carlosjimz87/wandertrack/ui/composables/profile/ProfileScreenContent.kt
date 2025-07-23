@@ -2,6 +2,7 @@ package com.carlosjimz87.wandertrack.ui.composables.profile
 
 
 import android.content.res.Configuration
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -26,13 +27,21 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
@@ -42,6 +51,7 @@ import com.carlosjimz87.wandertrack.domain.models.profile.Achievement
 import com.carlosjimz87.wandertrack.domain.models.profile.ProfileData
 import com.carlosjimz87.wandertrack.ui.composables.auth.PrimaryButton
 import com.carlosjimz87.wandertrack.ui.composables.auth.calculateResponsiveFontSize
+import com.carlosjimz87.wandertrack.ui.theme.AccentPinkDark
 import com.carlosjimz87.wandertrack.ui.theme.WanderTrackTheme
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -53,7 +63,9 @@ fun ProfileScreenContent(
     onLogout: () -> Unit,
     logoutText: String,
     avatarUrl: String? = null,
+    onDeleteAccountClick: () -> Unit
 ) {
+    val context = LocalContext.current
     BoxWithConstraints(
         modifier = modifier
             .fillMaxSize()
@@ -150,7 +162,30 @@ fun ProfileScreenContent(
                 )
             }
 
-            Spacer(Modifier.height(24.dp))
+            Spacer(Modifier.height(12.dp))
+
+            OutlinedButton(
+                onClick = onDeleteAccountClick,
+                colors = ButtonDefaults.outlinedButtonColors(
+                    contentColor = MaterialTheme.colorScheme.primaryContainer
+                ),
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary),
+                shape = RoundedCornerShape(16.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(56.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Delete,
+                    contentDescription = stringResource(R.string.delete_account),
+                    tint = MaterialTheme.colorScheme.primaryContainer,
+                    modifier = Modifier.size(24.dp)
+                )
+                Spacer(Modifier.width(4.dp))
+                Text(stringResource(R.string.delete_account), style = MaterialTheme.typography.headlineSmall)
+            }
+
+            Spacer(Modifier.height(4.dp))
 
             PrimaryButton(
                 text = logoutText,
@@ -185,7 +220,8 @@ fun ProfileScreenPreviewAchievements() {
             ),
             onEditProfile = {},
             onLogout = {},
-            logoutText = "Logout"
+            logoutText = "Logout",
+            onDeleteAccountClick = {}
         )
     }
 }
@@ -219,7 +255,8 @@ fun ProfileScreenPreviewAchievementsDark() {
             ),
             onEditProfile = {},
             onLogout = {},
-            logoutText = "Logout"
+            logoutText = "Logout",
+            onDeleteAccountClick = {}
         )
     }
 }

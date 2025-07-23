@@ -33,7 +33,7 @@ fun AchievementItem(achievement: Achievement) {
     ) {
         Box(
             modifier = Modifier
-                .size(64.dp)
+                .size(42.dp)
                 .background(MaterialTheme.colorScheme.secondary.copy(alpha = 0.2f), CircleShape),
             contentAlignment = Alignment.Center
         ) {
