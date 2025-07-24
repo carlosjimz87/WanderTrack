@@ -53,6 +53,7 @@
     <string name="cancel">Cancel</string>
     <string name="error_deleting_account">An error occurred while deleting your account</string>
     <string name="account_deleted_successfully">Your account has been deleted successfully.</string>
+    <string name="please_enter_your_password">Please enter your password</string>
 
 
 </resources>

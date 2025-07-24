@@ -6,6 +6,7 @@ import com.carlosjimz87.wandertrack.common.formatUsername
 import com.carlosjimz87.wandertrack.domain.repo.AuthRepository
 import com.carlosjimz87.wandertrack.domain.repo.FirestoreRepository
 import com.carlosjimz87.wandertrack.managers.SessionManager
+import com.carlosjimz87.wandertrack.ui.screens.auth.state.AuthUiState
 import com.google.firebase.auth.FirebaseUser
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -17,6 +18,8 @@ class AuthViewModel(
     private val firestoreRepository: FirestoreRepository,
     private val sessionManager: SessionManager
 ) : ViewModel() {
+    private val _authUiState = MutableStateFlow<AuthUiState>(AuthUiState.Idle)
+    val authUiState: StateFlow<AuthUiState> = _authUiState.asStateFlow()
 
     private val _authState = MutableStateFlow(authRepository.currentUser)
     val authState: StateFlow<FirebaseUser?> = _authState.asStateFlow()
@@ -33,22 +36,28 @@ class AuthViewModel(
     val userName: String?
         get() = userEmail?.formatUsername()
 
+    fun clearAuthUiState() {
+        _authUiState.value = AuthUiState.Idle
+    }
+
     fun loginWithEmail(
         email: String,
-        password: String,
-        onResult: (Boolean, String?) -> Unit
+        password: String
     ) {
+        _authUiState.value = AuthUiState.Loading
         authRepository.loginWithEmail(email, password) { success, message ->
-            val user = authRepository.currentUser
-            if (success && user?.isEmailVerified == true) {
-                _authState.value = user
+            if (success) {
+                _authState.value = authRepository.currentUser
                 sessionManager.refreshSession()
-                ensureUserDocument(onResult)
-                onResult(true, null)
-            } else if (user != null && !user.isEmailVerified) {
-                onResult(false, "Please verify your email before logging in.")
+                ensureUserDocument { result, error ->
+                    _authUiState.value = if (result) {
+                        AuthUiState.Success()
+                    } else {
+                        AuthUiState.Error(error ?: "Firestore setup failed.")
+                    }
+                }
             } else {
-                onResult(false, message)
+                _authUiState.value = AuthUiState.Error(message ?: "Unknown error")
             }
         }
     }
@@ -76,7 +85,6 @@ class AuthViewModel(
         authRepository.signup(email, password) { success, message ->
             if (success) {
                 _authState.value = authRepository.currentUser
-                authRepository.resendVerificationEmail { _, _ -> }
                 onResult(true, "Account created. Please verify your email before logging in.")
             } else {
                 onResult(false, message)

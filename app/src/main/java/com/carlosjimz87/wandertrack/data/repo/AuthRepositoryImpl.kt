@@ -25,14 +25,15 @@ class AuthRepositoryImpl : AuthRepository {
         auth.signInWithEmailAndPassword(email, password)
             .addOnSuccessListener { result ->
                 val user = result.user
-                if (user != null && user.isEmailVerified) {
-                    onResult(true, null)
+                if (user != null && !user.isEmailVerified) {
+                    onResult(false, "Please verify your email before continuing.")
                 } else {
-                    auth.signOut()
-                    onResult(false, "Please verify your email address before signing in.")
+                    onResult(true, null)
                 }
             }
-            .addOnFailureListener { onResult(false, it.message) }
+            .addOnFailureListener { e ->
+                onResult(false, e.message)
+            }
     }
 
     override fun loginWithGoogle(

@@ -47,21 +47,21 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.carlosjimz87.wandertrack.R
-import com.carlosjimz87.wandertrack.data.repo.AuthRepositoryImpl
 import com.carlosjimz87.wandertrack.ui.theme.WanderTrackTheme
 
 @Composable
 fun LoginScreenContent(
+    modifier: Modifier = Modifier,
     email: String,
     password: String,
-    error: String?,
     onEmailChange: (String) -> Unit,
     onPasswordChange: (String) -> Unit,
     onSignInClick: () -> Unit,
     onGoogleSignInClick: () -> Unit,
     onForgotPasswordClick: () -> Unit,
     resendVerificationEmail: () -> Unit,
-    modifier: Modifier = Modifier
+    showResendButton: Boolean = false,
+    isLoading: Boolean = false,
 ) {
     val focusManager = LocalFocusManager.current
     val emailFocusRequester = remember { FocusRequester() }
@@ -72,6 +72,7 @@ fun LoginScreenContent(
         Patterns.EMAIL_ADDRESS.matcher(email.trim()).matches()
     }
     val isFormValid = isEmailValid && password.trim().isNotEmpty()
+    var attemptedSignIn by remember { mutableStateOf(false) }
 
     val emailSanitized = remember(email) { email.replace(Regex("[<>\"']"), "") }
     val passwordSanitized = remember(password) { password.replace(Regex("[<>\"']"), "") }
@@ -105,16 +106,11 @@ fun LoginScreenContent(
                     modifier = Modifier.semantics { heading() }
                 )
 
-                Text(
-                    text = stringResource(R.string.sign_in_account),
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onBackground
-                )
-
                 Spacer(modifier = Modifier.height(24.dp))
 
                 GoogleButton(
                     onGoogleSignInClick = onGoogleSignInClick,
+                    enabled = !isLoading,
                     modifier = Modifier.semantics {
                         contentDescription = "Sign in with Google"
                     }
@@ -124,14 +120,12 @@ fun LoginScreenContent(
 
                 OutlinedTextField(
                     value = emailSanitized,
-                    onValueChange = {
-                        onEmailChange(it.replace(Regex("[<>\"']"), ""))
-                    },
+                    onValueChange = { onEmailChange(it.replace(Regex("[<>\"']"), "")) },
                     label = { Text(stringResource(R.string.email_address)) },
                     modifier = Modifier
                         .fillMaxWidth()
                         .focusRequester(emailFocusRequester),
-                    keyboardOptions = KeyboardOptions(
+                    keyboardOptions = KeyboardOptions.Default.copy(
                         keyboardType = KeyboardType.Email,
                         imeAction = ImeAction.Next
                     ),
@@ -140,6 +134,7 @@ fun LoginScreenContent(
                     ),
                     isError = email.isNotBlank() && !isEmailValid,
                     singleLine = true,
+                    enabled = !isLoading,
                     colors = OutlinedTextFieldDefaults.colors()
                 )
                 if (!isEmailValid && email.isNotBlank()) {
@@ -154,14 +149,12 @@ fun LoginScreenContent(
 
                 OutlinedTextField(
                     value = passwordSanitized,
-                    onValueChange = {
-                        onPasswordChange(it.replace(Regex("[<>\"']"), ""))
-                    },
+                    onValueChange = { onPasswordChange(it.replace(Regex("[<>\"']"), "")) },
                     label = { Text(stringResource(R.string.password)) },
                     modifier = Modifier
                         .fillMaxWidth()
                         .focusRequester(passwordFocusRequester),
-                    keyboardOptions = KeyboardOptions(
+                    keyboardOptions = KeyboardOptions.Default.copy(
                         keyboardType = KeyboardType.Password,
                         imeAction = ImeAction.Done
                     ),
@@ -176,14 +169,22 @@ fun LoginScreenContent(
                     trailingIcon = {
                         val icon = if (passwordVisible) Icons.Default.VisibilityOff else Icons.Default.Visibility
                         val desc = if (passwordVisible) "Hide password" else "Show password"
-                        IconButton(
-                            onClick = { passwordVisible = !passwordVisible }
-                        ) {
+                        IconButton(onClick = { passwordVisible = !passwordVisible }) {
                             Icon(imageVector = icon, contentDescription = desc)
                         }
                     },
+                    isError = attemptedSignIn && password.isBlank(),
+                    enabled = !isLoading,
                     colors = OutlinedTextFieldDefaults.colors()
                 )
+
+                if (attemptedSignIn && password.isBlank()) {
+                    Text(
+                        text = stringResource(R.string.please_enter_your_password),
+                        color = MaterialTheme.colorScheme.error,
+                        style = MaterialTheme.typography.labelSmall
+                    )
+                }
 
                 Spacer(modifier = Modifier.height(8.dp))
 
@@ -199,13 +200,15 @@ fun LoginScreenContent(
                     )
                 }
 
-//                if (error == AuthRepositoryImpl.VERIFY_EMAIL_FIRST) {
-//                    Spacer(modifier = Modifier.height(16.dp))
-//                    PrimaryButton(
-//                        text = stringResource(R.string.resend_verification_email),
-//                        onClick = resendVerificationEmail
-//                    )
-//                }
+                if (showResendButton) {
+                    Spacer(modifier = Modifier.height(8.dp))
+                    TextButton(onClick = resendVerificationEmail) {
+                        Text(
+                            text = stringResource(R.string.resend_verification_email),
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                }
             }
 
             Column(
@@ -215,9 +218,10 @@ fun LoginScreenContent(
                 PrimaryButton(
                     text = stringResource(R.string.sign_in),
                     onClick = {
-                        if (isEmailValid) onSignInClick()
+                        attemptedSignIn = true
+                        if (isFormValid) onSignInClick()
                     },
-                    enabled = isFormValid,
+                    enabled = !isLoading,
                     modifier = Modifier.semantics {
                         contentDescription = "Sign in with email and password"
                     }
@@ -238,7 +242,6 @@ fun LoginScreenContentPreviewLight() {
         LoginScreenContent(
             email = "user@email.com",
             password = "password",
-            error = null,
             onEmailChange = {},
             onPasswordChange = {},
             onSignInClick = {},
@@ -261,7 +264,6 @@ fun LoginScreenContentPreviewDark() {
         LoginScreenContent(
             email = "user@email.com",
             password = "password",
-            error = null,
             onEmailChange = {},
             onPasswordChange = {},
             onSignInClick = {},

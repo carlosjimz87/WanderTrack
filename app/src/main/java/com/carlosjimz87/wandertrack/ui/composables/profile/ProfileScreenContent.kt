@@ -165,7 +165,7 @@ fun ProfileScreenContent(
                 .align(Alignment.BottomCenter)
                 .fillMaxWidth()
                 .padding(
-                    bottom = 16.dp + WindowInsets.navigationBars.asPaddingValues()
+                    bottom = 2.dp + WindowInsets.navigationBars.asPaddingValues()
                         .calculateBottomPadding()
                 )
         )

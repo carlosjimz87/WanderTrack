@@ -1,4 +1,4 @@
-package com.carlosjimz87.wandertrack.ui.screens.auth.state
+package com.carlosjimz87.wandertrack.ui.screens.auth
 
 enum class AuthScreenState {
     START,

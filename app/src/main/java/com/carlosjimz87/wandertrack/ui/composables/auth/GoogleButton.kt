@@ -28,18 +28,23 @@ import com.carlosjimz87.wandertrack.ui.theme.Black
 
 @Composable
 fun GoogleButton(
-    onGoogleSignInClick : () -> Unit,
-    modifier: Modifier = Modifier
+    onGoogleSignInClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true
 ) {
     val context = LocalContext.current
 
     OutlinedButton(
-        modifier = modifier
-            .fillMaxWidth().height(56.dp),
         onClick = onGoogleSignInClick,
+        modifier = modifier
+            .fillMaxWidth()
+            .height(56.dp),
+        enabled = enabled,
         colors = ButtonDefaults.buttonColors(
             containerColor = MaterialTheme.colorScheme.tertiary,
-            contentColor = Black
+            contentColor = Black,
+            disabledContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+            disabledContentColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
         ),
         shape = RoundedCornerShape(8.dp)
     ) {
@@ -47,7 +52,7 @@ fun GoogleButton(
             painter = painterResource(id = R.drawable.google),
             contentDescription = context.getString(R.string.google_logo),
             modifier = Modifier.size(32.dp),
-            tint = Color.Unspecified // This preserves original icon colors
+            tint = Color.Unspecified // Keeps original icon color
         )
         Spacer(modifier = Modifier.width(8.dp))
         Text(

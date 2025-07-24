@@ -2,7 +2,6 @@ package com.carlosjimz87.wandertrack.ui.screens.auth
 
 import com.carlosjimz87.wandertrack.data.repo.fakes.FakeAuthRepository
 import com.carlosjimz87.wandertrack.data.repo.fakes.FakeFirestoreRepository
-import com.carlosjimz87.wandertrack.ui.screens.auth.state.AuthScreenState
 import com.carlosjimz87.wandertrack.ui.screens.auth.viewmodel.AuthViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
