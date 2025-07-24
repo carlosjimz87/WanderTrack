@@ -3,9 +3,9 @@ package com.carlosjimz87.wandertrack.ui.screens.auth.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.carlosjimz87.wandertrack.common.formatUsername
+import com.carlosjimz87.wandertrack.domain.managers.SessionManager
 import com.carlosjimz87.wandertrack.domain.repo.AuthRepository
 import com.carlosjimz87.wandertrack.domain.repo.FirestoreRepository
-import com.carlosjimz87.wandertrack.managers.SessionManager
 import com.carlosjimz87.wandertrack.ui.screens.auth.state.AuthUiState
 import com.google.firebase.auth.FirebaseUser
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -96,6 +96,7 @@ class AuthViewModel(
         authRepository.logout()
         _authState.value = null
         sessionManager.refreshSession()
+        _authUiState.value = AuthUiState.Idle
     }
 
     private fun ensureUserDocument(onResult: (Boolean, String?) -> Unit) {

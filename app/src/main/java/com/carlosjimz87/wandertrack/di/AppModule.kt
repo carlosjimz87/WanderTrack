@@ -6,7 +6,7 @@ import com.carlosjimz87.wandertrack.data.repo.MapRepositoryImpl
 import com.carlosjimz87.wandertrack.domain.repo.AuthRepository
 import com.carlosjimz87.wandertrack.domain.repo.FirestoreRepository
 import com.carlosjimz87.wandertrack.domain.repo.MapRepository
-import com.carlosjimz87.wandertrack.managers.SessionManager
+import com.carlosjimz87.wandertrack.managers.SessionManagerImpl
 import com.carlosjimz87.wandertrack.managers.StoreManager
 import com.carlosjimz87.wandertrack.managers.StylesManager
 import com.carlosjimz87.wandertrack.ui.screens.auth.viewmodel.AuthViewModel
@@ -26,7 +26,7 @@ val appModule = module {
     // Managers
     single { StoreManager(androidContext()) }
     single { StylesManager(androidContext()) }
-    single { SessionManager(get()) }
+    single { SessionManagerImpl(get()) }
 
     // Viewmodels
     viewModel { AuthViewModel(get(), get(), get()) }

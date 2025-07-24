@@ -13,7 +13,10 @@ import org.junit.After
 import org.junit.Before
 import org.junit.Test
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
+import kotlin.test.assertNotNull
+import kotlin.test.assertNull
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class FirestoreRepositoryTest {
@@ -64,5 +67,77 @@ class FirestoreRepositoryTest {
         repo.updateCityVisited(userId, "IT", "Rome", true)
         val updated = repo.fetchAllCountries(userId).first().cities.first()
         assertTrue(updated.visited)
+    }
+
+    @Test
+    fun `ensureUserDocument initializes user data structures`() = runTest {
+        val userId = "newUser"
+        repo.ensureUserDocument(userId)
+
+        val visits = repo.fetchUserVisits(userId)
+        assertTrue(visits.countryCodes.isEmpty())
+        assertTrue(visits.cities.isEmpty())
+    }
+
+    @Test
+    fun `deleteUserDocument removes all user data`() = runTest {
+        val userId = "testUser"
+        repo.updateCountryVisited(userId, "IT", true)
+        repo.updateCityVisited(userId, "IT", "Rome", true)
+
+        repo.deleteUserDocument(userId)
+
+        val countries = repo.fetchAllCountries(userId)
+        val visits = repo.fetchUserVisits(userId)
+        val profile = repo.fetchUserProfile(userId)
+
+        assertFalse(countries.first().visited)
+        assertTrue(visits.countryCodes.isEmpty())
+        assertTrue(visits.cities.isEmpty())
+        assertNull(profile)
+    }
+
+    @Test
+    fun `fetchUserVisits returns correct country and city visits`() = runTest {
+        val userId = "testUser"
+        repo.updateCountryVisited(userId, "IT", true)
+        repo.updateCityVisited(userId, "IT", "Rome", true)
+
+        val visits = repo.fetchUserVisits(userId)
+
+        assertEquals(setOf("IT"), visits.countryCodes)
+        assertEquals(setOf("Rome"), visits.cities["IT"])
+    }
+
+    @Test
+    fun `fetchUserProfile returns expected stats after updates`() = runTest {
+        val userId = "testUser"
+        repo.updateCountryVisited(userId, "IT", true)
+        repo.updateCityVisited(userId, "IT", "Rome", true)
+
+        val profile = repo.fetchUserProfile(userId)
+        assertNotNull(profile)
+        assertEquals(1, profile.countriesVisited)
+        assertEquals(1, profile.citiesVisited)
+        assertEquals(1, profile.continentsVisited)
+        assertTrue(profile.worldPercent > 0)
+    }
+
+    @Test
+    fun `unmarking country and city updates stats and visit list`() = runTest {
+        val userId = "testUser"
+        repo.updateCountryVisited(userId, "IT", true)
+        repo.updateCityVisited(userId, "IT", "Rome", true)
+
+        repo.updateCountryVisited(userId, "IT", false)
+        repo.updateCityVisited(userId, "IT", "Rome", false)
+
+        val visits = repo.fetchUserVisits(userId)
+        val profile = repo.fetchUserProfile(userId)
+
+        assertFalse("IT" in visits.countryCodes)
+        assertTrue(visits.cities["IT"] == null || visits.cities["IT"]!!.isEmpty())
+        assertEquals(0, profile?.countriesVisited)
+        assertEquals(0, profile?.citiesVisited)
     }
 }
