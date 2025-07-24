@@ -199,13 +199,13 @@ fun LoginScreenContent(
                     )
                 }
 
-                if (error == AuthRepositoryImpl.VERIFY_EMAIL_FIRST) {
-                    Spacer(modifier = Modifier.height(16.dp))
-                    PrimaryButton(
-                        text = stringResource(R.string.resend_verification_email),
-                        onClick = resendVerificationEmail
-                    )
-                }
+//                if (error == AuthRepositoryImpl.VERIFY_EMAIL_FIRST) {
+//                    Spacer(modifier = Modifier.height(16.dp))
+//                    PrimaryButton(
+//                        text = stringResource(R.string.resend_verification_email),
+//                        onClick = resendVerificationEmail
+//                    )
+//                }
             }
 
             Column(

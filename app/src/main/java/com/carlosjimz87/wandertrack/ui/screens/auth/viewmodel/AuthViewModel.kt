@@ -5,8 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.carlosjimz87.wandertrack.common.formatUsername
 import com.carlosjimz87.wandertrack.domain.repo.AuthRepository
 import com.carlosjimz87.wandertrack.domain.repo.FirestoreRepository
-import com.carlosjimz87.wandertrack.ui.screens.auth.state.AuthScreenState
-import com.carlosjimz87.wandertrack.utils.Logger
+import com.carlosjimz87.wandertrack.managers.SessionManager
 import com.google.firebase.auth.FirebaseUser
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -15,18 +14,24 @@ import kotlinx.coroutines.launch
 
 class AuthViewModel(
     private val authRepository: AuthRepository,
-    private val firestoreRepository: FirestoreRepository
+    private val firestoreRepository: FirestoreRepository,
+    private val sessionManager: SessionManager
 ) : ViewModel() {
 
     private val _authState = MutableStateFlow(authRepository.currentUser)
     val authState: StateFlow<FirebaseUser?> = _authState.asStateFlow()
 
-    private val _authScreenState = MutableStateFlow(AuthScreenState.START)
-    val authScreenState: StateFlow<AuthScreenState> = _authScreenState.asStateFlow()
+    val validSession: StateFlow<Boolean?>
+        get() = sessionManager.validSession
 
-    fun showLogin() { _authScreenState.value = AuthScreenState.LOGIN }
-    fun showSignup() { _authScreenState.value = AuthScreenState.SIGNUP }
-    fun showStart() { _authScreenState.value = AuthScreenState.START }
+    val userId: String?
+        get() = _authState.value?.uid
+
+    val userEmail: String?
+        get() = _authState.value?.email
+
+    val userName: String?
+        get() = userEmail?.formatUsername()
 
     fun loginWithEmail(
         email: String,
@@ -34,13 +39,16 @@ class AuthViewModel(
         onResult: (Boolean, String?) -> Unit
     ) {
         authRepository.loginWithEmail(email, password) { success, message ->
-            if (success) {
-                _authState.value = authRepository.currentUser
+            val user = authRepository.currentUser
+            if (success && user?.isEmailVerified == true) {
+                _authState.value = user
+                sessionManager.refreshSession()
                 ensureUserDocument(onResult)
                 onResult(true, null)
+            } else if (user != null && !user.isEmailVerified) {
+                onResult(false, "Please verify your email before logging in.")
             } else {
                 onResult(false, message)
-                Logger.e("Error in email login [$message]")
             }
         }
     }
@@ -52,6 +60,7 @@ class AuthViewModel(
         authRepository.loginWithGoogle(idToken) { success, message ->
             if (success) {
                 _authState.value = authRepository.currentUser
+                sessionManager.refreshSession()
                 ensureUserDocument(onResult)
             } else {
                 onResult(false, message)
@@ -67,6 +76,7 @@ class AuthViewModel(
         authRepository.signup(email, password) { success, message ->
             if (success) {
                 _authState.value = authRepository.currentUser
+                authRepository.resendVerificationEmail { _, _ -> }
                 onResult(true, "Account created. Please verify your email before logging in.")
             } else {
                 onResult(false, message)
@@ -77,6 +87,7 @@ class AuthViewModel(
     fun logout() {
         authRepository.logout()
         _authState.value = null
+        sessionManager.refreshSession()
     }
 
     private fun ensureUserDocument(onResult: (Boolean, String?) -> Unit) {
@@ -108,13 +119,12 @@ class AuthViewModel(
 
         viewModelScope.launch {
             try {
-                // 🔥 Eliminar documento de Firestore
                 firestoreRepository.deleteUserDocument(user.uid)
 
-                // 🔐 Eliminar cuenta de Firebase Auth
                 user.delete().addOnCompleteListener { task ->
                     if (task.isSuccessful) {
                         _authState.value = null
+                        sessionManager.refreshSession()
                         onResult(true, null)
                     } else {
                         onResult(false, task.exception?.message)
@@ -129,10 +139,4 @@ class AuthViewModel(
     fun resendVerificationEmail(onResult: (Boolean, String?) -> Unit) {
         authRepository.resendVerificationEmail(onResult)
     }
-
-    val userEmail: String?
-        get() = _authState.value?.email
-
-    val userName: String?
-        get() = userEmail?.formatUsername()
 }

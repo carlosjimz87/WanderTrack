@@ -12,7 +12,12 @@ import androidx.compose.animation.togetherWith
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
+import com.carlosjimz87.wandertrack.common.isLoggedIn
 import com.carlosjimz87.wandertrack.domain.models.Screens
 import com.carlosjimz87.wandertrack.ui.screens.auth.AuthScreen
 import com.carlosjimz87.wandertrack.ui.screens.auth.LoginScreen
@@ -29,23 +34,31 @@ fun AppNavigation(
     authViewModel: AuthViewModel = koinViewModel()
 ) {
     val context = LocalContext.current
-    val firebaseUser = authViewModel.authState.collectAsState().value
-    val controller = rememberMyNavController(initial = Screens.Splash)
+    val validSession by authViewModel.validSession.collectAsState()
+    var hasFinishedSplash by remember { mutableStateOf(false) }
+
+    val controller = rememberMyNavController(
+        initial = when (validSession) {
+            true -> Screens.Map
+            else -> Screens.Splash
+        }
+    )
     val currentScreen = controller.current
 
-    // Redirige desde pantallas protegidas si el usuario está deslogueado
-    LaunchedEffect(firebaseUser, currentScreen) {
-        if ((currentScreen is Screens.Map || currentScreen is Screens.Profile) && firebaseUser == null) {
+    LaunchedEffect(hasFinishedSplash, validSession) {
+        if (!hasFinishedSplash) return@LaunchedEffect
+        controller.replace(if (validSession.isLoggedIn()) Screens.Map else Screens.Auth)
+    }
+
+    LaunchedEffect(currentScreen, validSession) {
+        if (!validSession.isLoggedIn() && currentScreen.isProtected()) {
             controller.replace(Screens.Auth)
         }
     }
 
-    // Redirige desde pantallas públicas si el usuario se loguea
-    LaunchedEffect(firebaseUser) {
-        if ((currentScreen is Screens.Login || currentScreen is Screens.SignUp || currentScreen is Screens.Auth)
-            && firebaseUser != null
-        ) {
-            controller.replace(Screens.Map(firebaseUser.uid))
+    LaunchedEffect(validSession, currentScreen) {
+        if (validSession.isLoggedIn() && currentScreen.isPublic()) {
+            controller.replace(Screens.Map)
         }
     }
 
@@ -64,11 +77,7 @@ fun AppNavigation(
         when (screen) {
             is Screens.Splash -> SplashScreen(
                 onSplashFinished = {
-                    if (firebaseUser != null) {
-                        controller.replace(Screens.Map(firebaseUser.uid))
-                    } else {
-                        controller.replace(Screens.Auth)
-                    }
+                    hasFinishedSplash = true
                 }
             )
 
@@ -81,7 +90,8 @@ fun AppNavigation(
                 onGoogleIdTokenReceived = { idToken ->
                     authViewModel.loginWithGoogle(idToken) { success, _ ->
                         if (!success) {
-                            Toast.makeText(context, "Authentication error", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(context, "Authentication error", Toast.LENGTH_SHORT)
+                                .show()
                         }
                     }
                 },
@@ -89,14 +99,29 @@ fun AppNavigation(
             )
 
             is Screens.SignUp -> SignUpScreen(
-                onNavigateToLogin = { controller.replace(Screens.Login) },
+                onNavigateToLogin = {
+                    controller.replace(Screens.Login)
+                    Toast.makeText(
+                        context,
+                        "Account created. Please verify your email before logging in.",
+                        Toast.LENGTH_LONG
+                    ).show()
+                },
                 onBack = { controller.replace(Screens.Auth) }
             )
 
-            is Screens.Map -> MapScreen(
-                userId = screen.userId,
-                onProfileClick = { controller.navigate(Screens.Profile) }
-            )
+            is Screens.Map -> {
+                val userId = authViewModel.userId
+                userId?.let {
+                    MapScreen(
+                        userId = it,
+                        onProfileClick = { controller.navigate(Screens.Profile) }
+                    )
+                } ?: run {
+                    Toast.makeText(context, "User not authenticated", Toast.LENGTH_SHORT).show()
+                    controller.replace(Screens.Auth)
+                }
+            }
 
             is Screens.Profile -> ProfileScreen(
                 onLogout = {
@@ -104,10 +129,7 @@ fun AppNavigation(
                     controller.replace(Screens.Auth)
                 },
                 onBack = {
-                    controller.replace(
-                        firebaseUser?.let { Screens.Map(it.uid, Screens.Map.Source.BackFromProfile) }
-                            ?: Screens.Auth
-                    )
+                    controller.replace(if (validSession == true) Screens.Map else Screens.Auth)
                 }
             )
         }

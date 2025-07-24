@@ -12,38 +12,69 @@ class AuthRepositoryImpl : AuthRepository {
     override val currentUser: FirebaseUser?
         get() = auth.currentUser
 
-    companion object{
-        const val VERIFY_EMAIL_FIRST = "Please verify your email address before signing in."
+    override fun isUserLoggedIn(): Boolean {
+        val user = auth.currentUser
+        return user != null && user.isEmailVerified
     }
 
-    override fun loginWithEmail(email: String, password: String, onResult: (Boolean, String?) -> Unit) {
+    override fun loginWithEmail(
+        email: String,
+        password: String,
+        onResult: (Boolean, String?) -> Unit
+    ) {
         auth.signInWithEmailAndPassword(email, password)
-            .addOnSuccessListener { authResult ->
-                val user = authResult.user
+            .addOnSuccessListener { result ->
+                val user = result.user
                 if (user != null && user.isEmailVerified) {
                     onResult(true, null)
                 } else {
                     auth.signOut()
-                    onResult(false, VERIFY_EMAIL_FIRST)
+                    onResult(false, "Please verify your email address before signing in.")
                 }
             }
             .addOnFailureListener { onResult(false, it.message) }
     }
 
-    override fun loginWithGoogle(idToken: String, onResult: (Boolean, String?) -> Unit) {
+    override fun loginWithGoogle(
+        idToken: String,
+        onResult: (Boolean, String?) -> Unit
+    ) {
         val credential = GoogleAuthProvider.getCredential(idToken, null)
         auth.signInWithCredential(credential)
             .addOnSuccessListener { onResult(true, null) }
             .addOnFailureListener { onResult(false, it.message) }
     }
 
-    override fun signup(email: String, password: String, onResult: (Boolean, String?) -> Unit) {
+    override fun signup(
+        email: String,
+        password: String,
+        onResult: (Boolean, String?) -> Unit
+    ) {
         auth.createUserWithEmailAndPassword(email, password)
-            .addOnSuccessListener {
-                auth.currentUser?.sendEmailVerification()
-                onResult(true, null)
+            .addOnCompleteListener { task ->
+                if (task.isSuccessful) {
+                    val user = auth.currentUser
+
+                    if (user == null) {
+                        onResult(false, "Unexpected error: user not found after registration.")
+                        return@addOnCompleteListener
+                    }
+
+                    user.sendEmailVerification()
+                        .addOnSuccessListener {
+                            onResult(
+                                true,
+                                "Registration successful. We've sent you a verification email. Please check your inbox — and your spam folder just in case!"
+                            )
+                        }
+                        .addOnFailureListener { error ->
+                            onResult(false, "Failed to send verification email: ${error.message}")
+                        }
+                } else {
+                    val errorMsg = task.exception?.localizedMessage ?: "Unknown signup error"
+                    onResult(false, errorMsg)
+                }
             }
-            .addOnFailureListener { onResult(false, it.message) }
     }
 
     override fun logout() {

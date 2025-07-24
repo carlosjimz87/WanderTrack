@@ -36,10 +36,8 @@ import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import com.airbnb.lottie.compose.LottieAnimation
-import com.airbnb.lottie.compose.LottieCompositionSpec
 import com.airbnb.lottie.compose.LottieConstants
 import com.airbnb.lottie.compose.rememberLottieComposition
-import com.carlosjimz87.wandertrack.R
 import com.carlosjimz87.wandertrack.common.SetBottomBarColor
 import com.carlosjimz87.wandertrack.common.animateFocusOnSelectedCountry
 import com.carlosjimz87.wandertrack.common.animateToVisitedCountries
@@ -70,7 +68,7 @@ import org.koin.core.parameter.parametersOf
 @Composable
 fun MapScreen(
     userId: String,
-    from: Screens.Map.Source = Screens.Map.Source.Default,
+    from: Screens? = Screens.Map,
     onProfileClick: () -> Unit,
 ) {
     val viewModel: MapViewModel = koinViewModel(parameters = { parametersOf(userId) })
@@ -142,7 +140,7 @@ fun MapScreen(
         bottomSheetScaffoldState.bottomSheetState.currentValue,
         selectedCountry
     ) {
-        if (cameFrom == Screens.Map.Source.BackFromProfile) return@LaunchedEffect
+        if (cameFrom == Screens.Profile) return@LaunchedEffect
 
         when {
             shouldAnimateToVisitedCountries(visitedCountriesCodes, hasCenteredMap) -> {

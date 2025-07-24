@@ -14,6 +14,7 @@ import androidx.compose.ui.unit.Density
 import androidx.core.view.WindowCompat
 import com.carlosjimz87.wandertrack.common.Constants.ANIMATION_DURATION
 import com.carlosjimz87.wandertrack.common.Constants.MIN_ZOOM_LEVEL
+import com.carlosjimz87.wandertrack.domain.models.Screens
 import com.carlosjimz87.wandertrack.domain.models.map.City
 import com.carlosjimz87.wandertrack.domain.models.map.Country
 import com.carlosjimz87.wandertrack.domain.models.map.CountryGeometry
@@ -176,3 +177,8 @@ fun String.formatUsername(): String {
         .joinToString(" ") { it.replaceFirstChar { c -> c.uppercaseChar() } }
     return if (name.length > MAX_USERNAME_LENGTH) name.take(MAX_USERNAME_LENGTH) + "…" else name
 }
+
+fun Screens.isProtected(): Boolean =
+    this is Screens.Map || this is Screens.Profile
+
+fun Boolean?.isLoggedIn(): Boolean = this == true

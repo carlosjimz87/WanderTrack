@@ -7,7 +7,6 @@ import com.carlosjimz87.wandertrack.domain.models.map.Country
 import com.carlosjimz87.wandertrack.domain.models.map.CountryGeometry
 import com.carlosjimz87.wandertrack.domain.repo.FirestoreRepository
 import com.carlosjimz87.wandertrack.domain.repo.MapRepository
-import com.carlosjimz87.wandertrack.managers.StoreManager
 import com.carlosjimz87.wandertrack.utils.getCountryByCode
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
@@ -24,7 +23,6 @@ class MapViewModel(
     private val userId: String,
     private val mapRepo: MapRepository,
     private val firestoreRepo: FirestoreRepository,
-    private val storeManager: StoreManager
 ) : ViewModel() {
 
     private val _userMovedMap = MutableStateFlow(false)
@@ -49,11 +47,13 @@ class MapViewModel(
     private val _lastCameraPosition = MutableStateFlow<CameraPosition?>(null)
     val lastCameraPosition: StateFlow<CameraPosition?> = _lastCameraPosition.asStateFlow()
 
-    private val _cameFrom = MutableStateFlow(Screens.Map.Source.Default)
+    private val _cameFrom = MutableStateFlow<Screens>(Screens.Profile)
     val cameFrom = _cameFrom.asStateFlow()
 
-    fun setNavigationSource(from: Screens.Map.Source) {
-        _cameFrom.value = from
+    fun setNavigationSource(from: Screens?) {
+        if (from != null) {
+            _cameFrom.value = from
+        }
     }
 
     init {
