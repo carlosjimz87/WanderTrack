@@ -1,6 +1,6 @@
 package com.carlosjimz87.wandertrack.data.repo
 
-import com.carlosjimz87.wandertrack.data.repo.fakes.FakeAuthRepository
+import com.carlosjimz87.wandertrack.data.repo.fakes.FakeAuthRepositoryImpl
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -20,13 +20,13 @@ import org.junit.jupiter.api.Assertions.assertTrue
 @OptIn(ExperimentalCoroutinesApi::class)
 class AuthRepositoryTest {
 
-    private lateinit var repo: FakeAuthRepository
+    private lateinit var repo: FakeAuthRepositoryImpl
     private val testDispatcher = StandardTestDispatcher()
 
     @Before
     fun setup() {
         Dispatchers.setMain(testDispatcher)
-        repo = FakeAuthRepository()
+        repo = FakeAuthRepositoryImpl()
     }
 
     @After
@@ -193,10 +193,10 @@ class AuthRepositoryTest {
     }
 
     @Test
-    fun `loginWithGoogle returns success if flag set`() = runTest {
-        var success = false
-        repo.setGoogleLoginResult(true)
+    fun `loginWithGoogle returns success if googleLoginSuccess is true`() {
+        repo.googleLoginSuccess = true
 
+        var success = false
         repo.loginWithGoogle("dummy_token") { s, _ -> success = s }
 
         assertTrue(success)
@@ -205,10 +205,10 @@ class AuthRepositoryTest {
     }
 
     @Test
-    fun `loginWithGoogle returns failure if flag false`() = runTest {
-        var success = true
-        repo.setGoogleLoginResult(false)
+    fun `loginWithGoogle returns failure if googleLoginSuccess is false`() {
+        repo.googleLoginSuccess = false
 
+        var success = true
         repo.loginWithGoogle("dummy_token") { s, _ -> success = s }
 
         assertFalse(success)

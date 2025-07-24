@@ -2,7 +2,6 @@ package com.carlosjimz87.wandertrack.common
 
 import android.app.Activity
 import android.content.Context
-import android.content.res.Resources
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.SheetState
 import androidx.compose.material3.SheetValue
@@ -169,16 +168,14 @@ fun Context.SetBottomBarColor(color: Color = White){
     }
 }
 const val MAX_USERNAME_LENGTH = 12
-fun String.formatUsername(): String {
-    val name = substringBefore('@')
-        .replace('.', ' ')
-        .replace('_', ' ')
-        .split(" ")
-        .joinToString(" ") { it.replaceFirstChar { c -> c.uppercaseChar() } }
-    return if (name.length > MAX_USERNAME_LENGTH) name.take(MAX_USERNAME_LENGTH) + "…" else name
-}
 
 fun Screens.isProtected(): Boolean =
     this is Screens.Map || this is Screens.Profile
 
 fun Boolean?.isLoggedIn(): Boolean = this == true
+
+fun String.formatUsername(): String {
+    val regex = Regex("^(.*?)(?=@)")
+    val name = regex.find(this)?.value ?: this
+    return if (name.length > MAX_USERNAME_LENGTH) name.take(MAX_USERNAME_LENGTH) + "..." else name
+}

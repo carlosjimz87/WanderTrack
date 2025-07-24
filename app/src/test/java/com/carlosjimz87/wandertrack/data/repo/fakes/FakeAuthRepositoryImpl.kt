@@ -1,27 +1,29 @@
 package com.carlosjimz87.wandertrack.data.repo.fakes
 
+import android.net.Uri
 import com.carlosjimz87.wandertrack.domain.repo.AuthRepository
 import com.google.firebase.auth.FirebaseUser
 import io.mockk.every
 import io.mockk.mockk
 
-class FakeAuthRepository : AuthRepository {
+class FakeAuthRepositoryImpl : AuthRepository {
 
     private var _fakeUser: FirebaseUser? = null
+    override val currentUser: FirebaseUser?
+        get() = _fakeUser
     var shouldFail = false
     var shouldResetPasswordFail = false
-    private var googleLoginSuccess = true
+    var resendVerificationShouldFail = false
+    var googleLoginSuccess = true
     var isEmailVerified = true
+
     var lastEmail: String? = null
     var lastPassword: String? = null
     var lastGoogleIdToken: String? = null
     var lastResetEmail: String? = null
+
     var logoutCalled = false
     var resendVerificationCalled = false
-    var resendVerificationShouldFail = false
-
-    override val currentUser: FirebaseUser?
-        get() = _fakeUser
 
     override fun isUserLoggedIn(): Boolean {
         return _fakeUser?.isEmailVerified == true
@@ -36,7 +38,7 @@ class FakeAuthRepository : AuthRepository {
             onResult(false, "Login failed")
         } else {
             _fakeUser = mockFirebaseUser("testUserId", email)
-            if (!_fakeUser!!.isEmailVerified) {
+            if (!isEmailVerified) {
                 onResult(false, "Please verify your email before continuing.")
             } else {
                 onResult(true, null)
@@ -54,25 +56,29 @@ class FakeAuthRepository : AuthRepository {
         }
     }
 
-    override fun resendVerificationEmail(onResult: (Boolean, String?) -> Unit) {
-        resendVerificationCalled = true
-        val user = _fakeUser
+    override fun loginWithGoogle(idToken: String, onResult: (Boolean, String?) -> Unit) {
+        lastGoogleIdToken = idToken
 
-        if (resendVerificationShouldFail) {
-            onResult(false, "Failed to send verification email.")
-        } else if (user != null) {
-            onResult(true, "Verification email sent.")
+        if (googleLoginSuccess) {
+            _fakeUser = mockFirebaseUser("testUserId", "testuser@gmail.com") // ✅ bien
+            onResult(true, null)
         } else {
-            onResult(false, "User not found.")
+            _fakeUser = null
+            onResult(false, "Google login failed")
         }
     }
 
-    override fun sendPasswordResetEmail(
-        email: String,
-        onResult: (Boolean, String?) -> Unit
-    ) {
-        lastResetEmail = email
+    override fun resendVerificationEmail(onResult: (Boolean, String?) -> Unit) {
+        resendVerificationCalled = true
+        when {
+            _fakeUser == null -> onResult(false, "User not found.")
+            resendVerificationShouldFail -> onResult(false, "Failed to send verification email.")
+            else -> onResult(true, "Verification email sent.")
+        }
+    }
 
+    override fun sendPasswordResetEmail(email: String, onResult: (Boolean, String?) -> Unit) {
+        lastResetEmail = email
         if (shouldResetPasswordFail) {
             onResult(false, "Failed to send password reset email.")
         } else {
@@ -81,24 +87,8 @@ class FakeAuthRepository : AuthRepository {
     }
 
     override fun logout() {
-        _fakeUser = null
         logoutCalled = true
-    }
-
-    fun setGoogleLoginResult(success: Boolean) {
-        googleLoginSuccess = success
-    }
-
-    override fun loginWithGoogle(idToken: String, onResult: (Boolean, String?) -> Unit) {
-        lastGoogleIdToken = idToken
-
-        if (googleLoginSuccess) {
-            _fakeUser = mockFirebaseUser("testUserId", "testuser@gmail.com")
-            onResult(true, null)
-        } else {
-            _fakeUser = null
-            onResult(false, "Google login failed")
-        }
+        _fakeUser = null
     }
 
     private fun mockFirebaseUser(uid: String, email: String): FirebaseUser {
@@ -106,6 +96,9 @@ class FakeAuthRepository : AuthRepository {
         every { user.uid } returns uid
         every { user.email } returns email
         every { user.isEmailVerified } returns isEmailVerified
+        val fakeUri = mockk<Uri>(relaxed = true)
+        every { fakeUri.toString() } returns "https://fake.com/avatar.png"
+        every { user.photoUrl } returns fakeUri
         return user
     }
 }

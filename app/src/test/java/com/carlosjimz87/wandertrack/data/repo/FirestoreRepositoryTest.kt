@@ -1,6 +1,6 @@
 package com.carlosjimz87.wandertrack.data.repo
 
-import com.carlosjimz87.wandertrack.data.repo.fakes.FakeFirestoreRepository
+import com.carlosjimz87.wandertrack.data.repo.fakes.FakeFirestoreRepositoryImpl
 import com.carlosjimz87.wandertrack.domain.models.map.City
 import com.carlosjimz87.wandertrack.domain.models.map.Country
 import kotlinx.coroutines.Dispatchers
@@ -21,13 +21,13 @@ import kotlin.test.assertNull
 @OptIn(ExperimentalCoroutinesApi::class)
 class FirestoreRepositoryTest {
 
-    private lateinit var repo: FakeFirestoreRepository
+    private lateinit var repo: FakeFirestoreRepositoryImpl
     private val testDispatcher = StandardTestDispatcher()
 
     @Before
     fun setup() {
         Dispatchers.setMain(testDispatcher)
-        repo = FakeFirestoreRepository()
+        repo = FakeFirestoreRepositoryImpl()
 
         val countries = listOf(
             Country(

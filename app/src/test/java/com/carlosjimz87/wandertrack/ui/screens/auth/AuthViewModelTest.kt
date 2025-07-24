@@ -1,10 +1,9 @@
 package com.carlosjimz87.wandertrack.ui.screens.auth
 
-import com.carlosjimz87.wandertrack.data.repo.fakes.FakeAuthRepository
-import com.carlosjimz87.wandertrack.data.repo.fakes.FakeFirestoreRepository
-import com.carlosjimz87.wandertrack.data.repo.fakes.FakeSessionManager
+import com.carlosjimz87.wandertrack.data.repo.fakes.FakeAuthRepositoryImpl
+import com.carlosjimz87.wandertrack.data.repo.fakes.FakeFirestoreRepositoryImpl
+import com.carlosjimz87.wandertrack.data.repo.fakes.FakeSessionManagerImpl
 import com.carlosjimz87.wandertrack.domain.managers.SessionManager
-import com.carlosjimz87.wandertrack.domain.repo.AuthRepository
 import com.carlosjimz87.wandertrack.domain.repo.FirestoreRepository
 import com.carlosjimz87.wandertrack.ui.screens.auth.state.AuthUiState
 import com.carlosjimz87.wandertrack.ui.screens.auth.viewmodel.AuthViewModel
@@ -30,7 +29,7 @@ import org.junit.jupiter.api.Assertions.assertTrue
 @OptIn(ExperimentalCoroutinesApi::class)
 class AuthViewModelTest {
 
-    private lateinit var authRepo: FakeAuthRepository
+    private lateinit var authRepo: FakeAuthRepositoryImpl
     private lateinit var firestoreRepo: FirestoreRepository
     private lateinit var sessionManager: SessionManager
     private lateinit var viewModel: AuthViewModel
@@ -40,9 +39,9 @@ class AuthViewModelTest {
     @Before
     fun setup() {
         Dispatchers.setMain(testDispatcher)
-        authRepo = FakeAuthRepository()
-        firestoreRepo = FakeFirestoreRepository()
-        sessionManager = FakeSessionManager(authRepo)
+        authRepo = FakeAuthRepositoryImpl()
+        firestoreRepo = FakeFirestoreRepositoryImpl()
+        sessionManager = FakeSessionManagerImpl(authRepo)
 
         viewModel = AuthViewModel(
             authRepo,
@@ -150,7 +149,7 @@ class AuthViewModelTest {
 
     @Test
     fun `loginWithGoogle success updates authState`() = runTest {
-        authRepo.setGoogleLoginResult(success = true)
+        authRepo.googleLoginSuccess = true
 
         viewModel.loginWithGoogle("token") { success, _ ->
             assertTrue(success)
@@ -162,7 +161,7 @@ class AuthViewModelTest {
 
     @Test
     fun `loginWithGoogle failure does not update authState`() = runTest {
-        authRepo.setGoogleLoginResult(success = false)
+        authRepo.googleLoginSuccess = false
 
         viewModel.loginWithGoogle("token") { success, _ ->
             assertFalse(success)

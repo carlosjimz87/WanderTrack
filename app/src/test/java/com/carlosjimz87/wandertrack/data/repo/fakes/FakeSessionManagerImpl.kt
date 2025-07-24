@@ -6,7 +6,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
-class FakeSessionManager(
+class FakeSessionManagerImpl(
     private val authRepository: AuthRepository
 ) : SessionManager {
 

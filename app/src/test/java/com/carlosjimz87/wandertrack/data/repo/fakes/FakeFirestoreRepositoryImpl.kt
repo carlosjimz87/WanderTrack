@@ -1,26 +1,34 @@
 package com.carlosjimz87.wandertrack.data.repo.fakes
 
-import com.carlosjimz87.wandertrack.domain.repo.FirestoreRepository
-import com.carlosjimz87.wandertrack.domain.models.profile.Achievement
 import com.carlosjimz87.wandertrack.domain.models.map.Country
+import com.carlosjimz87.wandertrack.domain.models.profile.Achievement
 import com.carlosjimz87.wandertrack.domain.models.profile.ProfileData
 import com.carlosjimz87.wandertrack.domain.models.profile.UserVisits
+import com.carlosjimz87.wandertrack.domain.repo.FirestoreRepository
 import com.carlosjimz87.wandertrack.utils.AchievementsCalculator
 
-class FakeFirestoreRepository : FirestoreRepository {
+class FakeFirestoreRepositoryImpl : FirestoreRepository {
 
     private val _metaCountries = mutableListOf<Country>()
-    private val _userVisitedCountries = mutableMapOf<String, MutableSet<String>>()  // userId -> country codes
-    private val _userVisitedCities = mutableMapOf<String, MutableMap<String, MutableSet<String>>>() // userId -> countryCode -> city names
+    private val _userVisitedCountries =
+        mutableMapOf<String, MutableSet<String>>()  // userId -> country codes
+    private val _userVisitedCities =
+        mutableMapOf<String, MutableMap<String, MutableSet<String>>>() // userId -> countryCode -> city names
     private val _userStats = mutableMapOf<String, ProfileData>()  // userId -> stats/profile
 
     fun setInitialData(metaCountries: List<Country>) {
         _metaCountries.clear()
-        _metaCountries.addAll(metaCountries.map { it.copy(visited = false, cities = it.cities.map { city -> city.copy(visited = false) }) })
+        _metaCountries.addAll(metaCountries.map {
+            it.copy(
+                visited = false,
+                cities = it.cities.map { city -> city.copy(visited = false) })
+        })
         _userVisitedCountries.clear()
         _userVisitedCities.clear()
         _userStats.clear()
     }
+
+    private val fakeProfiles = mutableMapOf<String, ProfileData>()
 
     override suspend fun fetchAllCountries(userId: String): List<Country> {
         val visitedCountries = _userVisitedCountries[userId] ?: emptySet()
@@ -49,7 +57,12 @@ class FakeFirestoreRepository : FirestoreRepository {
         recalculateAndUpdateStats(userId)
     }
 
-    override suspend fun updateCityVisited(userId: String, countryCode: String, cityName: String, visited: Boolean) {
+    override suspend fun updateCityVisited(
+        userId: String,
+        countryCode: String,
+        cityName: String,
+        visited: Boolean
+    ) {
         val userCities = _userVisitedCities.getOrPut(userId) { mutableMapOf() }
         val countryCities = userCities.getOrPut(countryCode) { mutableSetOf() }
 
@@ -71,8 +84,12 @@ class FakeFirestoreRepository : FirestoreRepository {
         _userVisitedCities.putIfAbsent(userId, mutableMapOf())
     }
 
+    fun setFakeProfile(userId: String, profile: ProfileData) {
+        fakeProfiles[userId] = profile
+    }
+
     override suspend fun fetchUserProfile(userId: String): ProfileData? {
-        return _userStats[userId]
+        return fakeProfiles[userId] ?: _userStats[userId]
     }
 
     override suspend fun deleteUserDocument(userId: String) {

@@ -5,6 +5,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.carlosjimz87.wandertrack.common.formatUsername
 import com.carlosjimz87.wandertrack.domain.repo.AuthRepository
 import com.carlosjimz87.wandertrack.domain.repo.FirestoreRepository
 import com.carlosjimz87.wandertrack.domain.models.profile.ProfileData
@@ -17,32 +18,26 @@ class ProfileViewModel(
 
     var profileState by mutableStateOf(ProfileData())
         private set
-    var avatarUrl by mutableStateOf<String?>(null)
-        private set
 
     init {
         loadProfile()
     }
 
-    fun loadProfile(username: String? = null) {
+    fun loadProfile() {
         val userId = authRepository.currentUser?.uid ?: return
 
         viewModelScope.launch {
-            avatarUrl = authRepository.currentUser?.photoUrl?.toString()
+            val originalProfile = firestoreRepository.fetchUserProfile(userId)
+            val avatarUrl = authRepository.currentUser?.photoUrl?.toString()
+            val formattedUsername = originalProfile?.username?.formatUsername()
 
-            val profile = firestoreRepository.fetchUserProfile(userId)?.copy(
-                username = username?.formatUsername() ?: "Unknown User",
+            profileState = originalProfile?.copy(
+                username = formattedUsername ?: originalProfile.username,
+                avatarUrl = avatarUrl
+            ) ?: ProfileData(
+                username = formattedUsername ?: "Unknown User",
+                avatarUrl = avatarUrl
             )
-            if (profile != null) {
-                profileState = profile
-            }
         }
-    }
-
-    private fun String.formatUsername(): String {
-        // use regex to extract the username from the email
-        return this.substringBefore('@').replace('.', ' ').replace('_', ' ')
-            .split(" ")
-            .joinToString(" ")
     }
 }
