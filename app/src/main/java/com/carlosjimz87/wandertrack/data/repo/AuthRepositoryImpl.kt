@@ -1,5 +1,6 @@
 package com.carlosjimz87.wandertrack.data.repo
 
+import com.carlosjimz87.wandertrack.BuildConfig
 import com.carlosjimz87.wandertrack.domain.repo.AuthRepository
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
@@ -19,7 +20,7 @@ class AuthRepositoryImpl(
 
     override fun isUserLoggedIn(): Boolean {
         val user = auth.currentUser
-        return user != null && user.isEmailVerified
+       return user != null && (user.isEmailVerified || BuildConfig.FIREBASE_ENV == "dev")
     }
 
     override fun loginWithEmail(

@@ -1,7 +1,9 @@
 package com.carlosjimz87.wandertrack.data.repo.fakes
 
 import android.net.Uri
+import com.carlosjimz87.wandertrack.BuildConfig
 import com.carlosjimz87.wandertrack.domain.repo.AuthRepository
+import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
 import io.mockk.every
 import io.mockk.mockk
@@ -26,7 +28,7 @@ class FakeAuthRepositoryImpl : AuthRepository {
     var resendVerificationCalled = false
 
     override fun isUserLoggedIn(): Boolean {
-        return _fakeUser?.isEmailVerified == true
+        return _fakeUser != null && (isEmailVerified || BuildConfig.FIREBASE_ENV == "dev")
     }
 
     override fun loginWithEmail(email: String, password: String, onResult: (Boolean, String?) -> Unit) {
@@ -84,6 +86,10 @@ class FakeAuthRepositoryImpl : AuthRepository {
         } else {
             onResult(true, "Password reset email sent.")
         }
+    }
+
+    override fun addAuthStateListener(listener: FirebaseAuth.AuthStateListener) {
+        // No-op for fake implementation
     }
 
     override fun logout() {

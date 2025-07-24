@@ -79,15 +79,14 @@ class AuthViewModel(
 
     fun signup(
         email: String,
-        password: String,
-        onResult: (Boolean, String?) -> Unit
+        password: String
     ) {
+        _authUiState.value = AuthUiState.Loading
         authRepository.signup(email, password) { success, message ->
-            if (success) {
-                _authState.value = authRepository.currentUser
-                onResult(true, "Account created. Please verify your email before logging in.")
+            _authUiState.value = if (success) {
+                AuthUiState.Success(message ?: "Signup successful. Please verify your email.")
             } else {
-                onResult(false, message)
+                AuthUiState.Error(message ?: "Unknown error during signup")
             }
         }
     }

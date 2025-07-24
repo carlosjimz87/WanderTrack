@@ -1,6 +1,5 @@
 package com.carlosjimz87.wandertrack.ui.screens.auth
 
-import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
@@ -85,7 +84,7 @@ fun SignUpScreen(
                 dialogMessage = context.getString(R.string.passwords_do_not_match)
                 showDialog = true
             } else {
-                authViewModel.signup(email.trim(), password.trim()) { _, _ -> }
+                authViewModel.signup(email.trim(), password.trim())
             }
         },
         onSignInClick = onNavigateToLogin,

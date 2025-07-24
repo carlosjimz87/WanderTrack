@@ -56,11 +56,15 @@ class AuthViewModelTest {
     }
 
     @Test
-    fun `signup success updates authState`() = runTest {
-        viewModel.signup("test@test.com", "password") { success, _ ->
-            assertTrue(success)
-        }
-        assertNotNull(viewModel.authState.first())
+    fun `signup success shows success message in authUiState`() = runTest {
+        viewModel.signup("test@test.com", "password")
+
+        val state = viewModel.authUiState.first()
+        assertTrue(state is AuthUiState.Success)
+        assertEquals(
+            "Registration successful. We've sent you a verification email. Please check your inbox — and your spam folder just in case!",
+            (state as AuthUiState.Success).message
+        )
     }
 
     @Test
