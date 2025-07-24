@@ -5,9 +5,14 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.auth.GoogleAuthProvider
 
-class AuthRepositoryImpl : AuthRepository {
+class AuthRepositoryImpl(
+    private val auth: FirebaseAuth
+) : AuthRepository {
 
-    private val auth = FirebaseAuth.getInstance()
+
+    override fun addAuthStateListener(listener: FirebaseAuth.AuthStateListener) {
+        auth.addAuthStateListener(listener)
+    }
 
     override val currentUser: FirebaseUser?
         get() = auth.currentUser

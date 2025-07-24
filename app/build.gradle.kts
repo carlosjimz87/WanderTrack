@@ -47,6 +47,8 @@ android {
         create("dev") {
             dimension = "env"
             buildConfigField("String", "FIREBASE_ENV", "\"dev\"")
+            buildConfigField("String", "AUTH_EMULATOR_HOST", "\"10.0.2.2\"")
+            buildConfigField("int", "AUTH_EMULATOR_PORT", "9099")
         }
         create("prod") {
             dimension = "env"

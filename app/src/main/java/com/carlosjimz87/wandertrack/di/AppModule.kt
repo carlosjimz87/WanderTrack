@@ -6,6 +6,7 @@ import com.carlosjimz87.wandertrack.data.repo.MapRepositoryImpl
 import com.carlosjimz87.wandertrack.domain.repo.AuthRepository
 import com.carlosjimz87.wandertrack.domain.repo.FirestoreRepository
 import com.carlosjimz87.wandertrack.domain.repo.MapRepository
+import com.carlosjimz87.wandertrack.domain.managers.SessionManager
 import com.carlosjimz87.wandertrack.managers.SessionManagerImpl
 import com.carlosjimz87.wandertrack.managers.StoreManager
 import com.carlosjimz87.wandertrack.managers.StylesManager
@@ -19,14 +20,14 @@ import org.koin.dsl.module
 val appModule = module {
 
     // Repositories
+    single<AuthRepository> { AuthRepositoryImpl(get()) }
     single<MapRepository> { MapRepositoryImpl(androidContext()) }
     single<FirestoreRepository> { FirestoreRepositoryImpl() }
-    single<AuthRepository> { AuthRepositoryImpl() }
 
     // Managers
     single { StoreManager(androidContext()) }
     single { StylesManager(androidContext()) }
-    single { SessionManagerImpl(get()) }
+    single<SessionManager> { SessionManagerImpl(get()) }
 
     // Viewmodels
     viewModel { AuthViewModel(get(), get(), get()) }

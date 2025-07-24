@@ -1,5 +1,6 @@
 package com.carlosjimz87.wandertrack.domain.repo
 
+import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
 
 interface AuthRepository {
@@ -12,4 +13,5 @@ interface AuthRepository {
     fun logout()
     fun resendVerificationEmail(onResult: (Boolean, String?) -> Unit)
     fun sendPasswordResetEmail(email: String, onResult: (Boolean, String?) -> Unit)
+    fun addAuthStateListener(listener: FirebaseAuth.AuthStateListener)
 }

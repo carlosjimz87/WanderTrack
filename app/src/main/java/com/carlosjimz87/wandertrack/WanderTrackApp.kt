@@ -2,6 +2,7 @@ package com.carlosjimz87.wandertrack
 
 import android.app.Application
 import com.carlosjimz87.wandertrack.di.appModule
+import com.carlosjimz87.wandertrack.di.firebaseModule
 import com.carlosjimz87.wandertrack.managers.StylesManager
 import com.carlosjimz87.wandertrack.utils.Logger
 import com.google.firebase.FirebaseApp
@@ -26,7 +27,7 @@ class WanderTrackApp : Application(){
     private fun initializeKoin(){
         startKoin {
             androidContext(this@WanderTrackApp)
-            modules(appModule)
+            modules(listOf(appModule, firebaseModule))
         }
         get<StylesManager>().preloadStyles()
     }
