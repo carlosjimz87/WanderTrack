@@ -1,0 +1,33 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return request.auth.uid == userId;
+    }
+
+    function isEmailVerified() {
+      return request.auth.token.email_verified == true;
+    }
+
+    match /meta/countries/all/{countryId} {
+      allow read;
+    }
+
+    match /users_dev/{userId} {
+      allow read, write: if isSignedIn() && isOwner(userId) && isEmailVerified();
+
+      match /visited_countries/{document=**} {
+        allow read, write: if isSignedIn() && isOwner(userId) && isEmailVerified();
+      }
+
+      match /visited_cities/{document=**} {
+        allow read, write: if isSignedIn() && isOwner(userId) && isEmailVerified();
+      }
+    }
+  }
+}

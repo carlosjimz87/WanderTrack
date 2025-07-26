@@ -27,8 +27,8 @@ fun ProfileScreen(
 ) {
     val context = LocalContext.current
     val user by authViewModel.authState.collectAsState()
-    profileViewModel.loadProfile()
     val profile = profileViewModel.profileState
+    profileViewModel.loadProfile()
 
     var showDeleteDialog by remember { mutableStateOf(false) }
 
@@ -45,7 +45,6 @@ fun ProfileScreen(
         profile = profile,
         onEditProfile = { /* TODO Edit */ },
         onLogout = { authViewModel.logout() },
-        logoutText = context.getString(R.string.logout),
         avatarUrl = profile.avatarUrl,
         onDeleteAccountClick = { showDeleteDialog = true }
     )

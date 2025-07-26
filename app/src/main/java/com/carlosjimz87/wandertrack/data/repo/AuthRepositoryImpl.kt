@@ -20,7 +20,7 @@ class AuthRepositoryImpl(
 
     override fun isUserLoggedIn(): Boolean {
         val user = auth.currentUser
-       return user != null && (user.isEmailVerified || BuildConfig.FIREBASE_ENV == "dev")
+        return user != null && (user.isEmailVerified || BuildConfig.FIREBASE_ENV == "dev")
     }
 
     override fun loginWithEmail(
@@ -31,7 +31,7 @@ class AuthRepositoryImpl(
         auth.signInWithEmailAndPassword(email, password)
             .addOnSuccessListener { result ->
                 val user = result.user
-                if (user != null && !user.isEmailVerified) {
+                if (user != null && (!user.isEmailVerified && BuildConfig.FIREBASE_ENV != "dev")) {
                     onResult(false, "Please verify your email before continuing.")
                 } else {
                     onResult(true, null)

@@ -11,7 +11,6 @@ import com.carlosjimz87.wandertrack.ui.theme.WanderTrackTheme
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         val splashScreen = installSplashScreen()
-
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 

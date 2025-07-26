@@ -1,26 +1,26 @@
+package com.carlosjimz87.wandertrack.data.repo
+
 import com.carlosjimz87.wandertrack.BuildConfig
-import com.carlosjimz87.wandertrack.domain.repo.FirestoreRepository
 import com.carlosjimz87.wandertrack.domain.models.map.City
 import com.carlosjimz87.wandertrack.domain.models.map.Country
 import com.carlosjimz87.wandertrack.domain.models.profile.ProfileData
 import com.carlosjimz87.wandertrack.domain.models.profile.UserVisits
+import com.carlosjimz87.wandertrack.domain.repo.FirestoreRepository
 import com.carlosjimz87.wandertrack.utils.AchievementsCalculator
 import com.carlosjimz87.wandertrack.utils.Logger
 import com.carlosjimz87.wandertrack.utils.toProfileUiState
-import com.google.firebase.Firebase
 import com.google.firebase.firestore.CollectionReference
 import com.google.firebase.firestore.DocumentReference
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.firestore.firestore
 import kotlinx.coroutines.tasks.await
 
 class FirestoreRepositoryImpl(
-    private val db: FirebaseFirestore = Firebase.firestore
+    private val db: FirebaseFirestore
 ) : FirestoreRepository {
 
     companion object {
-        private const val USERS = "users"
+        private const val USERS = "users_dev"
         private const val USERS_DEV = "users_dev"
         private const val META = "meta"
         private const val COUNTRIES = "countries"
@@ -45,7 +45,7 @@ class FirestoreRepositoryImpl(
             val visitedCountries = try {
                 visitedCountriesCol(userId).get().await().documents.map { it.id }.toSet()
             } catch (e: Exception) {
-                e.printStackTrace()
+                Logger.e("FirestoreError -> visitedCountriesCol fetch failed: ${e.message}", e)
                 emptySet()
             }
 
@@ -58,7 +58,7 @@ class FirestoreRepositoryImpl(
                         code to cities.toSet()
                     }
             } catch (e: Exception) {
-                e.printStackTrace()
+                Logger.e("FirestoreError -> visitedCitiesMap fetch failed: ${e.message}", e)
                 emptyMap()
             }
 
@@ -80,15 +80,17 @@ class FirestoreRepositoryImpl(
                 Country(code = code, name = name, visited = visited, cities = cities)
             }
 
-            Logger.w("Fetched ${countries.size} countries for $userId")
+            Logger.w("FirestoreDebug -> ✅ Fetched ${countries.size} countries for $userId")
             countries
         } catch (e: Exception) {
-            e.printStackTrace()
+            Logger.e("FirestoreError -> fetchAllCountries failed: ${e.message}", e)
             emptyList()
         }
     }
 
     override suspend fun fetchUserVisits(userId: String): UserVisits {
+        Logger.d("FirestoreDebug -> 📌 fetchUserVisits for userId=$userId")
+        Logger.d("FirestoreDebug -> 🔗 Current firestore base path: ${userBasePath()}")
         return try {
             val visitedCountryCodes = visitedCountriesCol(userId)
                 .get().await()
@@ -108,12 +110,13 @@ class FirestoreRepositoryImpl(
                 cities = visitedCitiesMap
             )
         } catch (e: Exception) {
-            e.printStackTrace()
+            Logger.e("FirestoreError -> fetchUserVisits failed: ${e.message}", e)
             UserVisits()
         }
     }
 
     override suspend fun updateCountryVisited(userId: String, code: String, visited: Boolean) {
+        Logger.d("FirestoreDebug -> 🗺️ updateCountryVisited userId=$userId, code=$code, visited=$visited")
         val docRef = visitedCountriesCol(userId).document(code)
         val citiesDocRef = visitedCitiesDoc(userId, code)
 
@@ -121,16 +124,13 @@ class FirestoreRepositoryImpl(
             if (visited) {
                 docRef.set(mapOf("visited" to true)).await()
             } else {
-                // 1. Delete the country from visited_countries
                 docRef.delete().await()
-
-                // 2. Delete all cities visited in this country
                 citiesDocRef.delete().await()
             }
 
             recalculateAndUpdateStats(userId)
         } catch (e: Exception) {
-            e.printStackTrace()
+            Logger.e("FirestoreError -> updateCountryVisited failed: ${e.message}", e)
         }
     }
 
@@ -140,6 +140,7 @@ class FirestoreRepositoryImpl(
         cityName: String,
         visited: Boolean
     ) {
+        Logger.d("FirestoreDebug -> 🏙️ updateCityVisited userId=$userId, $countryCode -> $cityName = $visited")
         val docRef = visitedCitiesDoc(userId, countryCode)
 
         try {
@@ -160,50 +161,52 @@ class FirestoreRepositoryImpl(
 
             recalculateAndUpdateStats(userId)
         } catch (e: Exception) {
-            e.printStackTrace()
+            Logger.e("FirestoreError -> updateCityVisited failed: ${e.message}", e)
         }
     }
 
     override suspend fun deleteUserDocument(userId: String) {
-        db.collection("users").document(userId).delete().await()
+        Logger.d("FirestoreDebug -> ❌ deleteUserDocument for userId=$userId")
+        try {
+            db.collection(userBasePath()).document(userId).delete().await()
+        } catch (e: Exception) {
+            Logger.e("FirestoreError -> deleteUserDocument failed: ${e.message}", e)
+        }
     }
 
     override suspend fun ensureUserDocument(userId: String) {
+        Logger.d("FirestoreDebug -> 🛠️ ensureUserDocument for userId=$userId")
         try {
             val userDoc = db.collection(userBasePath()).document(userId)
             val snapshot = userDoc.get().await()
 
             if (!snapshot.exists()) {
                 userDoc.set(mapOf("createdAt" to FieldValue.serverTimestamp())).await()
-                Logger.w("Created user document for $userId")
+                Logger.w("FirestoreDebug -> ✅ Created user document for $userId")
             }
         } catch (e: Exception) {
-            e.printStackTrace()
+            Logger.e("FirestoreError -> ensureUserDocument failed: ${e.message}", e)
         }
     }
 
     override suspend fun fetchUserProfile(userId: String): ProfileData? {
+        Logger.d("FirestoreDebug -> 🙍 fetchUserProfile for userId=$userId")
         return try {
             val doc = db.collection(userBasePath()).document(userId).get().await()
-
             if (!doc.exists()) return null
-
-            return doc.toProfileUiState()
+            doc.toProfileUiState()
         } catch (e: Exception) {
-            e.printStackTrace()
+            Logger.e("FirestoreError -> fetchUserProfile failed: ${e.message}", e)
             null
         }
     }
 
     override suspend fun recalculateAndUpdateStats(userId: String) {
+        Logger.d("FirestoreDebug -> 📊 recalculateAndUpdateStats for userId=$userId")
         try {
-            // Fetch visited countries subcollection
-            val visitedCountriesSnapshot = visitedCountriesCol(userId)
-                .get().await()
-
+            val visitedCountriesSnapshot = visitedCountriesCol(userId).get().await()
             val countriesVisited = visitedCountriesSnapshot.size()
 
-            // Fetch visited cities subcollection
             val visitedCitiesSnapshot = db.collection(userBasePath())
                 .document(userId).collection(VISITED_CITIES).get().await()
 
@@ -212,9 +215,7 @@ class FirestoreRepositoryImpl(
                 cities.size
             }
 
-            // Fetch meta to calculate continents and world percent (optional but recommended)
             val metaSnapshot = db.collection(META).document(COUNTRIES).collection("all").get().await()
-
             val visitedCountryCodes = visitedCountriesSnapshot.documents.map { it.id }.toSet()
             val totalCountries = metaSnapshot.size()
             val visitedContinents = mutableSetOf<String>()
@@ -232,7 +233,6 @@ class FirestoreRepositoryImpl(
                 (visitedCountryCodes.size * 100) / totalCountries
             } else 0
 
-            // Calculate achievements using your isolated helper
             val achievements = AchievementsCalculator.calculateAchievements(
                 countriesVisited = countriesVisited,
                 citiesVisited = totalCitiesVisited,
@@ -242,7 +242,6 @@ class FirestoreRepositoryImpl(
                 mapOf("title" to it.title, "desc" to it.description)
             }
 
-            // Update user document with new stats and achievements
             db.collection(userBasePath()).document(userId).update(
                 mapOf(
                     "countries" to countriesVisited,
@@ -252,9 +251,8 @@ class FirestoreRepositoryImpl(
                     "achievements" to achievements
                 )
             ).await()
-
         } catch (e: Exception) {
-            e.printStackTrace()
+            Logger.e("FirestoreError -> recalculateAndUpdateStats failed: ${e.message}", e)
         }
     }
 }

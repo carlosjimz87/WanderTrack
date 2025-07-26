@@ -57,7 +57,6 @@ fun ProfileScreenContent(
     profile: ProfileData,
     onEditProfile: () -> Unit,
     onLogout: () -> Unit,
-    logoutText: String,
     avatarUrl: String? = null,
     onDeleteAccountClick: () -> Unit
 ) {
@@ -197,7 +196,6 @@ fun ProfileScreenPreviewAchievements() {
             ),
             onEditProfile = {},
             onLogout = {},
-            logoutText = "Logout",
             onDeleteAccountClick = {}
         )
     }
@@ -232,7 +230,6 @@ fun ProfileScreenPreviewAchievementsDark() {
             ),
             onEditProfile = {},
             onLogout = {},
-            logoutText = "Logout",
             onDeleteAccountClick = {}
         )
     }

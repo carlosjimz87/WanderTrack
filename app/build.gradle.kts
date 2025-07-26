@@ -47,12 +47,16 @@ android {
         create("dev") {
             dimension = "env"
             buildConfigField("String", "FIREBASE_ENV", "\"dev\"")
-            buildConfigField("String", "AUTH_EMULATOR_HOST", "\"10.0.2.2\"")
+            buildConfigField("String", "FIREBASE_EMULATOR_HOST", "\"10.0.2.2\"")
             buildConfigField("int", "AUTH_EMULATOR_PORT", "9099")
+            buildConfigField("int", "STORE_EMULATOR_PORT", "8080")
         }
         create("prod") {
             dimension = "env"
             buildConfigField("String", "FIREBASE_ENV", "\"prod\"")
+            buildConfigField("String", "FIREBASE_EMULATOR_HOST", "\"unused\"")
+            buildConfigField("int", "AUTH_EMULATOR_PORT", "0")
+            buildConfigField("int", "STORE_EMULATOR_PORT", "0")
         }
     }
 

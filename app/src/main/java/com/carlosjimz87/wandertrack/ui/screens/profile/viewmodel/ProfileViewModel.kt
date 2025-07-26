@@ -6,10 +6,11 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.carlosjimz87.wandertrack.common.formatUsername
+import com.carlosjimz87.wandertrack.domain.models.profile.ProfileData
 import com.carlosjimz87.wandertrack.domain.repo.AuthRepository
 import com.carlosjimz87.wandertrack.domain.repo.FirestoreRepository
-import com.carlosjimz87.wandertrack.domain.models.profile.ProfileData
 import kotlinx.coroutines.launch
+import java.util.Locale
 
 class ProfileViewModel(
     private val firestoreRepository: FirestoreRepository,
@@ -19,25 +20,31 @@ class ProfileViewModel(
     var profileState by mutableStateOf(ProfileData())
         private set
 
-    init {
-        loadProfile()
-    }
-
     fun loadProfile() {
-        val userId = authRepository.currentUser?.uid ?: return
 
         viewModelScope.launch {
-            val originalProfile = firestoreRepository.fetchUserProfile(userId)
+            val rawUsername = authRepository.currentUser?.email
             val avatarUrl = authRepository.currentUser?.photoUrl?.toString()
-            val formattedUsername = originalProfile?.username?.formatUsername()
+            val formattedUsername = rawUsername?.formatUsername() ?: "User${authRepository.currentUser?.uid?.takeLast(4)}"
+            val profileStats = firestoreRepository.fetchUserProfile(authRepository.currentUser?.uid ?: "")
 
-            profileState = originalProfile?.copy(
-                username = formattedUsername ?: originalProfile.username,
-                avatarUrl = avatarUrl
-            ) ?: ProfileData(
-                username = formattedUsername ?: "Unknown User",
-                avatarUrl = avatarUrl
-            )
+            profileStats?.let {
+                profileState = ProfileData(
+                    username = formattedUsername.capitalize(Locale.ROOT),
+                    avatarUrl = avatarUrl,
+                    countriesVisited = it.countriesVisited,
+                    citiesVisited = it.citiesVisited,
+                    continentsVisited = it.continentsVisited,
+                    worldPercent = it.worldPercent,
+                    achievements = it.achievements,
+                )
+            } ?: run {
+                profileState = ProfileData(
+                    username = formattedUsername.capitalize(Locale.ROOT),
+                    avatarUrl = avatarUrl
+                )
+            }
+
         }
     }
 }
