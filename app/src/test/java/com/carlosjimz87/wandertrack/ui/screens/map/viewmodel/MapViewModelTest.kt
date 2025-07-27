@@ -1,4 +1,4 @@
-package com.carlosjimz87.wandertrack.ui.screens.mapscreen.viewmodel
+package com.carlosjimz87.wandertrack.ui.screens.map.viewmodel
 
 import com.carlosjimz87.wandertrack.domain.models.map.City
 import com.carlosjimz87.wandertrack.domain.models.map.Country

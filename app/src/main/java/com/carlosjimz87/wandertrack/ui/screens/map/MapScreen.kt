@@ -1,4 +1,4 @@
-package com.carlosjimz87.wandertrack.ui.screens.mapscreen
+package com.carlosjimz87.wandertrack.ui.screens.map
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.isSystemInDarkTheme
@@ -53,7 +53,7 @@ import com.carlosjimz87.wandertrack.ui.composables.map.BottomSheetDragHandle
 import com.carlosjimz87.wandertrack.ui.composables.map.MapCanvas
 import com.carlosjimz87.wandertrack.ui.composables.map.MapHeaderInfo
 import com.carlosjimz87.wandertrack.ui.composables.map.ProfileIconButton
-import com.carlosjimz87.wandertrack.ui.screens.mapscreen.viewmodel.MapViewModel
+import com.carlosjimz87.wandertrack.ui.screens.map.viewmodel.MapViewModel
 import com.carlosjimz87.wandertrack.ui.theme.AccentPink
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
@@ -68,32 +68,38 @@ import org.koin.core.parameter.parametersOf
 @Composable
 fun MapScreen(
     userId: String,
-    from: Screens? = Screens.Map,
+    from: Screens = Screens.Profile,
     onProfileClick: () -> Unit,
 ) {
-    val viewModel: MapViewModel = koinViewModel(parameters = { parametersOf(userId) })
+    // Injections
     val stylesManager: StylesManager = getKoin().get()
+    val viewModel: MapViewModel = koinViewModel(parameters = { parametersOf(userId) })
+    viewModel.setFrom(from)
 
-    LaunchedEffect(from) {
-        viewModel.setNavigationSource(from)
-    }
+    // Initializations
+    val isDarkTheme = isSystemInDarkTheme()
+    val context = LocalContext.current
+    val density = LocalDensity.current
 
     val coroutineScope = rememberCoroutineScope()
     val visitedCountriesCodes by viewModel.visitedCountryCodes.collectAsState()
     val cameFrom by viewModel.cameFrom.collectAsState()
+    val containerSize = LocalWindowInfo.current.containerSize
+    context.SetBottomBarColor(AccentPink)
 
-    val countryBorders by viewModel.countryBorders.collectAsState()
+    // Collections
     val selectedCountry by viewModel.selectedCountry.collectAsState()
+    val isLoading by viewModel.isLoading.collectAsState()
+    val countryBorders by viewModel.countryBorders.collectAsState()
+    val lastCameraPosition by viewModel.lastCameraPosition.collectAsState()
+
+    // Remembered scopes
     val visitedCitiesCount = remember(selectedCountry) {
         selectedCountry?.cities?.count { it.visited } ?: 0
     }
-    val isLoading by viewModel.isLoading.collectAsState()
-    val lastCameraPosition by viewModel.lastCameraPosition.collectAsState()
     val cameraPositionState = rememberCameraPositionState {
         position = lastCameraPosition ?: CameraPosition.fromLatLngZoom(LatLng(0.0, 0.0), 2f)
     }
-
-    val isDarkTheme = isSystemInDarkTheme()
 
     val composition by rememberLottieComposition(stylesManager.getAnimationStyles(isDarkTheme))
 
@@ -104,18 +110,11 @@ fun MapScreen(
         )
     )
 
-    val context = LocalContext.current
-    val density = LocalDensity.current
-    val containerSize = LocalWindowInfo.current.containerSize
-    val screenWidth = containerSize.width
-    val screenHeight = containerSize.height
-
     var hasCenteredMap by remember { mutableStateOf(false) }
     var hasFocusedOnBottomSheet by remember { mutableStateOf(false) }
     var isAnimatingCamera by remember { mutableStateOf(false) }
 
-    context.SetBottomBarColor(AccentPink)
-
+    // Launched effects
     LaunchedEffect(cameraPositionState) {
         var lastCamera: CameraPosition? = null
 
@@ -161,7 +160,7 @@ fun MapScreen(
                     selectedCountry = selectedCountry!!,
                     countryBorders = countryBorders,
                     bottomSheetState = bottomSheetScaffoldState.bottomSheetState,
-                    mapViewHeightPx = screenHeight,
+                    mapViewHeightPx = containerSize.height,
                     density = density
                 )
                 isAnimatingCamera = false
@@ -174,6 +173,7 @@ fun MapScreen(
         }
     }
 
+    // Ui components
     BottomSheetScaffold(
         scaffoldState = bottomSheetScaffoldState,
         sheetPeekHeight = 0.dp,
@@ -200,8 +200,12 @@ fun MapScreen(
                         countryCode = country.code,
                         countryVisited = country.visited,
                         countryCities = country.cities,
-                        onToggleCityVisited = { viewModel.toggleCityVisited(country.code, it) },
-                        onToggleVisited = { viewModel.toggleCountryVisited(it) }
+                        onToggleCityVisited = {
+                            viewModel.toggleCityVisited(country.code, it)
+                                              },
+                        onToggleVisited = {
+                            viewModel.toggleCountryVisited(it)
+                        }
                     )
                 } ?: Spacer(modifier = Modifier.height(1.dp))
             }
@@ -223,8 +227,6 @@ fun MapScreen(
                         bottomSheetScaffoldState.bottomSheetState.currentValue == SheetValue.Expanded
                     ) return@MapCanvas
 
-                    viewModel.resetUserMovedFlag()
-
                     coroutineScope.launch {
                         val bounds = viewModel.resolveCountryFromLatLng(latLng)
                         bottomSheetScaffoldState.bottomSheetState.expand()
@@ -233,11 +235,11 @@ fun MapScreen(
                             safeAnimateToBounds(
                                 cameraPositionState = cameraPositionState,
                                 bounds = it,
-                                mapWidth = screenWidth,
-                                mapHeight = screenHeight,
+                                mapWidth = containerSize.width,
+                                mapHeight = containerSize.height,
                                 bottomOffset = calculateBottomOffset(
                                     bottomSheetScaffoldState.bottomSheetState.currentValue,
-                                    screenHeight
+                                    containerSize.height
                                 )
                             )
                             isAnimatingCamera = false

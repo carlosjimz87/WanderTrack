@@ -17,7 +17,7 @@ import com.carlosjimz87.wandertrack.domain.models.Screens
 import com.carlosjimz87.wandertrack.domain.models.map.City
 import com.carlosjimz87.wandertrack.domain.models.map.Country
 import com.carlosjimz87.wandertrack.domain.models.map.CountryGeometry
-import com.carlosjimz87.wandertrack.ui.screens.mapscreen.viewmodel.MapViewModel
+import com.carlosjimz87.wandertrack.ui.screens.map.viewmodel.MapViewModel
 import com.carlosjimz87.wandertrack.ui.theme.White
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.model.LatLng

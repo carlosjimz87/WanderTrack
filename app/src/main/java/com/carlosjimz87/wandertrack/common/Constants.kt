@@ -16,6 +16,7 @@ object Constants {
             code = "ID",
             name = "Indonesia",
             visited = false,
+            continent = "Asia",
             cities = listOf(
                 City(name = "Jakarta", latitude = -6.2088, longitude = 106.8456),
                 City(name = "Bali", latitude = -8.4095, longitude = 115.1889),
@@ -29,6 +30,7 @@ object Constants {
             code = "IT",
             name = "Italy",
             visited = true,
+            continent = "Europe",
             cities = listOf(
                 City(name = "Rome", latitude = 41.9028, longitude = 12.4964, visited = true),
                 City(name = "Venice", latitude = 45.4, longitude = 12.3, visited = true),

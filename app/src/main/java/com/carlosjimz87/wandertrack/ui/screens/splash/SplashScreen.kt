@@ -37,13 +37,15 @@ import com.carlosjimz87.wandertrack.ui.screens.splash.viewmodel.SplashViewModel
 import com.carlosjimz87.wandertrack.ui.theme.AccentPink
 import com.carlosjimz87.wandertrack.ui.theme.AccentPinkDark
 import kotlinx.coroutines.delay
+import org.koin.androidx.compose.koinViewModel
 
 @Composable
 fun SplashScreen(
     onSplashFinished: () -> Unit,
-    minSplashTimeMs: Long = 3000L,
-    splashViewModel: SplashViewModel = remember { SplashViewModel() }
-)  {
+    minSplashTimeMs: Long = 1000L,
+) {
+    val splashViewModel: SplashViewModel = koinViewModel()
+
     val animationOffset = (-50).dp
     val logoOffset = animationOffset - 90.dp
     val context = LocalContext.current
@@ -79,17 +81,18 @@ fun SplashScreen(
             animationSpec = tween(durationMillis = 800, easing = FastOutSlowInEasing)
         )
 
-        delay(1000) // Espera a que Lottie termine
+        delay(minSplashTimeMs) // Espera a que Lottie termine
 
         splashViewModel.showLogoAndText = true
 
-        splashViewModel.simulateLoading(minSplashTimeMs)
-
         splashViewModel.isPlaying = false // Detiene animación Lottie
 
-        delay(1000) // Pausa para transición suave
+        splashViewModel.loadData(context) { countries ->
+            if (countries.isNotEmpty()) {
+                onSplashFinished()
+            }
+        }
 
-        onSplashFinished()
     }
 
     Box(

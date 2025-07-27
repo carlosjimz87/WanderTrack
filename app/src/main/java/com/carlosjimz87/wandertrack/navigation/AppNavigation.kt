@@ -23,7 +23,7 @@ import com.carlosjimz87.wandertrack.ui.screens.auth.LoginScreen
 import com.carlosjimz87.wandertrack.ui.screens.auth.SignUpScreen
 import com.carlosjimz87.wandertrack.ui.screens.auth.state.AuthUiState
 import com.carlosjimz87.wandertrack.ui.screens.auth.viewmodel.AuthViewModel
-import com.carlosjimz87.wandertrack.ui.screens.mapscreen.MapScreen
+import com.carlosjimz87.wandertrack.ui.screens.map.MapScreen
 import com.carlosjimz87.wandertrack.ui.screens.profile.ProfileScreen
 import com.carlosjimz87.wandertrack.ui.screens.splash.SplashScreen
 import com.carlosjimz87.wandertrack.utils.Logger
@@ -40,12 +40,7 @@ fun AppNavigation(
     val authUiState by authViewModel.authUiState.collectAsState()
     var hasFinishedSplash by remember { mutableStateOf(false) }
 
-    val controller = rememberMyNavController(
-        initial = when (validSession) {
-            true -> Screens.Map
-            else -> Screens.Splash
-        }
-    )
+    val controller = rememberMyNavController(initial = Screens.Splash)
     val currentScreen = controller.current
 
     LaunchedEffect(validSession, authUiState, hasFinishedSplash) {
