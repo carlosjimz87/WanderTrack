@@ -6,4 +6,5 @@ interface NavController<T> {
     fun replace(screen: T)
     fun pop()
     val backStack: List<T>
+    fun setNewRoot(screen: T)
 }

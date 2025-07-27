@@ -145,7 +145,7 @@ fun AppNavigation(
                 onLogout = {
                     authViewModel.logout()
                     Logger.d("NavLog -> Logging out and going to Auth")
-                    controller.replace(Screens.Auth)
+                    controller.setNewRoot(Screens.Auth)
                 },
                 onBack = {
                     val target = if (validSession == true) Screens.Map else Screens.Auth

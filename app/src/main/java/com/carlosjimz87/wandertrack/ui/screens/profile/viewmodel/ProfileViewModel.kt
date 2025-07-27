@@ -21,12 +21,23 @@ class ProfileViewModel(
         private set
 
     fun loadProfile() {
-
         viewModelScope.launch {
-            val rawUsername = authRepository.currentUser?.email
-            val avatarUrl = authRepository.currentUser?.photoUrl?.toString()
-            val formattedUsername = rawUsername?.formatUsername() ?: "User${authRepository.currentUser?.uid?.takeLast(4)}"
-            val profileStats = firestoreRepository.fetchUserProfile(authRepository.currentUser?.uid ?: "")
+            val currentUser = authRepository.currentUser
+
+            if (currentUser?.uid.isNullOrBlank()) {
+                // Evita lanzar una excepción si el usuario no existe
+                profileState = ProfileData(
+                    username = "Guest",
+                    avatarUrl = null
+                )
+                return@launch
+            }
+
+            val rawUsername = currentUser.email
+            val avatarUrl = currentUser.photoUrl?.toString()
+            val formattedUsername = rawUsername?.formatUsername() ?: "User${currentUser.uid.takeLast(4)}"
+
+            val profileStats = firestoreRepository.fetchUserProfile(currentUser.uid)
 
             profileStats?.let {
                 profileState = ProfileData(
@@ -44,7 +55,6 @@ class ProfileViewModel(
                     avatarUrl = avatarUrl
                 )
             }
-
         }
     }
 }

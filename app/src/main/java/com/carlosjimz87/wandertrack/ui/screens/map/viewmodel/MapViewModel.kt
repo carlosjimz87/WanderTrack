@@ -62,6 +62,8 @@ class MapViewModel(
     }
 
     private fun loadData() {
+        if (userId.isBlank()) return
+
         viewModelScope.launch {
             _isLoading.value = true
             firestoreRepo.ensureUserDocument(userId)

@@ -47,16 +47,12 @@ android {
         create("dev") {
             dimension = "env"
             buildConfigField("String", "FIREBASE_ENV", "\"dev\"")
-            buildConfigField("String", "FIREBASE_EMULATOR_HOST", "\"10.0.2.2\"")
-            buildConfigField("int", "AUTH_EMULATOR_PORT", "9099")
-            buildConfigField("int", "STORE_EMULATOR_PORT", "8080")
+            buildConfigField("Boolean", "USE_FIRESTORE_EMULATOR", "false") // Change this to false to disable
         }
         create("prod") {
             dimension = "env"
             buildConfigField("String", "FIREBASE_ENV", "\"prod\"")
-            buildConfigField("String", "FIREBASE_EMULATOR_HOST", "\"unused\"")
-            buildConfigField("int", "AUTH_EMULATOR_PORT", "0")
-            buildConfigField("int", "STORE_EMULATOR_PORT", "0")
+            buildConfigField("Boolean", "USE_FIRESTORE_EMULATOR", "false")
         }
     }
 

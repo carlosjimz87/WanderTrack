@@ -1,6 +1,6 @@
 package com.carlosjimz87.wandertrack.data.repo
 
-import com.carlosjimz87.wandertrack.BuildConfig
+import com.carlosjimz87.wandertrack.common.AppConfig
 import com.carlosjimz87.wandertrack.domain.models.map.Country
 import com.carlosjimz87.wandertrack.domain.models.profile.ProfileData
 import com.carlosjimz87.wandertrack.domain.models.profile.UserVisits
@@ -9,6 +9,7 @@ import com.carlosjimz87.wandertrack.managers.LocalDataManager
 import com.carlosjimz87.wandertrack.utils.AchievementsCalculator
 import com.carlosjimz87.wandertrack.utils.Logger
 import com.carlosjimz87.wandertrack.utils.toProfileUiState
+import com.google.firebase.firestore.DocumentReference
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.SetOptions
@@ -27,10 +28,17 @@ class FirestoreRepositoryImpl(
     }
 
     private fun basePath(): String =
-        if (BuildConfig.FIREBASE_ENV == "prod" && BuildConfig.BUILD_TYPE == "release") USERS else USERS_DEV
+        if (AppConfig.isProd) USERS else USERS_DEV
 
-    private fun userDoc(userId: String) = firestoreDatabase.collection(basePath()).document(userId)
-    private fun cityDoc(userId: String, countryCode: String) = userDoc(userId).collection(VISITED_CITIES).document(countryCode)
+    private fun userDoc(userId: String): DocumentReference {
+        require(userId.isNotBlank()) {
+            "FirestoreRepositoryImpl: userId must not be null or blank"
+        }
+        return firestoreDatabase.collection(basePath()).document(userId)
+    }
+
+    private fun cityDoc(userId: String, countryCode: String) =
+        userDoc(userId).collection(VISITED_CITIES).document(countryCode)
 
     // ------------------ USER ------------------
 
@@ -47,13 +55,11 @@ class FirestoreRepositoryImpl(
 
     // ------------------ READS ------------------
 
-    override suspend fun fetchAllCountries(userId: String): List<Country> {
-        ensureUserDocument(userId)
-
+    override suspend fun fetchAllCountries(userId: String): List<Country> = withEnsuredUser(userId) {
         val visitedCountries = getVisitedCountries(userId)
         val visitedCities = getVisitedCitiesMap(userId)
 
-        return dataManager.preloadedCountries.map { country ->
+        return@withEnsuredUser dataManager.preloadedCountries.map { country ->
             country.copy(
                 visited = visitedCountries.contains(country.code),
                 cities = country.cities.map { city ->
@@ -63,17 +69,15 @@ class FirestoreRepositoryImpl(
         }
     }
 
-    override suspend fun fetchUserVisits(userId: String): UserVisits {
-        ensureUserDocument(userId)
-        return UserVisits(
+    override suspend fun fetchUserVisits(userId: String): UserVisits  = withEnsuredUser(userId) {
+        return@withEnsuredUser UserVisits(
             countryCodes = getVisitedCountries(userId),
             cities = getVisitedCitiesMap(userId)
         )
     }
 
-    override suspend fun fetchUserProfile(userId: String): ProfileData? {
-        ensureUserDocument(userId)
-        return try {
+    override suspend fun fetchUserProfile(userId: String): ProfileData? = withEnsuredUser(userId) {
+        return@withEnsuredUser try {
             userDoc(userId).get().await().takeIf { it.exists() }?.toProfileUiState()
         } catch (e: Exception) {
             Logger.e("FirestoreError -> fetchUserProfile failed", e)
@@ -83,9 +87,7 @@ class FirestoreRepositoryImpl(
 
     // ------------------ UPDATES ------------------
 
-    override suspend fun updateCountryVisited(userId: String, code: String, visited: Boolean) {
-        ensureUserDocument(userId)
-
+    override suspend fun updateCountryVisited(userId: String, code: String, visited: Boolean) = withEnsuredUser(userId) {
         val countries = getVisitedCountries(userId).toMutableSet().apply {
             if (visited) add(code) else remove(code)
         }
@@ -95,14 +97,19 @@ class FirestoreRepositoryImpl(
         }
 
         userDoc(userId).update(VISITED_COUNTRIES, countries.toList()).await()
-       recalculateAndUpdateStats(userId)
+        recalculateAndUpdateStats(userId)
     }
 
-    override suspend fun updateCityVisited(userId: String, countryCode: String, cityName: String, visited: Boolean) {
-        ensureUserDocument(userId)
+    override suspend fun updateCityVisited(
+        userId: String,
+        countryCode: String,
+        cityName: String,
+        visited: Boolean
+    ) = withEnsuredUser(userId) {
 
         val doc = cityDoc(userId, countryCode)
-        val current = (doc.get().await().get("cities") as? List<String>)?.toMutableSet() ?: mutableSetOf()
+        val current =
+            (doc.get().await().get("cities") as? List<String>)?.toMutableSet() ?: mutableSetOf()
 
         if (visited) current.add(cityName) else current.remove(cityName)
 
@@ -118,8 +125,6 @@ class FirestoreRepositoryImpl(
     // ------------------ STATS ------------------
 
     override suspend fun recalculateAndUpdateStats(userId: String) {
-        ensureUserDocument(userId)
-
         val visitedCountries = getVisitedCountries(userId)
         val visitedCitiesCount = getVisitedCitiesCount(userId)
 
@@ -177,5 +182,10 @@ class FirestoreRepositoryImpl(
     private suspend fun getVisitedCitiesCount(userId: String): Int {
         return userDoc(userId).collection(VISITED_CITIES).get().await()
             .sumOf { (it.get("cities") as? List<*>)?.size ?: 0 }
+    }
+
+    private suspend inline fun <T> withEnsuredUser(userId: String, crossinline block: suspend () -> T): T {
+        ensureUserDocument(userId)
+        return block()
     }
 }

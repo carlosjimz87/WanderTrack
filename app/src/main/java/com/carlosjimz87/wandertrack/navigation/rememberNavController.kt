@@ -32,6 +32,11 @@ fun rememberMyNavController(
                 if (stack.size > 1) stack.removeAt(stack.lastIndex)
             }
 
+            override fun setNewRoot(screen: Screens) {
+                stack.clear()
+                stack.add(screen)
+            }
+
             override val backStack: List<Screens>
                 get() = stack
         }

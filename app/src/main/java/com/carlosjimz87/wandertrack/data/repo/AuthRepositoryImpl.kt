@@ -1,6 +1,7 @@
 package com.carlosjimz87.wandertrack.data.repo
 
 import com.carlosjimz87.wandertrack.BuildConfig
+import com.carlosjimz87.wandertrack.common.AppConfig
 import com.carlosjimz87.wandertrack.domain.repo.AuthRepository
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
@@ -9,7 +10,6 @@ import com.google.firebase.auth.GoogleAuthProvider
 class AuthRepositoryImpl(
     private val auth: FirebaseAuth
 ) : AuthRepository {
-
 
     override fun addAuthStateListener(listener: FirebaseAuth.AuthStateListener) {
         auth.addAuthStateListener(listener)
@@ -20,7 +20,7 @@ class AuthRepositoryImpl(
 
     override fun isUserLoggedIn(): Boolean {
         val user = auth.currentUser
-        return user != null && (user.isEmailVerified || BuildConfig.FIREBASE_ENV == "dev")
+        return user != null && (user.isEmailVerified || AppConfig.isDev)
     }
 
     override fun loginWithEmail(

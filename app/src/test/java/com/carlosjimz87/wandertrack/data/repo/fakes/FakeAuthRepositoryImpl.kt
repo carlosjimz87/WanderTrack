@@ -2,6 +2,7 @@ package com.carlosjimz87.wandertrack.data.repo.fakes
 
 import android.net.Uri
 import com.carlosjimz87.wandertrack.BuildConfig
+import com.carlosjimz87.wandertrack.common.AppConfig
 import com.carlosjimz87.wandertrack.domain.repo.AuthRepository
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
@@ -28,7 +29,7 @@ class FakeAuthRepositoryImpl : AuthRepository {
     var resendVerificationCalled = false
 
     override fun isUserLoggedIn(): Boolean {
-        return _fakeUser != null && (isEmailVerified || BuildConfig.FIREBASE_ENV == "dev")
+        return _fakeUser != null && (isEmailVerified || AppConfig.isDev)
     }
 
     override fun loginWithEmail(email: String, password: String, onResult: (Boolean, String?) -> Unit) {
