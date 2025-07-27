@@ -11,6 +11,7 @@ import com.carlosjimz87.wandertrack.utils.Logger
 import com.carlosjimz87.wandertrack.utils.toProfileUiState
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.SetOptions
 import kotlinx.coroutines.tasks.await
 
 class FirestoreRepositoryImpl(
@@ -94,7 +95,7 @@ class FirestoreRepositoryImpl(
         }
 
         userDoc(userId).update(VISITED_COUNTRIES, countries.toList()).await()
-       // recalculateAndUpdateStats(userId)
+       recalculateAndUpdateStats(userId)
     }
 
     override suspend fun updateCityVisited(userId: String, countryCode: String, cityName: String, visited: Boolean) {
@@ -111,7 +112,7 @@ class FirestoreRepositoryImpl(
             doc.set(mapOf("cities" to current.toList())).await()
         }
 
-        //recalculateAndUpdateStats(userId)
+        recalculateAndUpdateStats(userId)
     }
 
     // ------------------ STATS ------------------
@@ -143,15 +144,20 @@ class FirestoreRepositoryImpl(
             )
             .map { mapOf("title" to it.title, "desc" to it.description) }
 
-        userDoc(userId).update(
-            mapOf(
-                "countries" to visitedCountries.size,
-                "cities" to visitedCitiesCount,
-                "continents" to visitedContinents.size,
-                "world" to worldPercent,
-                "achievements" to achievements
-            )
-        ).await()
+        try {
+            userDoc(userId).set(
+                mapOf(
+                    "countries" to visitedCountries.size,
+                    "cities" to visitedCitiesCount,
+                    "continents" to visitedContinents.size,
+                    "world" to worldPercent,
+                    "achievements" to achievements
+                ),
+                SetOptions.merge()
+            ).await()
+        } catch (e: Exception) {
+            Logger.e("FirestoreRepo -> ❌Failed to update stats", e)
+        }
     }
 
     // ------------------ INTERNAL HELPERS ------------------
