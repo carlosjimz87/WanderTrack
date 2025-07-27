@@ -19,6 +19,15 @@ android {
     namespace = "com.carlosjimz87.wandertrack"
     compileSdk = 36
 
+    signingConfigs {
+        create("release") {
+            val keystoreFile = secretsProperties["STORE_FILE"] as String
+            storeFile = rootProject.file(keystoreFile)
+            storePassword = secretsProperties["STORE_PASS"] as String
+            keyAlias = secretsProperties["KEY_ALIAS"] as String
+            keyPassword = secretsProperties["KEY_PASS"] as String
+        }
+    }
     defaultConfig {
         applicationId = "com.carlosjimz87.wandertrack"
         minSdk = 23
@@ -47,7 +56,11 @@ android {
         create("dev") {
             dimension = "env"
             buildConfigField("String", "FIREBASE_ENV", "\"dev\"")
-            buildConfigField("Boolean", "USE_FIRESTORE_EMULATOR", "false") // Change this to false to disable
+            buildConfigField(
+                "Boolean",
+                "USE_FIRESTORE_EMULATOR",
+                "false"
+            ) // Change this to false to disable
         }
         create("prod") {
             dimension = "env"
@@ -57,8 +70,10 @@ android {
     }
 
     buildTypes {
-        release {
-            isMinifyEnabled = false
+        getByName("release") {
+            signingConfig = signingConfigs.getByName("release")
+            isMinifyEnabled = true
+            isShrinkResources = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
