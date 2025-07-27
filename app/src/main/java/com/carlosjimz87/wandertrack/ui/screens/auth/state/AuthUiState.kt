@@ -1,8 +1,11 @@
 package com.carlosjimz87.wandertrack.ui.screens.auth.state
 
-sealed class AuthUiState {
-    object Idle : AuthUiState()
-    object Loading : AuthUiState()
-    data class Success(val message: String? = null) : AuthUiState()
-    data class Error(val message: String) : AuthUiState()
-}
+data class AuthUiState(
+    val isLoading: Boolean = false,
+    val errorMessage: String? = null,
+    val successMessage: String? = null,
+    val isLoginSuccessful: Boolean = false,
+    val showResendButton: Boolean = false,
+    val isAccountDeleted: Boolean = false,
+    val blockNavigation: Boolean = false
+)

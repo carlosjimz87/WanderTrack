@@ -14,9 +14,7 @@ import androidx.compose.ui.platform.LocalContext
 import com.carlosjimz87.wandertrack.R
 import com.carlosjimz87.wandertrack.ui.composables.auth.MessageDialog
 import com.carlosjimz87.wandertrack.ui.composables.auth.SignUpScreenContent
-import com.carlosjimz87.wandertrack.ui.screens.auth.state.AuthUiState
 import com.carlosjimz87.wandertrack.ui.screens.auth.viewmodel.AuthViewModel
-import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
 
 @Composable
@@ -26,9 +24,10 @@ fun SignUpScreen(
     onBack: () -> Unit
 ) {
     val context = LocalContext.current
-    val uiState by authViewModel.authUiState.collectAsState()
+    val uiState by authViewModel.uiState.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
     val coroutineScope = rememberCoroutineScope()
+
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var confirmPassword by remember { mutableStateOf("") }
@@ -38,32 +37,29 @@ fun SignUpScreen(
 
     BackHandler(onBack = onBack)
 
-    LaunchedEffect(uiState) {
-        when (uiState) {
-            is AuthUiState.Success -> {
-                (uiState as AuthUiState.Success).message?.let {
-                    coroutineScope.launch {
-                        snackbarHostState.showSnackbar(it)
-                    }
-                }
-                authViewModel.clearAuthUiState()
-                onNavigateToLogin()
-            }
+    // 🔹 Handle success navigation
+    LaunchedEffect(uiState.isLoginSuccessful) {
+        if (uiState.isLoginSuccessful) {
+            onNavigateToLogin()
+            authViewModel.clearUiState()
+        }
+    }
 
-            is AuthUiState.Error -> {
-                val msg = (uiState as AuthUiState.Error).message
-                if (msg.length > 80) {
-                    dialogMessage = msg
-                    showDialog = true
-                } else {
-                    coroutineScope.launch {
-                        snackbarHostState.showSnackbar(msg)
-                    }
-                }
-                authViewModel.clearAuthUiState()
-            }
+    // 🔹 Show snackbar or dialog based on message length
+    LaunchedEffect(uiState.errorMessage, uiState.successMessage) {
+        uiState.successMessage?.let {
+            snackbarHostState.showSnackbar(it)
+            authViewModel.clearUiState()
+        }
 
-            else -> Unit
+        uiState.errorMessage?.let { msg ->
+            if (msg.length > 80) {
+                dialogMessage = msg
+                showDialog = true
+            } else {
+                snackbarHostState.showSnackbar(msg)
+            }
+            authViewModel.clearUiState()
         }
     }
 
@@ -75,7 +71,7 @@ fun SignUpScreen(
         email = email,
         password = password,
         confirmPassword = confirmPassword,
-        isLoading = uiState is AuthUiState.Loading,
+        isLoading = uiState.isLoading,
         onEmailChange = { email = it },
         onPasswordChange = { password = it },
         onConfirmPasswordChange = { confirmPassword = it },

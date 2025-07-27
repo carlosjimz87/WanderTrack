@@ -27,9 +27,9 @@ fun ProfileScreen(
 ) {
     val context = LocalContext.current
     val user by authViewModel.authState.collectAsState()
+    val uiState by authViewModel.uiState.collectAsState()
     val profile = profileViewModel.profileState
     profileViewModel.loadProfile()
-
     var showDeleteDialog by remember { mutableStateOf(false) }
 
     context.SetBottomBarColor()
@@ -41,10 +41,31 @@ fun ProfileScreen(
         }
     }
 
+    LaunchedEffect(uiState.isAccountDeleted) {
+        if (uiState.isAccountDeleted) {
+            authViewModel.clearUiState()
+            onLogout()
+            Toast.makeText(
+                context,
+                context.getString(R.string.account_deleted_successfully),
+                Toast.LENGTH_LONG
+            ).show()
+        }
+    }
+
+    LaunchedEffect(uiState.errorMessage) {
+        uiState.errorMessage?.let {
+            Toast.makeText(context, it, Toast.LENGTH_LONG).show()
+        }
+    }
+
     ProfileScreenContent(
         profile = profile,
         onEditProfile = { /* TODO Edit */ },
-        onLogout = { authViewModel.logout() },
+        onLogout = {
+            authViewModel.logout()
+            authViewModel.clearUiState()
+        },
         avatarUrl = profile.avatarUrl,
         onDeleteAccountClick = { showDeleteDialog = true }
     )
@@ -53,22 +74,7 @@ fun ProfileScreen(
         DestructiveActionDialog(
             onConfirm = {
                 showDeleteDialog = false
-                authViewModel.deleteAccount { success, message ->
-                    if (success) {
-                        onLogout()
-                        Toast.makeText(
-                            context,
-                            context.getString(R.string.account_deleted_successfully),
-                            Toast.LENGTH_LONG
-                        ).show()
-                    } else {
-                        Toast.makeText(
-                            context,
-                            message ?: context.getString(R.string.error_deleting_account),
-                            Toast.LENGTH_LONG
-                        ).show()
-                    }
-                }
+                authViewModel.deleteAccount()
             },
             onDismiss = { showDeleteDialog = false }
         )

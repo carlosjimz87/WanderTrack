@@ -27,6 +27,7 @@ import com.carlosjimz87.wandertrack.ui.screens.map.MapScreen
 import com.carlosjimz87.wandertrack.ui.screens.profile.ProfileScreen
 import com.carlosjimz87.wandertrack.ui.screens.splash.SplashScreen
 import com.carlosjimz87.wandertrack.utils.Logger
+import com.carlosjimz87.wandertrack.utils.isLoginOrSignup
 import org.koin.androidx.compose.koinViewModel
 
 
@@ -37,25 +38,36 @@ fun AppNavigation(
 ) {
     val context = LocalContext.current
     val validSession by authViewModel.validSession.collectAsState()
-    val authUiState by authViewModel.authUiState.collectAsState()
+    val authUiState by authViewModel.uiState.collectAsState()
+    val authState by authViewModel.authState.collectAsState()
     var hasFinishedSplash by remember { mutableStateOf(false) }
 
     val controller = rememberMyNavController(initial = Screens.Splash)
     val currentScreen = controller.current
 
     LaunchedEffect(validSession, authUiState, hasFinishedSplash) {
-        val isSuccessLogin = authUiState is AuthUiState.Success && validSession == true
+        val isSuccessLogin = authUiState.isLoginSuccessful && validSession == true
         val isInitialLaunch = hasFinishedSplash && validSession != null
         val isInvalidSession = validSession == false && currentScreen.isProtected()
+
+        if (authUiState.isLoading) {
+            Logger.d("NavLog -> Navigation paused: still loading")
+            return@LaunchedEffect
+        }
+
+        if (authUiState.blockNavigation) {
+            Logger.d("NavLog -> Navigation blocked due to UI state")
+            return@LaunchedEffect
+        }
 
         when {
             isSuccessLogin && currentScreen.isPublic() -> {
                 Logger.d("NavLog -> Navigating to Map (auth success)")
                 controller.replace(Screens.Map)
-                authViewModel.clearAuthUiState()
+                authViewModel.clearUiState()
             }
 
-            isInitialLaunch -> {
+            isInitialLaunch && !currentScreen.isLoginOrSignup() -> {
                 val target = if (validSession == true) Screens.Map else Screens.Auth
                 Logger.d("NavLog -> Navigating to $target (post-splash)")
                 controller.replace(target)
@@ -99,11 +111,8 @@ fun AppNavigation(
 
             is Screens.Login -> LoginScreen(
                 onGoogleIdTokenReceived = { idToken ->
-                    authViewModel.loginWithGoogle(idToken) { success, _ ->
-                        if (!success) {
-                            Toast.makeText(context, "Authentication error", Toast.LENGTH_SHORT).show()
-                        }
-                    }
+                    Logger.d("NavLog -> Triggering loginWithGoogle")
+                    authViewModel.loginWithGoogle(idToken)
                 },
                 onBack = {
                     Logger.d("NavLog -> Back to Auth from Login")
@@ -123,10 +132,10 @@ fun AppNavigation(
             )
 
             is Screens.Map -> {
-                val userId = authViewModel.userId
-                if (userId != null) {
+                val user = authState
+                if (user != null) {
                     MapScreen(
-                        userId = userId,
+                        userId = user.uid,
                         onProfileClick = {
                             Logger.d("NavLog -> Navigating to Profile")
                             controller.navigate(Screens.Profile)
@@ -134,8 +143,10 @@ fun AppNavigation(
                     )
                 } else {
                     LaunchedEffect(Unit) {
-                        Toast.makeText(context, "User not authenticated", Toast.LENGTH_SHORT).show()
-                        Logger.d("NavLog -> Redirecting to Auth (userId null)")
+                        Logger.d("NavLog -> Redirecting to Auth (user is null)")
+                        Toast
+                            .makeText(context, "User not authenticated", Toast.LENGTH_SHORT)
+                            .show()
                         controller.replace(Screens.Auth)
                     }
                 }
@@ -143,8 +154,8 @@ fun AppNavigation(
 
             is Screens.Profile -> ProfileScreen(
                 onLogout = {
-                    authViewModel.logout()
                     Logger.d("NavLog -> Logging out and going to Auth")
+                    authViewModel.logout()
                     controller.setNewRoot(Screens.Auth)
                 },
                 onBack = {

@@ -36,7 +36,7 @@ import org.koin.androidx.compose.koinViewModel
 fun LoginScreen(
     authViewModel: AuthViewModel = koinViewModel(),
     onGoogleIdTokenReceived: (String) -> Unit,
-    onBack: () -> Unit
+    onBack: () -> Unit,
 ) {
     val context = LocalContext.current
     BackHandler(onBack = onBack)
@@ -47,43 +47,29 @@ fun LoginScreen(
 
     val snackbarHostState = remember { SnackbarHostState() }
     val coroutineScope = rememberCoroutineScope()
-    val uiState by authViewModel.authUiState.collectAsState()
 
-    // Optional dialog for long or critical messages
+    // 🔹 Collect Auth UI State
+    val uiState by authViewModel.uiState.collectAsState()
+
+    // 🔹 Dialog state
     var showDialog by remember { mutableStateOf(false) }
     var dialogMessage by remember { mutableStateOf("") }
-    var showResendButton by remember { mutableStateOf(false) }
 
-    LaunchedEffect(uiState) {
-        when (uiState) {
-            is AuthUiState.Success -> {
-                (uiState as AuthUiState.Success).message?.let { msg ->
-                    coroutineScope.launch {
-                        snackbarHostState.showSnackbar(msg)
-                    }
-                }
-                showResendButton = false
-                authViewModel.clearAuthUiState()
+    // 🔹 Message handling
+    LaunchedEffect(uiState.successMessage, uiState.errorMessage) {
+        uiState.successMessage?.let {
+            snackbarHostState.showSnackbar(it)
+            authViewModel.clearUiState()
+        }
+
+        uiState.errorMessage?.let { msg ->
+            if (msg.length > 80 || uiState.showResendButton) {
+                dialogMessage = msg
+                showDialog = true
+            } else {
+                snackbarHostState.showSnackbar(msg)
             }
-
-            is AuthUiState.Error -> {
-                val msg = (uiState as AuthUiState.Error).message
-                val shouldSuggestResend = msg.contains("verify", ignoreCase = true)
-                showResendButton = shouldSuggestResend
-
-                if (msg.length > 80 || shouldSuggestResend) {
-                    dialogMessage = msg
-                    showDialog = true
-                } else {
-                    coroutineScope.launch {
-                        snackbarHostState.showSnackbar(msg)
-                    }
-                }
-
-                authViewModel.clearAuthUiState()
-            }
-
-            else -> Unit
+            authViewModel.clearUiState()
         }
     }
 
@@ -102,9 +88,9 @@ fun LoginScreen(
             Logger.e("Google sign in failed: ${it.localizedMessage}")
         }
     }
-    Scaffold(
-        snackbarHost = { SnackbarHost(snackbarHostState) }
-    ) { innerPadding ->
+
+    Scaffold(snackbarHost = { SnackbarHost(snackbarHostState) }) { innerPadding ->
+
         LoginScreenContent(
             email = emailState.value,
             password = passwordState.value,
@@ -146,8 +132,8 @@ fun LoginScreen(
                     }
                 }
             },
-            showResendButton = showResendButton,
-            isLoading = uiState is AuthUiState.Loading,
+            showResendButton = uiState.showResendButton,
+            isLoading = uiState.isLoading,
             modifier = Modifier.padding(innerPadding)
         )
     }
