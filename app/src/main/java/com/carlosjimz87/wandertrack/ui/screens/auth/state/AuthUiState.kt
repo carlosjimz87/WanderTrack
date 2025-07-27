@@ -5,6 +5,7 @@ data class AuthUiState(
     val errorMessage: String? = null,
     val successMessage: String? = null,
     val isLoginSuccessful: Boolean = false,
+    val verificationEmailSent: Boolean = false,
     val showResendButton: Boolean = false,
     val isAccountDeleted: Boolean = false,
     val blockNavigation: Boolean = false

@@ -3,15 +3,16 @@ package com.carlosjimz87.wandertrack.domain.repo
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
 
+
 interface AuthRepository {
     val currentUser: FirebaseUser?
     fun isUserLoggedIn(): Boolean
 
-    fun loginWithEmail(email: String, password: String, onResult: (Boolean, String?) -> Unit)
-    fun loginWithGoogle(idToken: String, onResult: (Boolean, String?) -> Unit)
-    fun signup(email: String, password: String, onResult: (Boolean, String?) -> Unit)
+    suspend fun loginWithEmail(email: String, password: String): Result<Unit>
+    suspend fun loginWithGoogle(idToken: String): Result<Unit>
+    suspend fun signup(email: String, password: String): Result<String>
     fun logout()
-    fun resendVerificationEmail(onResult: (Boolean, String?) -> Unit)
-    fun sendPasswordResetEmail(email: String, onResult: (Boolean, String?) -> Unit)
+    suspend fun resendVerificationEmail(): Result<String>
+    suspend fun sendPasswordResetEmail(email: String): Result<Unit>
     fun addAuthStateListener(listener: FirebaseAuth.AuthStateListener)
 }

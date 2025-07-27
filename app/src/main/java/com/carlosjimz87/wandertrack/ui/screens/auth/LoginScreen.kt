@@ -72,6 +72,16 @@ fun LoginScreen(
             authViewModel.clearUiState()
         }
     }
+    LaunchedEffect(uiState.verificationEmailSent) {
+
+        val verificationEmailMsg = if (uiState.verificationEmailSent) uiState.successMessage
+            else uiState.errorMessage
+        verificationEmailMsg?.let {
+            coroutineScope.launch {
+                snackbarHostState.showSnackbar(it)
+            }
+        }
+    }
 
     val oneTapClient = remember { Identity.getSignInClient(context) }
     val googleLauncher = rememberLauncherForActivityResult(
@@ -124,13 +134,7 @@ fun LoginScreen(
                 // TODO: Implement forgot password
             },
             resendVerificationEmail = {
-                authViewModel.resendVerificationEmail { _, msg ->
-                    msg?.let {
-                        coroutineScope.launch {
-                            snackbarHostState.showSnackbar(it)
-                        }
-                    }
-                }
+                authViewModel.resendVerificationEmail()
             },
             showResendButton = uiState.showResendButton,
             isLoading = uiState.isLoading,
