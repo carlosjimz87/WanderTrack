@@ -1,15 +1,16 @@
 package com.carlosjimz87.wandertrack.ui.screens.auth
 
-import com.carlosjimz87.wandertrack.data.repo.fakes.FakeAuthRepositoryImpl
-import com.carlosjimz87.wandertrack.data.repo.fakes.FakeFirestoreRepositoryImpl
-import com.carlosjimz87.wandertrack.data.repo.fakes.FakeSessionManagerImpl
+import com.carlosjimz87.wandertrack.fakes.FakeAuthRepositoryImpl
+import com.carlosjimz87.wandertrack.fakes.FakeFirestoreRepositoryImpl
+import com.carlosjimz87.wandertrack.fakes.FakeSessionManagerImpl
 import com.carlosjimz87.wandertrack.domain.managers.SessionManager
 import com.carlosjimz87.wandertrack.domain.repo.FirestoreRepository
 import com.carlosjimz87.wandertrack.ui.screens.auth.state.AuthUiState
 import com.carlosjimz87.wandertrack.ui.screens.auth.viewmodel.AuthViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.drop
+import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -32,161 +33,199 @@ class AuthViewModelTest {
     private lateinit var authRepo: FakeAuthRepositoryImpl
     private lateinit var firestoreRepo: FirestoreRepository
     private lateinit var sessionManager: SessionManager
-    private lateinit var viewModel: AuthViewModel
-    private val testDispatcher = StandardTestDispatcher()
+    private lateinit var vm: AuthViewModel
+    private val dispatcher = StandardTestDispatcher()
 
-
-    @Before
-    fun setup() {
-        Dispatchers.setMain(testDispatcher)
+    @Before fun setup() {
+        Dispatchers.setMain(dispatcher)
         authRepo = FakeAuthRepositoryImpl()
         firestoreRepo = FakeFirestoreRepositoryImpl()
         sessionManager = FakeSessionManagerImpl(authRepo)
-
-        viewModel = AuthViewModel(
-            authRepo,
-            firestoreRepo,
-            sessionManager
-        )
+        vm = AuthViewModel(authRepo, firestoreRepo, sessionManager)
     }
 
-    @After
-    fun tearDown() {
-        Dispatchers.resetMain()
+    @After fun tearDown() { Dispatchers.resetMain() }
+
+    // --------- Helpers ----------
+    private fun AuthUiState.assertIdle(
+        loading: Boolean = false,
+        error: String? = null,
+        success: String? = null
+    ) {
+        assertEquals(loading, isLoading)
+        assertEquals(error, errorMessage)
+        assertEquals(success, successMessage)
     }
+
+    // --------- Tests ---------
 
     @Test
-    fun `signup success shows success message in authUiState`() = runTest {
-        viewModel.signup("test@test.com", "password")
+    fun `signup success sets verification flags and successMessage`() = runTest(dispatcher) {
+        authRepo.nextSignup = FakeAuthRepositoryImpl.Outcome.Success
 
-        val state = viewModel.authUiState.first()
-        assertTrue(state is AuthUiState.Success)
-        assertEquals(
-            "Registration successful. We've sent you a verification email. Please check your inbox — and your spam folder just in case!",
-            (state as AuthUiState.Success).message
-        )
-    }
-
-    @Test
-    fun `validSession is true after login`() = runTest {
-        authRepo.isEmailVerified = true
-        viewModel.loginWithEmail("test@test.com", "password")
+        vm.signup("test@test.com", "password")
         advanceUntilIdle()
 
-        assertTrue(viewModel.validSession.value == true)
+        val s = vm.authUiState.value
+        s.assertIdle(loading = false, success = "SIGNUP_OK_NEEDS_VERIFICATION")
+        assertTrue(s.verificationEmailSent)
+        assertFalse(s.isLoginSuccessful)
+        assertTrue(s.blockNavigation) // si bloqueas hasta verificar
     }
 
     @Test
-    fun `loginWithEmail success updates authUiState and authState`() = runTest {
+    fun `email login success updates flags and session`() = runTest(dispatcher) {
         authRepo.isEmailVerified = true
+        authRepo.nextEmailLogin = FakeAuthRepositoryImpl.Outcome.Success
 
-        viewModel.loginWithEmail("test@test.com", "password")
+        vm.loginWithEmail("test@test.com", "password")
         advanceUntilIdle()
 
-        val uiState = viewModel.authUiState.value
-        val user = viewModel.authState.value
-
-        assertTrue(uiState is AuthUiState.Success)
-        assertNotNull(user)
+        val s = vm.authUiState.value
+        assertFalse(s.isLoading)
+        assertTrue(s.isLoginSuccessful)
+        assertNull(s.errorMessage)
+        assertNotNull(vm.authState.value)
+        assertTrue(vm.validSession.value == true)
     }
 
     @Test
-    fun `loginWithEmail fails if user is not verified`() = runTest {
+    fun `email login blocked when email not verified`() = runTest(dispatcher) {
         authRepo.isEmailVerified = false
+        authRepo.nextEmailLogin = FakeAuthRepositoryImpl.Outcome.Success
 
-        viewModel.loginWithEmail("test@test.com", "password")
+        vm.loginWithEmail("test@test.com", "password")
         advanceUntilIdle()
 
-        val uiState = viewModel.authUiState.value
-        val user = viewModel.authState.value
-
-        assertTrue(uiState is AuthUiState.Error)
-        assertEquals("Please verify your email before continuing.", (uiState as AuthUiState.Error).message)
-        assertNull(user)
+        val s = vm.authUiState.value
+        assertFalse(s.isLoading)
+        assertFalse(s.isLoginSuccessful)
+        assertEquals("EMAIL_NOT_VERIFIED", s.errorMessage)   // tu mapper luego lo traduce
+        assertTrue(s.showResendButton)
+        assertTrue(s.blockNavigation)
+        assertNull(vm.authState.value)
     }
 
     @Test
-    fun `loginWithEmail fails if repo returns failure`() = runTest {
-        authRepo.shouldFail = true
+    fun `email login maps common errors (table driven)`() = runTest(dispatcher) {
+        val cases = listOf("WRONG_PASSWORD", "USER_NOT_FOUND", "TOO_MANY_REQUESTS")
+        for (code in cases) {
+            authRepo.reset()
+            authRepo.nextEmailLogin = FakeAuthRepositoryImpl.Outcome.Error(code)
 
-        viewModel.loginWithEmail("fail@test.com", "password")
-        advanceUntilIdle()
+            vm.loginWithEmail("fail@test.com", "x")
+            advanceUntilIdle()
 
-        val uiState = viewModel.authUiState.value
-        val user = viewModel.authState.value
-
-        assertTrue(uiState is AuthUiState.Error)
-        assertEquals("Login failed", (uiState as AuthUiState.Error).message)
-        assertNull(user)
+            val s = vm.authUiState.value
+            assertFalse(s.isLoading)
+            assertFalse(s.isLoginSuccessful)
+            assertEquals(code, s.errorMessage)
+            assertFalse(s.showResendButton)
+            assertNull(vm.authState.value)
+        }
     }
 
     @Test
-    fun `loginWithEmail emits Loading before Success`() = runTest {
+    fun `authUiState emits Loading then success on email login`() = runTest(dispatcher) {
         authRepo.isEmailVerified = true
+        authRepo.nextEmailLogin = FakeAuthRepositoryImpl.Outcome.Success
 
-        val collectedStates = mutableListOf<AuthUiState>()
+        val emissions = mutableListOf<AuthUiState>()
         val job = launch {
-            viewModel.authUiState.toList(collectedStates)
+            vm.authUiState
+                .drop(1)   // skip initial idle
+                .take(2)   // Loading, then Success
+                .toList(emissions)
         }
 
-        viewModel.loginWithEmail("test@test.com", "password")
+        // ✅ ensure collector is active
+        advanceUntilIdle()
+
+        vm.loginWithEmail("test@test.com", "password")
         advanceUntilIdle()
         job.cancel()
 
-        assertTrue(collectedStates.first() is AuthUiState.Loading)
-        assertTrue(collectedStates.last() is AuthUiState.Success)
+        assertEquals(2, emissions.size)
+        assertTrue(emissions[0].isLoading)
+        val last = emissions[1]
+        assertFalse(last.isLoading)
+        assertTrue(last.isLoginSuccessful)
+        assertNull(last.errorMessage)
     }
 
     @Test
-    fun `logout clears authState`() = runTest {
+    fun `logout clears authState and resets flags`() = runTest(dispatcher) {
         authRepo.isEmailVerified = true
-        viewModel.loginWithEmail("test@test.com", "password")
+        vm.loginWithEmail("test@test.com", "password")
         advanceUntilIdle()
 
-        assertNotNull(viewModel.authState.value)
+        assertNotNull(vm.authState.value)
+        vm.logout()
 
-        // Logout y verificar que authState se borra
-        viewModel.logout()
-        assertNull(viewModel.authState.value)
-        assertTrue(viewModel.authUiState.value is AuthUiState.Idle)
+        assertNull(vm.authState.value)
+        val s = vm.authUiState.value
+        assertFalse(s.isLoading)
+        assertFalse(s.isLoginSuccessful)
+        assertNull(s.errorMessage)
+        assertNull(s.successMessage)
+        assertFalse(s.verificationEmailSent)
+        assertFalse(s.blockNavigation)
     }
 
     @Test
-    fun `loginWithGoogle success updates authState`() = runTest {
-        authRepo.googleLoginSuccess = true
+    fun `google login success sets loginSuccessful`() = runTest(dispatcher) {
+        authRepo.nextGoogleLogin = FakeAuthRepositoryImpl.Outcome.Success
 
-        viewModel.loginWithGoogle("token") { success, _ ->
-            assertTrue(success)
-        }
-
+        vm.loginWithGoogle("token")
         advanceUntilIdle()
-        assertNotNull(viewModel.authState.value)
+
+        val s = vm.authUiState.value
+        assertTrue(s.isLoginSuccessful)
+        assertNull(s.errorMessage)
+        assertNotNull(vm.authState.value)
     }
 
     @Test
-    fun `loginWithGoogle failure does not update authState`() = runTest {
-        authRepo.googleLoginSuccess = false
+    fun `google login failure sets errorMessage`() = runTest(dispatcher) {
+        authRepo.nextGoogleLogin = FakeAuthRepositoryImpl.Outcome.Error("INVALID_IDP_RESPONSE")
 
-        viewModel.loginWithGoogle("token") { success, _ ->
-            assertFalse(success)
-        }
-
+        vm.loginWithGoogle("token")
         advanceUntilIdle()
-        assertNull(viewModel.authState.value)
+
+        val s = vm.authUiState.value
+        assertFalse(s.isLoginSuccessful)
+        assertEquals("INVALID_IDP_RESPONSE", s.errorMessage)
+        assertNull(vm.authState.value)
     }
 
     @Test
-    fun `resendVerificationEmail succeeds when user exists`() = runTest {
-        authRepo.loginWithEmail("test@test.com", "password") { _, _ -> }
+    fun `resendVerificationEmail updates state with error when no user`() = runTest(dispatcher) {
+        // No hay usuario logueado
+        vm.resendVerificationEmail()
+        advanceUntilIdle()
+
+        val s = vm.authUiState.value
+        assertFalse(s.verificationEmailSent)
+        // El fake repo falla con USER_NOT_FOUND si no hay user
+        assertEquals("USER_NOT_FOUND", s.errorMessage)
+        // Flags razonables según tu UI
+        assertFalse(s.isLoading)
+        assertFalse(s.isLoginSuccessful)
+    }
+
+    @Test
+    fun `resendVerificationEmail updates state with success when user exists`() = runTest(dispatcher) {
+        authRepo.seedLoggedUser(email = "a@b.com")
         authRepo.isEmailVerified = false
+        authRepo.nextResendVerification = FakeAuthRepositoryImpl.Outcome.Success
 
-        var result: Pair<Boolean, String?>? = null
+        vm.resendVerificationEmail()
+        advanceUntilIdle()
 
-        viewModel.resendVerificationEmail { success, msg ->
-            result = success to msg
-        }
-
-        assertEquals(true to "Verification email sent.", result)
+        val s = vm.authUiState.value
+        assertTrue(s.verificationEmailSent)
+        assertEquals("VERIFICATION_EMAIL_SENT", s.successMessage) // ✅ expect code
+        assertNull(s.errorMessage)
+        assertFalse(s.isLoading)
     }
-
 }

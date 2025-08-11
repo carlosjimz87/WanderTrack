@@ -1,21 +1,21 @@
 package com.carlosjimz87.wandertrack.ui.screens.profile.viewmodel
 
-import com.carlosjimz87.wandertrack.data.repo.fakes.FakeAuthRepositoryImpl
-import com.carlosjimz87.wandertrack.data.repo.fakes.FakeFirestoreRepositoryImpl
+import com.carlosjimz87.wandertrack.fakes.FakeAuthRepositoryImpl
+import com.carlosjimz87.wandertrack.fakes.FakeFirestoreRepositoryImpl
 import com.carlosjimz87.wandertrack.domain.models.profile.ProfileData
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.After
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
-import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertNull
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class ProfileViewModelTest {
@@ -27,20 +27,20 @@ class ProfileViewModelTest {
     private val testUserId = "testUserId"
 
     @Before
-    fun setup() = runBlocking {
+    fun setup() = runTest {
         Dispatchers.setMain(testDispatcher)
 
-        // Crear repos fake y configurar estado inicial
         authRepo = FakeAuthRepositoryImpl().apply {
-            // inyectamos un usuario simulado usando loginWithEmail (modifica _fakeUser)
-            loginWithEmail("test.user@example.com", "password") { _, _ -> }
+            isEmailVerified = true                 // must be true for success
+            nextEmailLogin =
+                FakeAuthRepositoryImpl.Outcome.Success       // your fake’s control knob
         }
+        // perform the actual "login" to populate _fakeUser and notify listeners
+        val res = authRepo.loginWithEmail("test.user@example.com", "password")
+        assertTrue(res.isSuccess)
 
         firestoreRepo = FakeFirestoreRepositoryImpl().apply {
-            setFakeProfile(
-                userId = testUserId,
-                profile = ProfileData(username = "Test User")
-            )
+            setFakeProfile(testUserId, ProfileData(username = "Test User"))
         }
 
         viewModel = ProfileViewModel(firestoreRepo, authRepo)
@@ -71,7 +71,7 @@ class ProfileViewModelTest {
         viewModel.loadProfile()
         advanceUntilIdle()
 
-        assertEquals("carlos.jimz_...", viewModel.profileState.username)
+        assertEquals("Carlos.jimz_...", viewModel.profileState.username)
     }
 
     @Test

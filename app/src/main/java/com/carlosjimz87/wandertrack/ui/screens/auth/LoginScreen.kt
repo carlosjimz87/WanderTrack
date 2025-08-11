@@ -24,7 +24,6 @@ import com.carlosjimz87.wandertrack.R
 import com.carlosjimz87.wandertrack.common.SetBottomBarColor
 import com.carlosjimz87.wandertrack.ui.composables.auth.LoginScreenContent
 import com.carlosjimz87.wandertrack.ui.composables.auth.MessageDialog
-import com.carlosjimz87.wandertrack.ui.screens.auth.state.AuthUiState
 import com.carlosjimz87.wandertrack.ui.screens.auth.viewmodel.AuthViewModel
 import com.carlosjimz87.wandertrack.utils.Logger
 import com.google.android.gms.auth.api.identity.BeginSignInRequest
@@ -49,7 +48,7 @@ fun LoginScreen(
     val coroutineScope = rememberCoroutineScope()
 
     // 🔹 Collect Auth UI State
-    val uiState by authViewModel.uiState.collectAsState()
+    val uiState by authViewModel.authUiState.collectAsState()
 
     // 🔹 Dialog state
     var showDialog by remember { mutableStateOf(false) }

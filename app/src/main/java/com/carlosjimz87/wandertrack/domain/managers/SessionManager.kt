@@ -5,4 +5,5 @@ import kotlinx.coroutines.flow.StateFlow
 interface SessionManager {
     val validSession: StateFlow<Boolean?>
     fun refreshSession()
+    fun endSession()
 }

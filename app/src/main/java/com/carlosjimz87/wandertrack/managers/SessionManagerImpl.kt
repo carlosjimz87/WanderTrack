@@ -15,7 +15,6 @@ class SessionManagerImpl(
 
     init {
         _validSession.value = authRepository.isUserLoggedIn()
-
         authRepository.addAuthStateListener {
             _validSession.value = authRepository.isUserLoggedIn()
         }
@@ -23,5 +22,9 @@ class SessionManagerImpl(
 
     override fun refreshSession() {
         _validSession.value = authRepository.isUserLoggedIn()
+    }
+
+    override fun endSession() {
+        _validSession.value = false
     }
 }

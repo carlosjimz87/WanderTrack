@@ -25,36 +25,35 @@ class ProfileViewModel(
             val currentUser = authRepository.currentUser
 
             if (currentUser?.uid.isNullOrBlank()) {
-                // Evita lanzar una excepción si el usuario no existe
-                profileState = ProfileData(
-                    username = "Guest",
-                    avatarUrl = null
-                )
+                profileState = ProfileData(username = "Guest", avatarUrl = null)
                 return@launch
             }
 
-            val rawUsername = currentUser.email
+            val uid = currentUser.uid
+            val email = currentUser.email
             val avatarUrl = currentUser.photoUrl?.toString()
-            val formattedUsername = rawUsername?.formatUsername() ?: "User${currentUser.uid.takeLast(4)}"
 
-            val profileStats = firestoreRepository.fetchUserProfile(currentUser.uid)
+            val profileStats = firestoreRepository.fetchUserProfile(uid)
 
-            profileStats?.let {
-                profileState = ProfileData(
-                    username = formattedUsername.capitalize(Locale.ROOT),
-                    avatarUrl = avatarUrl,
-                    countriesVisited = it.countriesVisited,
-                    citiesVisited = it.citiesVisited,
-                    continentsVisited = it.continentsVisited,
-                    worldPercent = it.worldPercent,
-                    achievements = it.achievements,
-                )
-            } ?: run {
-                profileState = ProfileData(
-                    username = formattedUsername.capitalize(Locale.ROOT),
-                    avatarUrl = avatarUrl
-                )
+            // Prefer Firestore.username when available, else email, else fallback
+            val baseName = when {
+                !profileStats?.username.isNullOrBlank() -> profileStats!!.username!!
+                !email.isNullOrBlank() -> email!!
+                else -> "User${uid.takeLast(4)}"
             }
+
+            // Apply your formatter consistently to the chosen source
+            val formatted = baseName.formatUsername().capitalize(Locale.ROOT)
+
+            profileState = ProfileData(
+                username = formatted,
+                avatarUrl = avatarUrl,
+                countriesVisited = profileStats?.countriesVisited ?: 0,
+                citiesVisited = profileStats?.citiesVisited ?: 0,
+                continentsVisited = profileStats?.continentsVisited ?: 0,
+                worldPercent = profileStats?.worldPercent ?: 0,
+                achievements = profileStats?.achievements.orEmpty(),
+            )
         }
     }
 }

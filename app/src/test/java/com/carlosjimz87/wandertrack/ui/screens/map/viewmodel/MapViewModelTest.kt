@@ -22,7 +22,10 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Before
-import org.junit.jupiter.api.Assertions.*
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertTrue
 import kotlin.test.Test
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -44,15 +47,27 @@ class MapViewModelTest {
             Country(
                 code = "US",
                 name = "United States",
+                continent = "North America",
                 visited = true,
                 cities = listOf(
-                    City(name = "New York", latitude = 40.7128, longitude = -74.0060, visited = true),
-                    City(name = "Los Angeles", latitude = 34.0522, longitude = -118.2437, visited = false)
+                    City(
+                        name = "New York",
+                        latitude = 40.7128,
+                        longitude = -74.0060,
+                        visited = true
+                    ),
+                    City(
+                        name = "Los Angeles",
+                        latitude = 34.0522,
+                        longitude = -118.2437,
+                        visited = false
+                    )
                 )
             ),
             Country(
                 code = "FR",
                 name = "France",
+                continent = "Europe",
                 visited = false,
                 cities = listOf(
                     City(name = "Paris", latitude = 48.8566, longitude = 2.3522, visited = false)

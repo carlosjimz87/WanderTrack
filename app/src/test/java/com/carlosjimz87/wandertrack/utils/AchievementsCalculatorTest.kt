@@ -1,8 +1,7 @@
 package com.carlosjimz87.wandertrack.utils
 
-import org.junit.jupiter.api.Assertions.*
-
 import org.junit.Test
+import org.junit.jupiter.api.Assertions.assertTrue
 
 class AchievementsCalculatorTest {
 

@@ -73,8 +73,13 @@ fun MapScreen(
 ) {
     // Injections
     val stylesManager: StylesManager = getKoin().get()
-    val viewModel: MapViewModel = koinViewModel(parameters = { parametersOf(userId) })
-    viewModel.setFrom(from)
+    val viewModel: MapViewModel = koinViewModel(
+        key = "map-$userId",
+        parameters = { parametersOf(userId) }
+    )
+    LaunchedEffect(viewModel, from) {
+        viewModel.setFrom(from)
+    }
 
     // Initializations
     val isDarkTheme = isSystemInDarkTheme()

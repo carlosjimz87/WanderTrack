@@ -27,7 +27,7 @@ fun ProfileScreen(
 ) {
     val context = LocalContext.current
     val user by authViewModel.authState.collectAsState()
-    val uiState by authViewModel.uiState.collectAsState()
+    val uiState by authViewModel.authUiState.collectAsState()
     val profile = profileViewModel.profileState
     profileViewModel.loadProfile()
     var showDeleteDialog by remember { mutableStateOf(false) }

@@ -21,7 +21,6 @@ import com.carlosjimz87.wandertrack.domain.models.Screens
 import com.carlosjimz87.wandertrack.ui.screens.auth.AuthScreen
 import com.carlosjimz87.wandertrack.ui.screens.auth.LoginScreen
 import com.carlosjimz87.wandertrack.ui.screens.auth.SignUpScreen
-import com.carlosjimz87.wandertrack.ui.screens.auth.state.AuthUiState
 import com.carlosjimz87.wandertrack.ui.screens.auth.viewmodel.AuthViewModel
 import com.carlosjimz87.wandertrack.ui.screens.map.MapScreen
 import com.carlosjimz87.wandertrack.ui.screens.profile.ProfileScreen
@@ -38,7 +37,7 @@ fun AppNavigation(
 ) {
     val context = LocalContext.current
     val validSession by authViewModel.validSession.collectAsState()
-    val authUiState by authViewModel.uiState.collectAsState()
+    val authUiState by authViewModel.authUiState.collectAsState()
     val authState by authViewModel.authState.collectAsState()
     var hasFinishedSplash by remember { mutableStateOf(false) }
 

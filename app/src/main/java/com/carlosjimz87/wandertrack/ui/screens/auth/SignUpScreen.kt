@@ -24,7 +24,7 @@ fun SignUpScreen(
     onBack: () -> Unit
 ) {
     val context = LocalContext.current
-    val uiState by authViewModel.uiState.collectAsState()
+    val uiState by authViewModel.authUiState.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
     val coroutineScope = rememberCoroutineScope()
 
