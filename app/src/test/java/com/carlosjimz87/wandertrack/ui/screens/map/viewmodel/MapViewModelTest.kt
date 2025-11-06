@@ -3,8 +3,11 @@ package com.carlosjimz87.wandertrack.ui.screens.map.viewmodel
 import com.carlosjimz87.wandertrack.domain.models.map.City
 import com.carlosjimz87.wandertrack.domain.models.map.Country
 import com.carlosjimz87.wandertrack.domain.models.map.CountryGeometry
-import com.carlosjimz87.wandertrack.domain.repo.FirestoreRepository
 import com.carlosjimz87.wandertrack.domain.repo.MapRepository
+import com.carlosjimz87.wandertrack.domain.usecase.GetCountriesUseCase
+import com.carlosjimz87.wandertrack.domain.usecase.GetCountryGeometriesUseCase
+import com.carlosjimz87.wandertrack.domain.usecase.UpdateCityVisitedUseCase
+import com.carlosjimz87.wandertrack.domain.usecase.UpdateCountryVisitedUseCase
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.LatLngBounds
@@ -32,18 +35,24 @@ import kotlin.test.Test
 class MapViewModelTest {
 
     private lateinit var viewModel: MapViewModel
+    private lateinit var getCountriesUseCase: GetCountriesUseCase
+    private lateinit var getCountryGeometriesUseCase: GetCountryGeometriesUseCase
+    private lateinit var updateCountryVisitedUseCase: UpdateCountryVisitedUseCase
+    private lateinit var updateCityVisitedUseCase: UpdateCityVisitedUseCase
     private lateinit var mapRepository: MapRepository
-    private lateinit var firestoreRepository: FirestoreRepository
 
     private val testDispatcher = StandardTestDispatcher()
 
     @Before
     fun setup() {
         Dispatchers.setMain(testDispatcher)
+        getCountriesUseCase = mockk()
+        getCountryGeometriesUseCase = mockk()
+        updateCountryVisitedUseCase = mockk()
+        updateCityVisitedUseCase = mockk()
         mapRepository = mockk(relaxed = true)
-        firestoreRepository = mockk(relaxed = true)
 
-        coEvery { firestoreRepository.fetchAllCountries(userId = any()) } returns listOf(
+        coEvery { getCountriesUseCase.execute(any()) } returns listOf(
             Country(
                 code = "US",
                 name = "United States",
@@ -75,15 +84,18 @@ class MapViewModelTest {
             )
         )
 
-        coEvery { mapRepository.getCountryGeometries() } returns mapOf(
+        coEvery { getCountryGeometriesUseCase.execute() } returns mapOf(
             "US" to CountryGeometry(polygons = listOf(listOf(LatLng(0.0, 0.0)))),
             "FR" to CountryGeometry(polygons = listOf(listOf(LatLng(1.0, 1.0))))
         )
 
         viewModel = MapViewModel(
             userId = "testUser",
-            mapRepo = mapRepository,
-            firestoreRepo = firestoreRepository
+            getCountriesUseCase = getCountriesUseCase,
+            getCountryGeometriesUseCase = getCountryGeometriesUseCase,
+            updateCountryVisitedUseCase = updateCountryVisitedUseCase,
+            updateCityVisitedUseCase = updateCityVisitedUseCase,
+            mapRepo = mapRepository
         )
     }
 
@@ -101,7 +113,7 @@ class MapViewModelTest {
 
     @Test
     fun `toggleCountryVisited adds and removes correctly`() = runTest {
-        coEvery { firestoreRepository.updateCountryVisited(any(), any(), any()) } just Runs
+        coEvery { updateCountryVisitedUseCase.execute(any(), any(), any()) } just Runs
         viewModel.toggleCountryVisited("FR")
         runCurrent()
         assertTrue(viewModel.visitedCountryCodes.value.contains("FR"))
@@ -113,8 +125,8 @@ class MapViewModelTest {
 
     @Test
     fun `toggleCityVisited updates visitedCities and country state`() = runTest {
-        coEvery { firestoreRepository.updateCityVisited(any(), any(), any(), any()) } just Runs
-        coEvery { firestoreRepository.updateCountryVisited(any(), any(), any()) } just Runs
+        coEvery { updateCityVisitedUseCase.execute(any(), any(), any(), any()) } just Runs
+        coEvery { updateCountryVisitedUseCase.execute(any(), any(), any()) } just Runs
 
         viewModel.toggleCityVisited("FR", "Paris")
         runCurrent()
@@ -150,6 +162,11 @@ class MapViewModelTest {
 
     @Test
     fun `getVisitedCountriesCenterAndBounds returns valid data`() = runTest {
+        every { mapRepository.getCountryGeometries() } returns mapOf(
+            "US" to CountryGeometry(polygons = listOf(listOf(LatLng(0.0, 0.0)))),
+            "FR" to CountryGeometry(polygons = listOf(listOf(LatLng(1.0, 1.0))))
+        )
+
         val result = viewModel.getVisitedCountriesCenterAndBounds()
         assertNotNull(result)
         assertEquals(0.0, result!!.first.latitude, 0.001)

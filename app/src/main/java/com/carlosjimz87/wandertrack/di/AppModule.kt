@@ -38,7 +38,14 @@ val appModule = module {
     viewModel { SplashViewModel(get()) }
     viewModel { AuthViewModel(get(), get(), get()) }
     viewModel { (userId: String) ->
-        MapViewModel(userId, get<MapRepository>(), get<FirestoreRepository>())
+        MapViewModel(
+            userId = userId,
+            getCountriesUseCase = get(),
+            getCountryGeometriesUseCase = get(),
+            updateCountryVisitedUseCase = get(),
+            updateCityVisitedUseCase = get(),
+            mapRepo = get(),
+        )
     }
     viewModel { ProfileViewModel(get(), get()) }
 }

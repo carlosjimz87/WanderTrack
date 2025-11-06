@@ -5,8 +5,11 @@ import androidx.lifecycle.viewModelScope
 import com.carlosjimz87.wandertrack.domain.models.Screens
 import com.carlosjimz87.wandertrack.domain.models.map.Country
 import com.carlosjimz87.wandertrack.domain.models.map.CountryGeometry
-import com.carlosjimz87.wandertrack.domain.repo.FirestoreRepository
 import com.carlosjimz87.wandertrack.domain.repo.MapRepository
+import com.carlosjimz87.wandertrack.domain.usecase.GetCountriesUseCase
+import com.carlosjimz87.wandertrack.domain.usecase.GetCountryGeometriesUseCase
+import com.carlosjimz87.wandertrack.domain.usecase.UpdateCityVisitedUseCase
+import com.carlosjimz87.wandertrack.domain.usecase.UpdateCountryVisitedUseCase
 import com.carlosjimz87.wandertrack.ui.screens.map.state.MapUiState
 import com.carlosjimz87.wandertrack.utils.getCountryByCode
 import com.google.android.gms.maps.model.CameraPosition
@@ -24,8 +27,11 @@ import kotlinx.coroutines.withContext
 
 class MapViewModel(
     private val userId: String,
-    private val mapRepo: MapRepository,
-    private val firestoreRepo: FirestoreRepository,
+    private val getCountriesUseCase: GetCountriesUseCase,
+    private val getCountryGeometriesUseCase: GetCountryGeometriesUseCase,
+    private val updateCountryVisitedUseCase: UpdateCountryVisitedUseCase,
+    private val updateCityVisitedUseCase: UpdateCityVisitedUseCase,
+    private val mapRepo: MapRepository, // Still needed for some map-specific operations
 ) : ViewModel() {
 
     private val _countries = MutableStateFlow<List<Country>>(emptyList())
@@ -55,7 +61,7 @@ class MapViewModel(
             countryBorders = countryBorders,
             lastCameraPosition = lastCameraPosition
         )
-    }.stateIn(viewModelScope, SharingStarted.Eagerly, MapUiState())
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), MapUiState())
 
     init {
         loadData()
@@ -66,17 +72,14 @@ class MapViewModel(
 
         viewModelScope.launch {
             _isLoading.value = true
-            firestoreRepo.ensureUserDocument(userId)
-
-            val allCountries = firestoreRepo.fetchAllCountries(userId)
-
+            val allCountries = getCountriesUseCase.execute(userId)
             _countries.value = allCountries
             _visitedCountryCodes.value = allCountries.filter { it.visited }.mapTo(mutableSetOf()) { it.code }
             _visitedCities.value = allCountries.associate { country ->
                 country.code to country.cities.filter { it.visited }.mapTo(mutableSetOf()) { it.name }
             }
 
-            _countryBorders.value = mapRepo.getCountryGeometries()
+            _countryBorders.value = getCountryGeometriesUseCase.execute()
             _isLoading.value = false
         }
     }
@@ -92,7 +95,7 @@ class MapViewModel(
         }
 
         viewModelScope.launch {
-            firestoreRepo.updateCountryVisited(userId, code, nowVisited)
+            updateCountryVisitedUseCase.execute(userId, code, nowVisited)
         }
     }
 
@@ -118,7 +121,7 @@ class MapViewModel(
         updateCityVisitedStates(countryCode, cityName, nowVisited)
 
         viewModelScope.launch {
-            firestoreRepo.updateCityVisited(userId, countryCode, cityName, nowVisited)
+            updateCityVisitedUseCase.execute(userId, countryCode, cityName, nowVisited)
 
             val remainingCities = _visitedCities.value[countryCode]?.size ?: 0
             val isCountryVisited = _visitedCountryCodes.value.contains(countryCode)
@@ -177,14 +180,14 @@ class MapViewModel(
         return selectedCountry.value?.code?.equals(code, ignoreCase = true) == true
     }
 
-    fun getVisitedCountriesCenterAndBounds(): Pair<LatLng, LatLngBounds>? {
+    suspend fun getVisitedCountriesCenterAndBounds(): Pair<LatLng, LatLngBounds>? = withContext(Dispatchers.IO) {
         val codes = _visitedCountryCodes.value
-        if (codes.isEmpty()) return null
+        if (codes.isEmpty()) return@withContext null
 
         val allPoints = codes.flatMap {
             mapRepo.getCountryGeometries()[it]?.polygons?.flatten().orEmpty()
         }
-        if (allPoints.isEmpty()) return null
+        if (allPoints.isEmpty()) return@withContext null
 
         val bounds = LatLngBounds.builder().apply {
             allPoints.forEach { include(it) }
@@ -194,7 +197,7 @@ class MapViewModel(
             allPoints.map { it.latitude }.average(),
             allPoints.map { it.longitude }.average()
         )
-        return center to bounds
+        center to bounds
     }
 
     fun setFrom(from: Screens) {
