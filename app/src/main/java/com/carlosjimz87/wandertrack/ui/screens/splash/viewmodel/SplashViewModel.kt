@@ -1,61 +1,76 @@
 package com.carlosjimz87.wandertrack.ui.screens.splash.viewmodel
 
-import android.content.Context
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.carlosjimz87.wandertrack.R
 import com.carlosjimz87.wandertrack.domain.models.map.Country
+import com.carlosjimz87.wandertrack.domain.usecase.PreloadCountriesUseCase
 import com.carlosjimz87.wandertrack.managers.LocalDataManager
+import com.carlosjimz87.wandertrack.ui.screens.splash.state.SplashUiState
 import com.carlosjimz87.wandertrack.utils.Logger
-import com.google.gson.Gson
-import com.google.gson.reflect.TypeToken
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import kotlin.math.max
 
 class SplashViewModel(
+    private val preloadCountriesUseCase: PreloadCountriesUseCase,
     private val localDataManager: LocalDataManager
 ) : ViewModel() {
 
-    var splashStartTime: Long = 0L
-    var showLogoAndText by mutableStateOf(false)
-    var isPlaying by mutableStateOf(true)
+    private val _uiState = MutableStateFlow(SplashUiState())
+    val uiState = _uiState.asStateFlow()
 
-    /**
-     * Loads all countries and cities from the raw JSON and notifies via callback.
-     */
-    fun loadData(context: Context, onDataLoaded: (List<Country>) -> Unit) {
+    fun start(minSplashTimeMs: Long = 1000L) {
+        // Evita relanzar si ya está en curso o listo
+        if (!_uiState.value.isLoading) return
+
         viewModelScope.launch {
-            val countries = preloadCountriesWithCities(context)
+            val t0 = System.nanoTime()
 
-            if (countries.isNotEmpty()) {
-                Logger.d("SplashVM → ✅ Preloaded ${countries.size} countries")
-            } else {
-                Logger.e("SplashVM → ❌ Failed to load countries")
+            // Arranque: reproducimos lottie
+            _uiState.update {
+                it.copy(
+                    isLoading = true,
+                    isPlaying = true,
+                    showLogoAndText = false,
+                    errorMessage = null
+                )
             }
 
-            onDataLoaded(countries)
-        }
-    }
+            // IO pesado: leer y parsear JSON
+            val countries: List<Country> = try {
+                preloadCountriesUseCase().also {
+                    Logger.d("SplashVM → ✅ Preloaded ${it.size} countries")
+                }
+            } catch (e: Exception) {
+                Logger.e("SplashVM → ❌ Error: ${e.message}")
+                emptyList()
+            }
 
-    /**
-     * Parses the JSON file from raw resources and stores it in LocalDataManager.
-     */
-    private fun preloadCountriesWithCities(context: Context): List<Country> {
-        return runCatching {
-            context.resources.openRawResource(R.raw.country_codes)
-                .bufferedReader()
-                .use { it.readText() }
-        }.mapCatching { json ->
-            val type = object : TypeToken<List<Country>>() {}.type
-            Gson().fromJson<List<Country>>(json, type)
-        }.onSuccess { countries ->
-            localDataManager.preloadedCountries = countries
-        }.onFailure { error ->
-            Logger.e("SplashVM → ❌ Error loading countries: ${error.message}")
-        }.getOrElse {
-            emptyList()
+            // Persistimos en un hilo de fondo
+            withContext(Dispatchers.Default) {
+                localDataManager.preloadedCountries = countries
+            }
+
+            // Espera el mínimo de splash (sin bloquear animaciones)
+            val elapsedMs = (System.nanoTime() - t0) / 1_000_000
+            val remaining = max(0L, minSplashTimeMs - elapsedMs)
+            if (remaining > 0) kotlinx.coroutines.delay(remaining)
+
+            // Fade-in de logo/texto
+            _uiState.update {
+                it.copy(
+                    isLoading = false,
+                    showLogoAndText = true,
+                    isPlaying = false,
+                    preloadedCount = countries.size,
+                    readyToNavigate = countries.isNotEmpty(),
+                    errorMessage = if (countries.isEmpty()) "No se pudieron cargar los países" else null
+                )
+            }
         }
     }
 }

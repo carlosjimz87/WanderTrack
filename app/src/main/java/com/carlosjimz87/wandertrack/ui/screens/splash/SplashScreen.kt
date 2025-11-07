@@ -17,6 +17,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -36,7 +37,6 @@ import com.carlosjimz87.wandertrack.common.SetBottomBarColor
 import com.carlosjimz87.wandertrack.ui.screens.splash.viewmodel.SplashViewModel
 import com.carlosjimz87.wandertrack.ui.theme.AccentPink
 import com.carlosjimz87.wandertrack.ui.theme.AccentPinkDark
-import kotlinx.coroutines.delay
 import org.koin.androidx.compose.koinViewModel
 
 @Composable
@@ -44,55 +44,45 @@ fun SplashScreen(
     onSplashFinished: () -> Unit,
     minSplashTimeMs: Long = 1000L,
 ) {
-    val splashViewModel: SplashViewModel = koinViewModel()
+    val viewModel: SplashViewModel = koinViewModel()
+    val uiState by viewModel.uiState.collectAsState()
 
     val animationOffset = (-50).dp
     val logoOffset = animationOffset - 90.dp
     val context = LocalContext.current
     val isDarkMode = isSystemInDarkTheme()
-
     context.SetBottomBarColor(AccentPinkDark)
 
-    // Lottie composition y animación
+    // Lottie
     val composition by rememberLottieComposition(LottieCompositionSpec.RawRes(R.raw.splash_anim))
     val progress by animateLottieCompositionAsState(
         composition,
         iterations = LottieConstants.IterateForever,
-        isPlaying = splashViewModel.isPlaying,
+        isPlaying = uiState.isPlaying,
         speed = 1.0f,
         restartOnPlay = false
     )
 
-    // Escala para animación del planeta
     val scale = remember { Animatable(0f) }
-
-    // Opacidad animada para logo y texto
     val alpha = animateFloatAsState(
-        targetValue = if (splashViewModel.showLogoAndText) 1f else 0f,
-        animationSpec = tween(durationMillis = 800, easing = FastOutSlowInEasing)
+        targetValue = if (uiState.showLogoAndText) 1f else 0f,
+        animationSpec = tween(durationMillis = 800, easing = FastOutSlowInEasing),
+        label = "logoAlpha"
     )
 
-    // Control de animación y carga
+    // Lanzar carga + animación
     LaunchedEffect(Unit) {
-        splashViewModel.splashStartTime = System.currentTimeMillis()
-
+        // anim scale
         scale.animateTo(
             targetValue = 1.5f,
             animationSpec = tween(durationMillis = 800, easing = FastOutSlowInEasing)
         )
+        viewModel.start(minSplashTimeMs)
+    }
 
-        delay(minSplashTimeMs) // Espera a que Lottie termine
-
-        splashViewModel.showLogoAndText = true
-
-        splashViewModel.isPlaying = false // Detiene animación Lottie
-
-        splashViewModel.loadData(context) { countries ->
-            if (countries.isNotEmpty()) {
-                onSplashFinished()
-            }
-        }
-
+    // Navegar cuando listo
+    LaunchedEffect(uiState.readyToNavigate) {
+        if (uiState.readyToNavigate) onSplashFinished()
     }
 
     Box(
@@ -101,7 +91,6 @@ fun SplashScreen(
             .background(if (isDarkMode) AccentPink else AccentPinkDark),
         contentAlignment = Alignment.Center
     ) {
-
         LottieAnimation(
             composition,
             progress,
@@ -114,7 +103,7 @@ fun SplashScreen(
                 }
         )
 
-        if (splashViewModel.showLogoAndText) {
+        if (uiState.showLogoAndText) {
             Image(
                 painter = painterResource(id = R.drawable.logo),
                 contentDescription = context.getString(R.string.app_name),
