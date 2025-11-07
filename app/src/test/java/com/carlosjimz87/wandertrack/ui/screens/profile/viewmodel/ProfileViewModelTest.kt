@@ -2,6 +2,7 @@ package com.carlosjimz87.wandertrack.ui.screens.profile.viewmodel
 
 import com.carlosjimz87.wandertrack.fakes.FakeAuthRepositoryImpl
 import com.carlosjimz87.wandertrack.fakes.FakeFirestoreRepositoryImpl
+import com.carlosjimz87.wandertrack.fakes.FakeGetProfileDataUseCase
 import com.carlosjimz87.wandertrack.domain.models.profile.ProfileData
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -13,7 +14,6 @@ import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
-import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 
@@ -22,28 +22,17 @@ class ProfileViewModelTest {
 
     private lateinit var authRepo: FakeAuthRepositoryImpl
     private lateinit var firestoreRepo: FakeFirestoreRepositoryImpl
+    private lateinit var getProfileDataUseCase: FakeGetProfileDataUseCase
     private lateinit var viewModel: ProfileViewModel
     private val testDispatcher = StandardTestDispatcher()
-    private val testUserId = "testUserId"
 
     @Before
-    fun setup() = runTest {
+    fun setup() {
         Dispatchers.setMain(testDispatcher)
-
-        authRepo = FakeAuthRepositoryImpl().apply {
-            isEmailVerified = true                 // must be true for success
-            nextEmailLogin =
-                FakeAuthRepositoryImpl.Outcome.Success       // your fake’s control knob
-        }
-        // perform the actual "login" to populate _fakeUser and notify listeners
-        val res = authRepo.loginWithEmail("test.user@example.com", "password")
-        assertTrue(res.isSuccess)
-
-        firestoreRepo = FakeFirestoreRepositoryImpl().apply {
-            setFakeProfile(testUserId, ProfileData(username = "Test User"))
-        }
-
-        viewModel = ProfileViewModel(firestoreRepo, authRepo)
+        authRepo = FakeAuthRepositoryImpl()
+        firestoreRepo = FakeFirestoreRepositoryImpl()
+        getProfileDataUseCase = FakeGetProfileDataUseCase(firestoreRepo, authRepo)
+        viewModel = ProfileViewModel(getProfileDataUseCase)
     }
 
     @After
@@ -53,6 +42,14 @@ class ProfileViewModelTest {
 
     @Test
     fun `loadProfile loads user data and avatar`() = runTest {
+        authRepo.seedLoggedUser()
+        firestoreRepo.setFakeProfile(
+            "uid", ProfileData(
+                username = "Test User",
+                avatarUrl = "https://fake.com/avatar.png"
+            )
+        )
+
         viewModel.loadProfile()
         advanceUntilIdle()
 
@@ -62,11 +59,11 @@ class ProfileViewModelTest {
 
     @Test
     fun `loadProfile formats username from Firestore`() = runTest {
+        authRepo.seedLoggedUser()
         val rawUsername = "carlos.jimz_dev@domain.com"
-
         firestoreRepo.setFakeProfile(
-            userId = testUserId,
-            profile = ProfileData(username = rawUsername)
+            "uid",
+            ProfileData(username = rawUsername)
         )
         viewModel.loadProfile()
         advanceUntilIdle()
@@ -76,12 +73,11 @@ class ProfileViewModelTest {
 
     @Test
     fun `loadProfile does nothing if user is null`() = runTest {
-        authRepo.logout() // esto borra el usuario
-        viewModel = ProfileViewModel(firestoreRepo, authRepo)
-
+        authRepo.logout()
+        viewModel.loadProfile()
         advanceUntilIdle()
 
-        assertEquals(ProfileData(), viewModel.profileState)
+        assertEquals("Guest", viewModel.profileState.username)
         assertNull(viewModel.profileState.avatarUrl)
     }
 }

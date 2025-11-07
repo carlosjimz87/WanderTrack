@@ -47,5 +47,5 @@ val appModule = module {
             mapRepo = get(),
         )
     }
-    viewModel { ProfileViewModel(get(), get()) }
+    viewModel { ProfileViewModel(get()) }
 }
