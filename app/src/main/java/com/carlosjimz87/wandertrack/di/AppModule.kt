@@ -36,7 +36,7 @@ val appModule = module {
 
     // Viewmodels
     viewModel { SplashViewModel(get()) }
-    viewModel { AuthViewModel(get(), get(), get()) }
+    viewModel { AuthViewModel(get(), get(), get(), get(), get(), get(), get(), get(), get()) }
     viewModel { (userId: String) ->
         MapViewModel(
             userId = userId,

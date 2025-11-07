@@ -10,7 +10,6 @@ import com.carlosjimz87.wandertrack.domain.usecase.GetCountriesUseCase
 import com.carlosjimz87.wandertrack.domain.usecase.GetCountryGeometriesUseCase
 import com.carlosjimz87.wandertrack.domain.usecase.UpdateCityVisitedUseCase
 import com.carlosjimz87.wandertrack.domain.usecase.UpdateCountryVisitedUseCase
-import com.carlosjimz87.wandertrack.ui.screens.map.state.MapUiState
 import com.carlosjimz87.wandertrack.utils.getCountryByCode
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
@@ -19,8 +18,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -51,17 +48,6 @@ class MapViewModel(
     val lastCameraPosition = _lastCameraPosition.asStateFlow()
     val isLoading = _isLoading.asStateFlow()
     val cameFrom = _cameFrom.asStateFlow()
-
-    private val uiState = combine(
-        _selectedCountry, _isLoading, _countryBorders, _lastCameraPosition
-    ) { selectedCountry, isLoading, countryBorders, lastCameraPosition ->
-        MapUiState(
-            selectedCountry = selectedCountry,
-            isLoading = isLoading,
-            countryBorders = countryBorders,
-            lastCameraPosition = lastCameraPosition
-        )
-    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), MapUiState())
 
     init {
         loadData()
