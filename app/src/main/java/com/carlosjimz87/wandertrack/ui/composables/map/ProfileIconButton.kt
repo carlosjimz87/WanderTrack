@@ -20,7 +20,11 @@ fun ProfileIconButton(onClick: () -> Unit, modifier: Modifier = Modifier) {
         modifier = modifier
             .size(40.dp)
             .background(MaterialTheme.colorScheme.surface, CircleShape)
-            .border(1.dp, MaterialTheme.colorScheme.onSurface.copy(alpha = 0.2f), CircleShape)
+            .border(
+                width = 1.dp,
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.2f),
+                shape = CircleShape
+            )
     ) {
         Icon(
             imageVector = Icons.Default.Person,

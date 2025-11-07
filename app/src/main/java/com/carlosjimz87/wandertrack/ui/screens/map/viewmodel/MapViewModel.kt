@@ -16,158 +16,212 @@ import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.LatLngBounds
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
+import com.carlosjimz87.wandertrack.ui.screens.map.state.MapUiState
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.mapLatest
+
+@OptIn(ExperimentalCoroutinesApi::class)
 class MapViewModel(
     private val userId: String,
     private val getCountriesUseCase: GetCountriesUseCase,
     private val getCountryGeometriesUseCase: GetCountryGeometriesUseCase,
     private val updateCountryVisitedUseCase: UpdateCountryVisitedUseCase,
     private val updateCityVisitedUseCase: UpdateCityVisitedUseCase,
-    private val mapRepo: MapRepository, // Still needed for some map-specific operations
+    private val mapRepo: MapRepository,
 ) : ViewModel() {
 
-    private val _countries = MutableStateFlow<List<Country>>(emptyList())
-    private val _visitedCountryCodes = MutableStateFlow<Set<String>>(emptySet())
-    private val _visitedCities = MutableStateFlow<Map<String, Set<String>>>(emptyMap())
-    private val _selectedCountry = MutableStateFlow<Country?>(null)
-    private val _countryBorders = MutableStateFlow<Map<String, CountryGeometry>>(emptyMap())
-    private val _lastCameraPosition = MutableStateFlow<CameraPosition?>(null)
-    private val _isLoading = MutableStateFlow(true)
-    private val _cameFrom = MutableStateFlow<Screens>(Screens.Profile)
-
-    // UI state composition
-    val countries = _countries.asStateFlow()
-    val visitedCountryCodes = _visitedCountryCodes.asStateFlow()
-    val selectedCountry = _selectedCountry.asStateFlow()
-    val countryBorders = _countryBorders.asStateFlow()
-    val lastCameraPosition = _lastCameraPosition.asStateFlow()
-    val isLoading = _isLoading.asStateFlow()
-    val cameFrom = _cameFrom.asStateFlow()
+    private val _uiState = MutableStateFlow(MapUiState())
+    val uiState = _uiState.asStateFlow()
 
     init {
         loadData()
+        observeVisitedUnion()
     }
 
     private fun loadData() {
         if (userId.isBlank()) return
 
-        viewModelScope.launch {
-            _isLoading.value = true
-            val allCountries = getCountriesUseCase.execute(userId)
-            _countries.value = allCountries
-            _visitedCountryCodes.value = allCountries.filter { it.visited }.mapTo(mutableSetOf()) { it.code }
-            _visitedCities.value = allCountries.associate { country ->
-                country.code to country.cities.filter { it.visited }.mapTo(mutableSetOf()) { it.name }
-            }
+        viewModelScope.launch(Dispatchers.IO) {
+            _uiState.update { it.copy(isLoading = true, errorMessage = null) }
+            try {
+                val allCountries = getCountriesUseCase.execute(userId)
+                val visitedCountryCodes = allCountries
+                    .filter { it.visited }
+                    .mapTo(mutableSetOf()) { it.code }
+                val visitedCities = allCountries.associate { country ->
+                    country.code to country.cities
+                        .filter { it.visited }
+                        .mapTo(mutableSetOf()) { it.name }
+                }
+                val countryBorders = getCountryGeometriesUseCase.execute()
 
-            _countryBorders.value = getCountryGeometriesUseCase.execute()
-            _isLoading.value = false
+                _uiState.update {
+                    it.copy(
+                        isLoading = false,
+                        countries = allCountries,
+                        visitedCountryCodes = visitedCountryCodes,
+                        visitedCities = visitedCities,
+                        countryBorders = countryBorders
+                    )
+                }
+            } catch (e: Exception) {
+                _uiState.update { it.copy(isLoading = false, errorMessage = e.message) }
+            }
         }
+    }
+
+    private fun observeVisitedUnion() = viewModelScope.launch {
+        uiState
+            .map { it.visitedCountryCodes to it.countryBorders }
+            .distinctUntilChanged()
+            .mapLatest { (codes, borders) ->
+                withContext(Dispatchers.Default) {
+                    if (codes.isEmpty()) return@withContext null
+                    val allPoints = codes.flatMap { borders[it]?.polygons?.flatten().orEmpty() }
+                    if (allPoints.isEmpty()) return@withContext null
+
+                    val bounds = LatLngBounds.builder().apply {
+                        allPoints.forEach { include(it) }
+                    }.build()
+                    val center = LatLng(
+                        allPoints.map { it.latitude }.average(),
+                        allPoints.map { it.longitude }.average()
+                    )
+                    center to bounds
+                }
+            }
+            .collect { result ->
+                _uiState.update {
+                    it.copy(
+                        visitedUnionCenter = result?.first,
+                        visitedUnionBounds = result?.second
+                    )
+                }
+            }
     }
 
     fun toggleCountryVisited(code: String) {
-        val nowVisited = !_visitedCountryCodes.value.contains(code)
+        val nowVisited = !_uiState.value.visitedCountryCodes.contains(code)
 
-        _visitedCountryCodes.update { if (nowVisited) it + code else it - code }
-        updateSelectedCountry(code, nowVisited)
-
-        if (!nowVisited) {
-            _visitedCities.update { it - code }
+        // Optimistic update (single atomic update)
+        _uiState.update {
+            it.copy(
+                visitedCountryCodes = if (nowVisited)
+                    it.visitedCountryCodes + code
+                else
+                    it.visitedCountryCodes - code,
+                selectedCountry = it.selectedCountry?.let { sc ->
+                    if (sc.code == code) sc.copy(
+                        visited = nowVisited,
+                        cities = sc.cities.map { c -> c.copy(visited = if (!nowVisited) false else c.visited) }
+                    ) else sc
+                },
+                visitedCities = if (!nowVisited) it.visitedCities - code else it.visitedCities
+            )
         }
 
-        viewModelScope.launch {
-            updateCountryVisitedUseCase.execute(userId, code, nowVisited)
-        }
-    }
-
-    private fun updateSelectedCountry(code: String, visited: Boolean) {
-        _selectedCountry.update {
-            if (it?.code == code) it.copy(
-                visited = visited,
-                cities = it.cities.map { c -> c.copy(visited = if (!visited) false else c.visited) }
-            ) else it
+        // Persist
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                updateCountryVisitedUseCase.execute(userId, code, nowVisited)
+            } catch (e: Exception) {
+                // Optional: revert on failure
+            }
         }
     }
 
     fun toggleCityVisited(countryCode: String, cityName: String) {
-        val nowVisited = _visitedCities.value[countryCode]?.contains(cityName) != true
+        val nowVisited = _uiState.value.visitedCities[countryCode]?.contains(cityName) != true
 
-        _visitedCities.update { current ->
-            val updatedCities = (current[countryCode] ?: emptySet()).let {
+        // Optimistic update (single atomic update)
+        _uiState.update { st ->
+            val updatedCitiesForCountry = (st.visitedCities[countryCode] ?: emptySet()).let {
                 if (nowVisited) it + cityName else it - cityName
             }
-            current + (countryCode to updatedCities)
-        }
+            val newVisitedCities = st.visitedCities + (countryCode to updatedCitiesForCountry)
 
-        updateCityVisitedStates(countryCode, cityName, nowVisited)
-
-        viewModelScope.launch {
-            updateCityVisitedUseCase.execute(userId, countryCode, cityName, nowVisited)
-
-            val remainingCities = _visitedCities.value[countryCode]?.size ?: 0
-            val isCountryVisited = _visitedCountryCodes.value.contains(countryCode)
-
-            if (nowVisited && !isCountryVisited) toggleCountryVisited(countryCode)
-            if (!nowVisited && remainingCities == 0 && isCountryVisited) toggleCountryVisited(countryCode)
-        }
-    }
-
-    private fun updateCityVisitedStates(code: String, city: String, visited: Boolean) {
-        _countries.update { list ->
-            list.map { country ->
-                if (country.code == code) {
-                    country.copy(cities = country.cities.map {
-                        if (it.name == city) it.copy(visited = visited) else it
+            val newCountries = st.countries.map { c ->
+                if (c.code == countryCode) {
+                    c.copy(cities = c.cities.map { city ->
+                        if (city.name == cityName) city.copy(visited = nowVisited) else city
                     })
-                } else country
+                } else c
             }
+
+            val selectedUpdated = st.selectedCountry?.let { sc ->
+                if (sc.code == countryCode) {
+                    sc.copy(cities = sc.cities.map { city ->
+                        if (city.name == cityName) city.copy(visited = nowVisited) else city
+                    })
+                } else sc
+            }
+
+            // Auto-toggle country visited if needed
+            val hadCountryVisited = st.visitedCountryCodes.contains(countryCode)
+            val remaining = updatedCitiesForCountry.size
+            val newVisitedCodes = when {
+                nowVisited && !hadCountryVisited -> st.visitedCountryCodes + countryCode
+                !nowVisited && remaining == 0 && hadCountryVisited -> st.visitedCountryCodes - countryCode
+                else -> st.visitedCountryCodes
+            }
+
+            st.copy(
+                countries = newCountries,
+                visitedCities = newVisitedCities,
+                visitedCountryCodes = newVisitedCodes,
+                selectedCountry = selectedUpdated
+            )
         }
 
-        _selectedCountry.update { current ->
-            if (current?.code == code) {
-                current.copy(cities = current.cities.map {
-                    if (it.name == city) it.copy(visited = visited) else it
-                })
-            } else current
+        // Persist
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                updateCityVisitedUseCase.execute(userId, countryCode, cityName, nowVisited)
+                // If you want strict server-sync for country toggle, call updateCountryVisitedUseCase accordingly.
+            } catch (e: Exception) {
+                // Optional: revert on failure
+            }
         }
     }
 
     fun notifyUserMovedMap(position: CameraPosition) {
-        _lastCameraPosition.value = position
+        _uiState.update { it.copy(lastCameraPosition = position) }
     }
 
     suspend fun resolveCountryFromLatLng(latLng: LatLng): LatLngBounds? {
-        val code = withContext(Dispatchers.Default) {
-            mapRepo.getCountryCodeFromLatLng(latLng)
+        return withContext(Dispatchers.IO) {
+            val code = mapRepo.getCountryCodeFromLatLng(latLng)
+
+            if (code == null) {
+                _uiState.update { it.copy(selectedCountry = null) }
+                return@withContext null
+            }
+
+            val fullCountry = getCountryByCode(_uiState.value.countries, code) ?: return@withContext null
+
+            val isVisited = _uiState.value.visitedCountryCodes.contains(fullCountry.code) ||
+                    (_uiState.value.visitedCities[fullCountry.code]?.isNotEmpty() == true)
+
+            _uiState.update { it.copy(selectedCountry = fullCountry.copy(visited = isVisited)) }
+
+            mapRepo.getCountryBounds()[code]
         }
-
-        if (code == null) {
-            _selectedCountry.value = null
-            return null
-        }
-
-        val fullCountry = getCountryByCode(_countries.value, code) ?: return null
-
-        val isVisited = visitedCountryCodes.value.contains(fullCountry.code) ||
-                (_visitedCities.value[fullCountry.code]?.isNotEmpty() == true)
-
-        _selectedCountry.value = fullCountry.copy(visited = isVisited)
-
-        return mapRepo.getCountryBounds()[code]
     }
 
     fun isSameCountrySelected(latLng: LatLng): Boolean {
         val code = mapRepo.getCountryCodeFromLatLng(latLng)
-        return selectedCountry.value?.code?.equals(code, ignoreCase = true) == true
+        return uiState.value.selectedCountry?.code?.equals(code, ignoreCase = true) == true
     }
 
     suspend fun getVisitedCountriesCenterAndBounds(): Pair<LatLng, LatLngBounds>? = withContext(Dispatchers.IO) {
-        val codes = _visitedCountryCodes.value
+        val codes = _uiState.value.visitedCountryCodes
         if (codes.isEmpty()) return@withContext null
 
         val allPoints = codes.flatMap {
@@ -186,7 +240,33 @@ class MapViewModel(
         center to bounds
     }
 
-    fun setFrom(from: Screens) {
-        _cameFrom.value = from
+    fun onMapClick(latLng: LatLng) = viewModelScope.launch(Dispatchers.Default) {
+        _uiState.update { it.copy(isResolvingTap = true, errorMessage = null) }
+        try {
+            val code = mapRepo.getCountryCodeFromLatLng(latLng)
+            if (code == null) {
+                _uiState.update { it.copy(selectedCountry = null, isResolvingTap = false) }
+                return@launch
+            }
+
+            val snapshot = _uiState.value
+            val fullCountry = getCountryByCode(snapshot.countries, code)
+            if (fullCountry == null) {
+                _uiState.update { it.copy(selectedCountry = null, isResolvingTap = false) }
+                return@launch
+            }
+
+            val isVisited = snapshot.visitedCountryCodes.contains(fullCountry.code) ||
+                    (snapshot.visitedCities[fullCountry.code]?.isNotEmpty() == true)
+
+            _uiState.update {
+                it.copy(
+                    selectedCountry = fullCountry.copy(visited = isVisited),
+                    isResolvingTap = false
+                )
+            }
+        } catch (e: Exception) {
+            _uiState.update { it.copy(isResolvingTap = false, errorMessage = e.message) }
+        }
     }
 }
