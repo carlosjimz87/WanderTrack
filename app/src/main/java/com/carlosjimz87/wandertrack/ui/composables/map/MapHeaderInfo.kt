@@ -14,6 +14,7 @@ import androidx.compose.ui.unit.dp
 import com.carlosjimz87.wandertrack.R
 import com.carlosjimz87.wandertrack.domain.models.map.Country
 
+
 @Composable
 fun MapHeaderInfo(
     selectedCountry: Country?,

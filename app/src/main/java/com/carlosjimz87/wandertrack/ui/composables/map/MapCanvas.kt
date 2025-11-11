@@ -12,6 +12,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Modifier
 import com.carlosjimz87.wandertrack.common.Constants.MAX_ZOOM_LEVEL
@@ -31,27 +32,28 @@ import org.koin.compose.getKoin
 
 @Composable
 fun MapCanvas(
-    visitedCountriesCodes: Set<String>,
-    selectedCountry: Country?,
+    countries: List<Country>,
+    visitedCountryCodes: Set<String>,
     countryBorders: Map<String, CountryGeometry>,
-    onMapClick: (LatLng) -> Unit,
     cameraPositionState: CameraPositionState,
+    onMapClick: (LatLng) -> Unit,
+    onUserMove: () -> Unit,
+    isSameCountrySelected: (LatLng) -> Boolean,
+    selectedCountry: Country? = null,
 ) {
+    // DI
     val stylesManager: StylesManager = getKoin().get()
     val isDarkTheme = isSystemInDarkTheme()
 
-    val mapStyle = remember(isDarkTheme) {
-        stylesManager.getMapStyle(isDarkTheme)
-    }
+    val mapStyle = remember(isDarkTheme) { stylesManager.getMapStyle(isDarkTheme) }
 
-    // 👇 Delay rendering the GoogleMap by one frame after first composition
+    // Retrasar un frame el renderizado del mapa para evitar el flash del estilo por defecto
     var shouldShowMap by remember { mutableStateOf(false) }
     LaunchedEffect(mapStyle) {
         withFrameNanos { shouldShowMap = true }
     }
 
     if (!shouldShowMap) {
-        // Avoid showing default map while waiting
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -60,24 +62,30 @@ fun MapCanvas(
         return
     }
 
-    val visitedPolygons by remember(visitedCountriesCodes, countryBorders) {
+    // Polígonos visitados (memoizados)
+    val visitedPolygons by remember(visitedCountryCodes, countryBorders) {
         derivedStateOf {
-            visitedCountriesCodes.flatMap { code ->
-                countryBorders[code]?.polygons?.map { polygon ->
-                    PolygonData(polygon)
-                } ?: emptyList()
+            visitedCountryCodes.flatMap { code ->
+                countryBorders[code]?.polygons.orEmpty()
             }
         }
     }
 
+    // Polígonos del país seleccionado (memoizados)
     val selectedPolygons by remember(selectedCountry, countryBorders) {
         derivedStateOf {
             selectedCountry?.let { country ->
-                countryBorders[country.code]?.polygons?.map { polygon ->
-                    PolygonData(polygon, isSelected = true)
-                }
-            } ?: emptyList()
+                countryBorders[country.code]?.polygons.orEmpty()
+            }.orEmpty()
         }
+    }
+
+    // Detectar "camera idle" y notificar hacia arriba (VM) cuando pare de moverse
+    LaunchedEffect(cameraPositionState) {
+        snapshotFlow { cameraPositionState.isMoving }
+            .collect { moving ->
+                if (!moving) onUserMove()
+            }
     }
 
     GoogleMap(
@@ -97,19 +105,26 @@ fun MapCanvas(
             zoomControlsEnabled = true,
             mapToolbarEnabled = false
         ),
-        onMapClick = onMapClick
+        onMapClick = { latLng ->
+            // Pequeña optimización: evita recalcular si ya está seleccionado el mismo país
+            if (isSameCountrySelected(latLng)) return@GoogleMap
+            onMapClick(latLng)
+        }
     ) {
-        visitedPolygons.forEach { polygonData ->
+        // Países visitados
+        visitedPolygons.forEach { polygon ->
             Polygon(
-                points = polygonData.points,
+                points = polygon,
                 fillColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f),
                 strokeColor = MaterialTheme.colorScheme.primary,
                 strokeWidth = 4f
             )
         }
-        selectedPolygons.forEach { polygonData ->
+
+        // País seleccionado (por encima)
+        selectedPolygons.forEach { polygon ->
             Polygon(
-                points = polygonData.points,
+                points = polygon,
                 fillColor = MaterialTheme.colorScheme.secondary.copy(alpha = 0.4f),
                 strokeColor = MaterialTheme.colorScheme.secondary,
                 strokeWidth = 4f,

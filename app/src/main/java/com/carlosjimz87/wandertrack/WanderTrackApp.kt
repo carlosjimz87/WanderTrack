@@ -2,12 +2,12 @@ package com.carlosjimz87.wandertrack
 
 import android.app.Application
 import com.carlosjimz87.wandertrack.di.appModule
+import com.carlosjimz87.wandertrack.di.authUseCaseModule
 import com.carlosjimz87.wandertrack.di.firebaseModule
+import com.carlosjimz87.wandertrack.di.useCaseModule
 import com.carlosjimz87.wandertrack.managers.StylesManager
 import com.carlosjimz87.wandertrack.utils.Logger
 import com.google.firebase.FirebaseApp
-import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.firestore.FirebaseFirestore
 import org.koin.android.ext.android.get
 import org.koin.android.ext.koin.androidContext
 import org.koin.core.context.startKoin
@@ -28,7 +28,7 @@ class WanderTrackApp : Application(){
     private fun initializeKoin(){
         startKoin {
             androidContext(this@WanderTrackApp)
-            modules(listOf(appModule, firebaseModule))
+            modules(listOf(appModule, firebaseModule, useCaseModule, authUseCaseModule))
         }
         get<StylesManager>().preloadStyles()
     }
