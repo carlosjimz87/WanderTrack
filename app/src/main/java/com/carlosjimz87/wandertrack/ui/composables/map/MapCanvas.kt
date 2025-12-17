@@ -28,8 +28,12 @@ import com.google.maps.android.compose.MapProperties
 import com.google.maps.android.compose.MapType
 import com.google.maps.android.compose.MapUiSettings
 import com.google.maps.android.compose.Polygon
+import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.distinctUntilChanged
 import org.koin.compose.getKoin
 
+@OptIn(FlowPreview::class)
 @Composable
 fun MapCanvas(
     countries: List<Country>,
@@ -83,6 +87,8 @@ fun MapCanvas(
     // Detectar "camera idle" y notificar hacia arriba (VM) cuando pare de moverse
     LaunchedEffect(cameraPositionState) {
         snapshotFlow { cameraPositionState.isMoving }
+            .distinctUntilChanged()
+            .debounce(150) // avoids rapid toggles
             .collect { moving ->
                 if (!moving) onUserMove()
             }

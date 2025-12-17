@@ -22,7 +22,24 @@ val uiTestsModule = module {
     single<SessionManager> { FakeSessionManagerImpl(get()) }
 
     // ViewModels
-    viewModel { AuthViewModel(get(), get(), get()) }
-    viewModel { (userId: String) -> MapViewModel(userId, get(), get()) }
-    viewModel { ProfileViewModel(get(), get()) }
+    viewModel { AuthViewModel(
+        get(),
+        get(),
+        get(),
+        get(),
+        get(),
+        get(),
+        get(),
+        get(),
+        get()
+    ) }
+    viewModel { (userId: String) -> MapViewModel(
+        userId,
+        get(),
+        get(),
+        get(),
+        get(),
+        get()
+    ) }
+    viewModel { ProfileViewModel(get()) }
 }

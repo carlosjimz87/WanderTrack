@@ -82,20 +82,7 @@ class MapViewModel(
             .map { it.visitedCountryCodes to it.countryBorders }
             .distinctUntilChanged()
             .mapLatest { (codes, borders) ->
-                withContext(Dispatchers.Default) {
-                    if (codes.isEmpty()) return@withContext null
-                    val allPoints = codes.flatMap { borders[it]?.polygons?.flatten().orEmpty() }
-                    if (allPoints.isEmpty()) return@withContext null
-
-                    val bounds = LatLngBounds.builder().apply {
-                        allPoints.forEach { include(it) }
-                    }.build()
-                    val center = LatLng(
-                        allPoints.map { it.latitude }.average(),
-                        allPoints.map { it.longitude }.average()
-                    )
-                    center to bounds
-                }
+                computeVisitedUnion(codes, borders)
             }
             .collect { result ->
                 _uiState.update {
@@ -268,5 +255,28 @@ class MapViewModel(
         } catch (e: Exception) {
             _uiState.update { it.copy(isResolvingTap = false, errorMessage = e.message) }
         }
+    }
+
+    private suspend fun computeVisitedUnion(
+        codes: Set<String>,
+        borders: Map<String, CountryGeometry>
+    ): Pair<LatLng, LatLngBounds>? = withContext(Dispatchers.Default) {
+        if (codes.isEmpty()) return@withContext null
+
+        val allPoints = codes.flatMap { code ->
+            borders[code]?.polygons?.flatten().orEmpty()
+        }
+        if (allPoints.isEmpty()) return@withContext null
+
+        val bounds = LatLngBounds.builder().apply {
+            allPoints.forEach { include(it) }
+        }.build()
+
+        val center = LatLng(
+            allPoints.map { it.latitude }.average(),
+            allPoints.map { it.longitude }.average()
+        )
+
+        center to bounds
     }
 }

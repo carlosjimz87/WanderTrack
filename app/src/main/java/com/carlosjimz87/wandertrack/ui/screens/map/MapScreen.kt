@@ -59,7 +59,6 @@ fun MapScreen(
         val bounds = uiState.visitedUnionBounds ?: return@LaunchedEffect
         if (!hasCenteredOnVisited) {
             cameraPositionState.move(CameraUpdateFactory.newLatLngBounds(bounds, 100))
-            hasCenteredOnVisited = true
         }
     }
 

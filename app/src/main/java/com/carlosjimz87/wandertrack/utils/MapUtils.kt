@@ -5,10 +5,8 @@ import com.carlosjimz87.wandertrack.R
 import com.carlosjimz87.wandertrack.common.Constants.countryNameToIso2
 import com.carlosjimz87.wandertrack.domain.models.map.Country
 import com.carlosjimz87.wandertrack.domain.models.map.CountryGeometry
-import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
 import com.google.maps.android.PolyUtil
-import com.google.maps.android.compose.rememberCameraPositionState
 import org.json.JSONArray
 import org.json.JSONObject
 

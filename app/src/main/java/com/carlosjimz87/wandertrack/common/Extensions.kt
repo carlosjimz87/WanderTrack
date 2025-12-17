@@ -28,42 +28,6 @@ import kotlin.math.max
 
 fun List<City>.visited(): List<City> = this.filter { it.visited }.toList()
 
-suspend fun safeAnimateToBounds(
-    cameraPositionState: CameraPositionState,
-    bounds: LatLngBounds,
-    mapWidth: Int,
-    mapHeight: Int,
-    bottomOffset: Int
-) {
-    val topPadding = 64
-    val sidePadding = 64
-
-    val effectiveHeight = mapHeight - bottomOffset - topPadding
-    val effectiveWidth = mapWidth - (sidePadding * 2)
-
-    val isSizeSafe = effectiveHeight > 100 && effectiveWidth > 100
-
-    val extraPadding = 100  // Padding extra para dispersión
-
-    if (isSizeSafe) {
-        cameraPositionState.animate(
-            CameraUpdateFactory.newLatLngBounds(
-                bounds,
-                mapWidth,
-                mapHeight,
-                sidePadding + extraPadding
-            ),
-            durationMs = ANIMATION_DURATION
-        )
-    } else {
-        val zoomLevel = calculateZoomLevel(bounds)
-        cameraPositionState.animate(
-            CameraUpdateFactory.newLatLngZoom(bounds.center, zoomLevel),
-            durationMs = ANIMATION_DURATION
-        )
-    }
-}
-
 fun calculateZoomLevel(bounds: LatLngBounds): Float {
     val latDiff = abs(bounds.northeast.latitude - bounds.southwest.latitude)
     val lngDiff = abs(bounds.northeast.longitude - bounds.southwest.longitude)
