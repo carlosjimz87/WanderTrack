@@ -77,9 +77,26 @@ WanderTrack is a modern Android app to visually track the countries and cities y
 
 ## Contributing
 
-> This repository and its contents are proprietary and intended for personal use only. Unauthorized use, copying, modification, or distribution is strictly prohibited.
+Contributions are welcome! If you have suggestions for improving WanderTrack, please open an issue or submit a pull request.
+
+Please ensure your contributions adhere to the following guidelines:
+
+-   **Code Style:** Follow the existing Kotlin coding conventions and project's code style.
+-   **Tests:** Add or update tests for any new or changed functionality to maintain high code quality.
+-   **Commit Messages:** Write clear and concise commit messages that explain the purpose of your changes.
+
+### How to Contribute
+
+1.  **Fork the repository.**
+2.  **Create a new branch** for your feature or bug fix: `git checkout -b feature/your-feature-name` or `bugfix/your-bug-fix-name`.
+3.  **Make your changes and commit them.**
+4.  **Push your branch** to your forked repository.
+5.  **Open a pull request** to the `main` branch of the original repository.
+
+---
 
 ## License
 
-> This project is proprietary. No license is granted for usage, redistribution, or modification. All rights reserved.
+WanderTrack is released under the MIT License. See the [LICENSE](LICENSE) file for more details.
+
 ---
